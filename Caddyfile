@@ -1,6 +1,5 @@
-{$DOMAIN:localhost} {
+:80 {
   handle /api/* { reverse_proxy backend:8080 }
-  handle_path /media/* { reverse_proxy host.docker.internal:7480 }
   root * /srv
   try_files {path} /index.html
   file_server
