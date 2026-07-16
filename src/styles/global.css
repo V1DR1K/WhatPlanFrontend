@@ -549,6 +549,13 @@ a {
   }
 }
 @media (max-width: 540px) {
+  .app-header::before {
+    inset-inline: -16px;
+  }
+  .hero,
+  .film-hero {
+    margin-top: 20px;
+  }
   .app-shell {
     padding: 0 16px 45px;
   }
