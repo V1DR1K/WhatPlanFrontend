@@ -750,6 +750,14 @@ header {
   aspect-ratio: auto;
   object-fit: contain !important;
 }
+.item-card .photo-lightbox img {
+  width: auto !important;
+  height: auto !important;
+  max-width: min(1100px, 100%) !important;
+  max-height: 88vh !important;
+  aspect-ratio: auto;
+  object-fit: contain !important;
+}
 @media (max-width: 540px) {
   .detail .place-cover {
     margin-bottom: 18px;
