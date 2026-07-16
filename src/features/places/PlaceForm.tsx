@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCategories } from "../categories/categories";
+import { getHighlightTags, saveHighlightTag } from "./highlightTags";
 import {
   savePlace,
   savePlaceReview,
@@ -49,12 +50,20 @@ export function PlaceForm({
   const [categoryId, setCategoryId] = useState(() =>
     place?.category.id ? String(place.category.id) : "",
   );
+  const [tagIds, setTagIds] = useState<number[]>(() => place?.tags.map((tag) => tag.id) ?? []);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagEmoji, setNewTagEmoji] = useState("✨");
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
     enabled: canEditDetails,
   });
   const qc = useQueryClient();
+  const tagsQuery = useQuery({ queryKey: ["highlight-tags"], queryFn: getHighlightTags, enabled: canEditDetails });
+  const addTag = useMutation({
+    mutationFn: () => saveHighlightTag({ name: newTagName.trim(), emoji: newTagEmoji.trim() }),
+    onSuccess: async (tag) => { await qc.invalidateQueries({ queryKey: ["highlight-tags"] }); setTagIds((current) => [...current, tag.id]); setNewTagName(""); setNewTagEmoji("✨"); },
+  });
   const mutation = useMutation({
     mutationFn: async (form: FormData) => {
       if (!place) {
@@ -65,6 +74,7 @@ export function PlaceForm({
           sourceUrl: String(form.get("sourceUrl")) || undefined,
           mapsUrl: mapsSearch(address),
           categoryId: Number(form.get("categoryId")),
+          tagIds,
         });
         if (file) await uploadPlacePhoto(saved.id, file);
         return saved;
@@ -78,6 +88,7 @@ export function PlaceForm({
             sourceUrl: String(form.get("sourceUrl")) || undefined,
             mapsUrl: mapsSearch(address),
             categoryId: Number(form.get("categoryId")),
+            tagIds,
           },
           place.id,
         );
@@ -168,6 +179,19 @@ export function PlaceForm({
                 onChange={(e) => setFile(e.target.files?.[0])}
               />
             </label>
+            <fieldset className="tag-picker">
+              <legend>¿Por qué se destaca?</legend>
+              <p>Elegí todas las etiquetas que correspondan.</p>
+              <div className="tag-options">
+                {tagsQuery.data?.map((tag) => <label className="tag-option" key={tag.id}><input type="checkbox" checked={tagIds.includes(tag.id)} onChange={() => setTagIds((current) => current.includes(tag.id) ? current.filter((id) => id !== tag.id) : [...current, tag.id])} /><span>{tag.emoji} {tag.name}</span></label>)}
+              </div>
+              <div className="tag-create-row">
+                <input aria-label="Emoji de nueva etiqueta" value={newTagEmoji} onChange={(event) => setNewTagEmoji(event.target.value)} maxLength={8} />
+                <input aria-label="Nombre de nueva etiqueta" placeholder="Nueva etiqueta" value={newTagName} onChange={(event) => setNewTagName(event.target.value)} />
+                <button type="button" className="secondary-button" disabled={!newTagName.trim() || !newTagEmoji.trim() || addTag.isPending} onClick={() => addTag.mutate()}>Añadir</button>
+              </div>
+              {addTag.error && <p className="form-error">No pudimos añadir la etiqueta. Probá con otro nombre.</p>}
+            </fieldset>
             {photo && (
               <img
                 className="form-photo-preview"

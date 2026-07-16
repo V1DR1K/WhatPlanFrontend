@@ -8,7 +8,7 @@ import { ItemForm } from "../items/ItemForm";
 import { PlaceForm } from "./PlaceForm";
 import { StarRating } from "../../components/ui/StarRating";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
-import { session } from "../../lib/api";
+import { mediaUrl, session } from "../../lib/api";
 import type { Item } from "../../types/domain";
 
 const mapsSearch = (address?: string) =>
@@ -74,6 +74,7 @@ export function PlaceDetailPage() {
   const pending = venue.status === "PENDING";
   const mapsUrl = venue.mapsUrl || mapsSearch(venue.address);
   const coverPhoto = venue.photoUrl || venue.thumbnailUrl;
+  const coverPhotoSrc = coverPhoto ? mediaUrl(coverPhoto) : undefined;
   const itemList = items.data?.content ?? [];
   const itemsByAuthor = Object.entries(
     itemList.reduce<Record<string, Item[]>>((groups, item) => {
@@ -88,8 +89,8 @@ export function PlaceDetailPage() {
       <Link to="/">← Volver al mapa</Link>
       <div className="detail-heading">
         <div className="place-cover">
-          {coverPhoto ? (
-            <AdaptivePhoto alt={`Foto de ${venue.name}`} context="place" height={venue.photoHeight} src={coverPhoto} width={venue.photoWidth} />
+          {coverPhotoSrc ? (
+            <AdaptivePhoto alt={`Foto de ${venue.name}`} context="place" height={venue.photoHeight} src={coverPhotoSrc} width={venue.photoWidth} />
           ) : (
             <span className="place-cover-empty">{venue.category.icon}</span>
           )}
@@ -97,6 +98,7 @@ export function PlaceDetailPage() {
         <div>
           <p className="eyebrow">{pending ? "PENDIENTE · " : ""}{venue.category.name}</p>
           <h1>{venue.name}</h1>
+          {!!venue.tags?.length && <div className="place-tags place-tags--detail">{venue.tags.map((tag) => <span key={tag.id}>{tag.emoji} {tag.name}</span>)}</div>}
           <p>
             {mapsUrl ? (
               <a className="address-link" href={mapsUrl} target="_blank" rel="noreferrer">📍 {venue.address || "Abrir en Google Maps"} ↗</a>

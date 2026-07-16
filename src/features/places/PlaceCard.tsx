@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
 import type { Place } from "../../types/domain";
 import { StarRating } from "../../components/ui/StarRating";
+import { mediaUrl } from "../../lib/api";
 export function PlaceCard({ place }: { place: Place }) {
   const pending = place.status === "PENDING";
   const photo = place.thumbnailUrl ?? place.photoUrl;
+  const photoSrc = photo ? mediaUrl(photo) : undefined;
   return (
     <Link
       className="place-card-link"
@@ -12,8 +14,13 @@ export function PlaceCard({ place }: { place: Place }) {
     >
       <article className={`place-card ${pending ? "pending-card" : ""}`}>
         <div className="food-poster">
-          {photo ? (
-            <img src={photo} alt={`Foto de ${place.name}`} />
+          {photoSrc ? (
+            <img
+              src={photoSrc}
+              alt={`Foto de ${place.name}`}
+              decoding="async"
+              loading="lazy"
+            />
           ) : (
             <span>{place.category.icon}</span>
           )}
@@ -34,6 +41,7 @@ export function PlaceCard({ place }: { place: Place }) {
               </b>
             )}
           </div>
+          {!!place.tags?.length && <div className="place-tags">{place.tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.emoji} {tag.name}</span>)}</div>}
           {pending ? (
             <p className="note">
               {place.address || "Guardado para la próxima salida"}
