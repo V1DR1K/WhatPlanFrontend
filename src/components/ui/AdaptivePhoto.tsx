@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 
 export type PhotoOrientation = "landscape" | "portrait";
 
@@ -28,6 +28,13 @@ export function AdaptivePhoto({
 }: AdaptivePhotoProps) {
   const [expanded, setExpanded] = useState(false);
   const orientation = getPhotoOrientation(width, height);
+  const ratioStyle =
+    typeof width === "number" &&
+    typeof height === "number" &&
+    width > 0 &&
+    height > 0
+      ? ({ "--photo-aspect-ratio": `${width} / ${height}` } as CSSProperties)
+      : undefined;
   return (
     <>
       <button
@@ -35,6 +42,7 @@ export function AdaptivePhoto({
         aria-label={`Ampliar ${alt.toLowerCase()}`}
         className={`adaptive-photo adaptive-photo--${context} adaptive-photo--${orientation}`}
         onClick={() => setExpanded(true)}
+        style={ratioStyle}
         type="button"
       >
         <img className="adaptive-photo__image" src={src} alt={alt} />

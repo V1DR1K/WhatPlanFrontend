@@ -704,6 +704,7 @@ header {
 .adaptive-photo {
   display: block;
   width: 100%;
+  aspect-ratio: var(--photo-aspect-ratio, auto);
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -720,8 +721,7 @@ header {
 .adaptive-photo__image {
   display: block;
   width: 100%;
-  height: auto;
-  max-height: 520px;
+  height: 100%;
   margin: 0 auto;
   object-fit: contain;
   background: #090909;
@@ -730,12 +730,11 @@ header {
 .adaptive-photo--portrait {
   width: min(100%, 430px);
   margin-inline: auto;
-}
-.adaptive-photo--portrait .adaptive-photo__image {
   max-height: 68svh;
 }
-.adaptive-photo--landscape .adaptive-photo__image {
-  max-height: 440px;
+.adaptive-photo--landscape {
+  max-width: 720px;
+  margin-inline: auto;
 }
 .adaptive-photo:hover .adaptive-photo__image,
 .adaptive-photo:focus-visible .adaptive-photo__image {
@@ -747,7 +746,7 @@ header {
 }
 .item-card .adaptive-photo__image {
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
   aspect-ratio: auto;
   object-fit: contain !important;
 }
@@ -755,10 +754,7 @@ header {
   .detail .place-cover {
     margin-bottom: 18px;
   }
-  .adaptive-photo--landscape .adaptive-photo__image {
-    max-height: 42svh;
-  }
-  .adaptive-photo--portrait .adaptive-photo__image {
+  .adaptive-photo--portrait {
     max-height: 68svh;
   }
 }
