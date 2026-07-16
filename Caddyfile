@@ -1,7 +1,7 @@
 :80 {
   route {
     handle /api/* {
-      reverse_proxy wherefood-backend:8080
+      reverse_proxy tapicks-backend:8080
     }
     handle {
       root * /srv
