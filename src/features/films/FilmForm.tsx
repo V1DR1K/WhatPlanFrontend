@@ -7,6 +7,7 @@ import { adjustWatchCount, getFilmGenres, getPlatforms, saveFilm, saveFilmGenre,
 const inputFrom = (form: FormData): Omit<FilmInput, 'genres'> => ({
   title: String(form.get('title')).trim(),
   synopsis: String(form.get('review')).trim() || undefined,
+  watchedOn: String(form.get('watchedOn')) || undefined,
   platformId: form.get('platformId') ? Number(form.get('platformId')) : undefined,
 });
 
@@ -44,7 +45,7 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
     <h2>{film ? 'Afinemos la ficha' : '¿Qué quieren guardar?'}</h2>
     <label>Título<input name="title" defaultValue={film?.title} required autoFocus /></label>
     <label>Reseña<textarea name="review" defaultValue={film?.synopsis} placeholder="¿Qué les pareció?" /></label>
-    <div className="form-columns">{!film && <label>Fecha vista<input name="watchedOn" type="date" defaultValue={new Date().toLocaleDateString('sv-SE')} required /></label>}<label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div>
+    <div className="form-columns"><label>Fecha vista<input name="watchedOn" type="date" defaultValue={film?.lastWatchedOn ?? new Date().toLocaleDateString('sv-SE')} required /></label><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div>
     <label>Foto o póster<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setFile(event.target.files?.[0])} /></label>
     <small className="tiny">{file ? `Se cargará ${file.name}.` : film?.posterUrl ? 'La imagen actual se conservará si no elegís otra.' : 'Podés subir una imagen; se adapta automáticamente a los mosaicos.'}</small>
     <fieldset className="tag-picker film-genre-picker"><legend>Géneros</legend><p>Elegí todos los que correspondan. También podés crear uno nuevo.</p><div className="tag-options">{visibleOptions.map(option => <label className="tag-option" key={option.id}><input type="checkbox" checked={genres.includes(option.name)} onChange={() => toggleGenre(option.name)} /><span>{option.emoji} {option.name}</span></label>)}</div><div className="tag-create-row"><input aria-label="Emoji del nuevo género" value={newGenreEmoji} maxLength={8} onChange={event => setNewGenreEmoji(event.target.value)} /><input aria-label="Nombre del nuevo género" placeholder="Nuevo género" value={newGenreName} onChange={event => setNewGenreName(event.target.value)} /><button className="secondary-button" type="button" disabled={!newGenreName.trim() || addGenre.isPending} onClick={() => addGenre.mutate()}>Agregar</button></div>{addGenre.error && <p className="form-error">{addGenre.error.message}</p>}</fieldset>

@@ -1,7 +1,7 @@
 import { api } from '../../lib/api';
 import type { Film, FilmGenreOption, FilmReview, WatchPlatform } from '../../types/domain';
 
-export type FilmInput = { title: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; genres: string[]; platformId?: number };
+export type FilmInput = { title: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; watchedOn?: string; genres: string[]; platformId?: number };
 export type PlatformInput = { name: string; icon: string; active: boolean };
 export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean } = {}) => {
   const query = new URLSearchParams();
