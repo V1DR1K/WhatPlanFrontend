@@ -1,6 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
+import '../styles/global.css';
+import '../styles/interactions.css';
+import '../styles/action-buttons.css';
+import '../styles/touch.css';
+import '../styles/item-scores.css';
 
 export function AppLayout() {
   const navigate = useNavigate();

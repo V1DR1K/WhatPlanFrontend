@@ -1,0 +1,41 @@
+:root {
+  --bg: #121112;
+  --panel: #1c1a1c;
+  --line: #312e31;
+  --cream: #fffaf0;
+  --muted: #aaa3a3;
+  --coral: #ff6049;
+  --lime: #d4ef55;
+  --violet: #a978ff;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--cream);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: var(--bg); }
+#root { min-height: 100vh; isolation: isolate; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+
+.heart-rain { position: fixed; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; }
+.heart-rain span { position: absolute; top: -18vh; left: var(--heart-left); color: #ff83ba; font-size: var(--heart-size); line-height: 1; opacity: .28; text-shadow: 0 0 9px #ff4e9ab3; animation: heart-matrix-fall var(--heart-duration) linear var(--heart-delay) infinite; }
+@keyframes heart-matrix-fall { 0% { transform: translate3d(0, -18vh, 0) rotate(-12deg); } 70% { opacity: .36; } 100% { transform: translate3d(var(--heart-drift), 125vh, 0) rotate(20deg); opacity: .12; } }
+
+.login-shell { position: relative; z-index: 1; display: grid; min-height: 100vh; place-items: center; padding: 24px; }
+.login-card { width: min(420px, 100%); text-align: center; }
+.food-orbit { margin-bottom: 25px; font-size: 42px; letter-spacing: 16px; transform: rotate(-6deg); }
+.food-orbit span { display: inline-block; transform: translateY(-18px); }
+.eyebrow { margin: 0 0 10px; color: var(--lime); font: 500 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 1.5px; }
+.login-card h1 { margin: 0; font: 700 clamp(48px, 9vw, 70px)/.9 Georgia, serif; letter-spacing: -3px; }
+.login-card h1 span { color: var(--coral); }
+.intro { margin: 22px auto; color: #c6bfc0; font-size: 17px; line-height: 1.5; }
+.login-card label { display: grid; gap: 6px; margin: 10px 0; color: #d5ced0; font-size: 12px; text-align: left; }
+.login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 9px; outline-color: var(--violet); background: #151415; color: var(--cream); }
+.main-button { border: 0; border-radius: 13px; padding: 14px 20px; background: var(--coral); color: #241111; font-weight: 700; box-shadow: 5px 5px 0 #9b3428; }
+.login-card .main-button { width: 100%; margin-top: 10px; }
+.tiny { color: var(--muted); font-size: 12px; }
+.form-error { color: #ff9e90; font-size: 13px; }
+
+@media (prefers-reduced-motion: reduce) { .heart-rain { display: none; } }
