@@ -922,7 +922,7 @@ a {
 .add-film-button:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 #4f427e; }
 .add-film-button small { display: block; font: 500 9px "DM Mono"; letter-spacing: 1px; opacity: .76; }
 .add-film-button>b { margin-left: 4px; font-size: 22px; }
-.add-film-icon { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#fffaf0; color:#312653; font-size:23px; line-height:1; }
+.add-film-icon { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#b8adff; color:#312653; font-size:23px; line-height:1; }
 .film-controls { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 0 9px; border-bottom: 1px solid var(--line); }
 .film-controls label { display: grid; grid-template-columns: auto minmax(125px, 180px); gap: 8px; align-items: center; color: var(--muted); font-size: 12px; }
 .film-controls select { min-height: 39px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); color: var(--cream); padding: 0 9px; }

@@ -1,5 +1,5 @@
 .quick-nav-action .add-place-button > b {
-  margin-left: auto;
+  margin-left: 4px;
 }
 
 .add-cook-button {
@@ -8,8 +8,7 @@
 
 .add-cook-button:hover,
 .add-cook-button:focus-visible {
-  transform: translateY(-3px);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #394321;
   border-color: var(--lime);
-  background: #d4ef5522;
-  box-shadow: 0 8px 18px #d4ef5530;
 }
