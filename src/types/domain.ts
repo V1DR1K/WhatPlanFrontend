@@ -8,5 +8,5 @@ export type Slice<T>={content:T[];nextCursor:number|null};
 export type Session={token:string;username:string;role:'USER'|'ADMIN'};
 export type WatchPlatform={id:number;name:string;icon:string;active:boolean};
 export type FilmGenreOption={id:number;name:string;emoji:string};
-export type FilmReview={author:string;rating:number;comment?:string;watchedOn?:string;metrics?:Record<string,number>};
+export type FilmReview={id:number;author:string;rating:number;comment?:string;watchedOn?:string;metrics?:Record<string,number>};
 export type Film={id:number;title:string;originalTitle?:string;synopsis?:string;releaseDate?:string;posterUrl?:string;thumbnailUrl?:string;posterWidth?:number;posterHeight?:number;genres:string[];platform?:WatchPlatform;watchedCount:number;lastWatchedOn?:string;author:string;reviews:FilmReview[];createdAt:string};

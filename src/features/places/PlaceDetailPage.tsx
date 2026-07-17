@@ -83,6 +83,7 @@ export function PlaceDetailPage() {
     }, {}),
   );
   const selectedDateIndex = visitDates.indexOf(selectedVisitDate);
+  const visitNumber = visitDates.length - selectedDateIndex;
 
   return (
     <section className="detail">
@@ -113,6 +114,12 @@ export function PlaceDetailPage() {
         </div>
       </div>
       {!pending && (
+        <section className="watch-counter" aria-label="Contador de visitas">
+          <div><p className="eyebrow">CONTADOR COMPARTIDO</p><h2>{visitDates.length === 0 ? "Todavía no fueron" : `${visitDates.length} ${visitDates.length === 1 ? "vez" : "veces"}`}</h2><p>Última visita: {visitDates[0] ? visitDateLabel(visitDates[0]) : "pendiente"}</p></div>
+          <div><button className="counter-add" onClick={() => setEditingItem(null)}>Fuimos de nuevo 🍽️</button></div>
+        </section>
+      )}
+      {!pending && (
         <section className="rating-breakdown" aria-label="Promedios globales">
           <div><span>😋 Sabor</span><strong>{score(venue.tasteAverage)}</strong><StarRating label="Promedio de sabor" value={Math.round(venue.tasteAverage || 0)} /></div>
           <div><span>💸 Precio</span><strong>{score(venue.priceAverage)}</strong><StarRating label="Promedio de precio" value={Math.round(venue.priceAverage || 0)} /></div>
@@ -136,9 +143,9 @@ export function PlaceDetailPage() {
       {!!visitDates.length && (
         <div className="item-date-pager" aria-label="Navegar visitas por fecha">
           <button type="button" className="date-chevron" aria-label="Ver visita más reciente" disabled={selectedDateIndex <= 0} onClick={() => setSelectedVisitDate(visitDates[selectedDateIndex - 1])}>‹</button>
-          <label>Visita
+          <label>Visita #{visitNumber}
             <select value={selectedVisitDate} onChange={(event) => setSelectedVisitDate(event.target.value)}>
-              {visitDates.map((date) => <option key={date} value={date}>{visitDateLabel(date)}</option>)}
+              {visitDates.map((date, index) => <option key={date} value={date}>Visita #{visitDates.length - index} · {visitDateLabel(date)}</option>)}
             </select>
           </label>
           <button type="button" className="date-chevron" aria-label="Ver visita anterior" disabled={selectedDateIndex < 0 || selectedDateIndex >= visitDates.length - 1} onClick={() => setSelectedVisitDate(visitDates[selectedDateIndex + 1])}>›</button>
