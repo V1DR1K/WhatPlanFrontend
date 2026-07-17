@@ -131,7 +131,7 @@ export function PlaceDetailPage() {
         <div className="review-columns">
           {venue.reviews.map((review) => (
             <article className="place-review" key={review.author}>
-              <h3>{review.author === username ? "Tu calificación" : `Calificación de ${review.author}`}</h3>
+              <div className="place-review__heading"><h3>{review.author === username ? "Tu calificación" : `Calificación de ${review.author}`}</h3>{review.author === username && <button className="icon-edit" type="button" aria-label="Editar reseña" onClick={() => setEditingPlace(true)}>✎</button>}</div>
               {review.comment && <p>{review.comment}</p>}
               <div>{reviewLabels.map(({ key, label }) => <span key={key}>{label}<StarRating label={label} value={review[key]} /></span>)}</div>
             </article>

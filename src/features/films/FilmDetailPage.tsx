@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { SegmentedLevel } from '../../components/ui/SegmentedLevel';
 import { StarRating } from '../../components/ui/StarRating';
-import { mediaUrl } from '../../lib/api';
+import { mediaUrl, session } from '../../lib/api';
 import type { FilmReview } from '../../types/domain';
 import { FilmForm } from './FilmForm';
 import { FilmReviewForm } from './FilmReviewForm';
@@ -19,6 +19,7 @@ export function FilmDetailPage() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [editingReview, setEditingReview] = useState<FilmReview>();
   const [selectedReviewDate, setSelectedReviewDate] = useState('');
   const filmQuery = useQuery({ queryKey: ['film', id], queryFn: () => getFilm(id), enabled: validId });
   const reviewDates = [...new Set((filmQuery.data?.reviews ?? []).map(review => review.watchedOn).filter((date): date is string => Boolean(date)))];
@@ -56,14 +57,15 @@ export function FilmDetailPage() {
     <section className="reviews-section">
       <div className="section-title"><div><p className="eyebrow">HISTORIAL DE VISTAS</p><h2>Reseñas</h2></div><strong>{film.reviews.length}</strong></div>
       {!!reviewDates.length && <div className="item-date-pager" aria-label="Navegar reseñas por fecha"><button type="button" className="date-chevron" aria-label="Ver vista más reciente" disabled={selectedReviewIndex <= 0} onClick={() => setSelectedReviewDate(reviewDates[selectedReviewIndex - 1])}>‹</button><label>Vista #{visitNumber}<select value={selectedReviewDate} onChange={event => setSelectedReviewDate(event.target.value)}>{reviewDates.map((date, index) => <option key={date} value={date}>Vista #{reviewDates.length - index} · {viewedLabel(date)}</option>)}</select></label><button type="button" className="date-chevron" aria-label="Ver vista anterior" disabled={selectedReviewIndex < 0 || selectedReviewIndex >= reviewDates.length - 1} onClick={() => setSelectedReviewDate(reviewDates[selectedReviewIndex + 1])}>›</button></div>}
-      <div className="film-review-columns">{reviewsForDate.map(review => <ReviewCard key={review.id} review={review} visitNumber={visitNumber} />)}</div>
+      <div className="film-review-columns">{reviewsForDate.map(review => <ReviewCard key={review.id} review={review} visitNumber={visitNumber} own={review.author === session.get()?.username} onEdit={() => setEditingReview(review)} />)}</div>
       {!film.reviews.length && <p className="empty-state">Todavía no hay reseñas. Registren la primera vista.</p>}
     </section>
     {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
     {reviewing && <FilmReviewForm film={film} onClose={() => setReviewing(false)} />}
+    {editingReview && <FilmReviewForm film={film} review={editingReview} onClose={() => setEditingReview(undefined)} />}
   </section>;
 }
 
-function ReviewCard({ review, visitNumber }: { review: FilmReview; visitNumber: number }) {
-  return <article className="film-review-card"><div><span className="review-avatar">{review.author[0].toUpperCase()}</span><h3>{review.author === 'tomas' ? 'Tomás' : 'Avril'}</h3></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><div className="film-review-metrics">{filmReviewMetrics.map(metric => { const value = review.metrics?.[metric.key]; return <div key={metric.key}><span>{metric.shortLabel}</span><SegmentedLevel label={`${metric.label} de ${review.author}`} levels={metric.levels} value={value} /><small>{metricLevel(metric.levels, value)}</small></div>; })}</div><p className="film-review-comment">{review.comment || 'Sin comentario todavía.'}</p><small>Vista #{visitNumber} · {viewedLabel(review.watchedOn)}</small></article>;
+function ReviewCard({ review, visitNumber, own, onEdit }: { review: FilmReview; visitNumber: number; own: boolean; onEdit: () => void }) {
+  return <article className="film-review-card"><div><span className="review-avatar">{review.author[0].toUpperCase()}</span><h3>{review.author === 'tomas' ? 'Tomás' : 'Avril'}</h3>{own && <button className="icon-edit" type="button" aria-label="Editar reseña" onClick={onEdit}>✎</button>}</div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><div className="film-review-metrics">{filmReviewMetrics.map(metric => { const value = review.metrics?.[metric.key]; return <div key={metric.key}><span>{metric.shortLabel}</span><SegmentedLevel label={`${metric.label} de ${review.author}`} levels={metric.levels} value={value} /><small>{metricLevel(metric.levels, value)}</small></div>; })}</div><p className="film-review-comment">{review.comment || 'Sin comentario todavía.'}</p><small>Vista #{visitNumber} · {viewedLabel(review.watchedOn)}</small></article>;
 }

@@ -15,6 +15,7 @@ export const saveFilm = (input: FilmInput, id?: number) => api<Film>(`/films${id
 export const uploadFilmPhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Film>(`/films/${id}/photo`, { method: 'POST', body: data }); };
 export const deleteFilm = (id: number) => api<void>(`/films/${id}`, { method: 'DELETE' });
 export const saveFilmReview = (id: number, input: Pick<FilmReview, 'rating' | 'comment' | 'watchedOn' | 'metrics'>) => api<FilmReview>(`/films/${id}/reviews`, { method: 'POST', body: JSON.stringify(input) });
+export const updateFilmReview = (filmId: number, reviewId: number, input: Pick<FilmReview, 'rating' | 'comment' | 'watchedOn' | 'metrics'>) => api<FilmReview>(`/films/${filmId}/reviews/${reviewId}`, { method: 'PUT', body: JSON.stringify(input) });
 export const getPlatforms = () => api<WatchPlatform[]>('/watch-platforms');
 export const getAllPlatforms = () => api<WatchPlatform[]>('/watch-platforms/all');
 export const savePlatform = (input: PlatformInput, id?: number) => api<WatchPlatform>(`/watch-platforms${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
