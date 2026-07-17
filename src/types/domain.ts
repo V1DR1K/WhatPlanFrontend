@@ -10,3 +10,7 @@ export type WatchPlatform={id:number;name:string;icon:string;active:boolean};
 export type FilmGenreOption={id:number;name:string;emoji:string};
 export type FilmReview={id:number;author:string;rating:number;comment?:string;watchedOn?:string;metrics?:Record<string,number>};
 export type Film={id:number;title:string;originalTitle?:string;synopsis?:string;releaseDate?:string;posterUrl?:string;thumbnailUrl?:string;posterWidth?:number;posterHeight?:number;genres:string[];platform?:WatchPlatform;watchedCount:number;lastWatchedOn?:string;author:string;reviews:FilmReview[];createdAt:string};
+export type Home='TOMAS'|'AVRIL';
+export type MealType='DESAYUNO'|'ALMUERZO'|'MERIENDA'|'CENA';
+export type HomeRecipeIngredient={name:string;grams:number};
+export type HomeRecipe={id:number;home:Home;name:string;recipeUrl?:string;preparedOn:string;mealType:MealType;ingredients:HomeRecipeIngredient[];author:string;photoUrl?:string;thumbnailUrl?:string;photoWidth?:number;photoHeight?:number;createdAt:string};
