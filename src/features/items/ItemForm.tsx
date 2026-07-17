@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteItem, saveItem, uploadPhoto } from "./items";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { StarRating } from "../../components/ui/StarRating";
 import type { Item } from "../../types/domain";
 export function ItemForm({
@@ -18,6 +19,7 @@ export function ItemForm({
     price: item?.price ?? 4,
   });
   const [file, setFile] = useState<File>();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const qc = useQueryClient();
   const invalidateItems = () =>
     Promise.all([
@@ -54,6 +56,7 @@ export function ItemForm({
   const photo = file
     ? URL.createObjectURL(file)
     : (item?.thumbnailUrl ?? item?.photoUrl);
+  if (confirmingDelete && item) return <ConfirmDialog title="¿Borrar este ítem?" message="Dejará de mostrarse en esta visita." confirmLabel="Borrar ítem" pending={deleteMutation.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => deleteMutation.mutate()} />;
   return (
     <Modal onClose={onClose}>
       <form
@@ -136,11 +139,7 @@ export function ItemForm({
             className="danger-button"
             type="button"
             disabled={mutation.isPending || deleteMutation.isPending}
-            onClick={() => {
-              if (window.confirm("¿Querés borrar este ítem? Podrás conservarlo en la base, pero dejará de mostrarse.")) {
-                deleteMutation.mutate();
-              }
-            }}
+            onClick={() => setConfirmingDelete(true)}
           >
             {deleteMutation.isPending ? "Borrando…" : "Borrar ítem"}
           </button>

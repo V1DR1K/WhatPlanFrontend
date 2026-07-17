@@ -7,6 +7,7 @@ import { mediaUrl, session } from '../../lib/api';
 import type { FilmReview } from '../../types/domain';
 import { FilmForm } from './FilmForm';
 import { FilmReviewForm } from './FilmReviewForm';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { deleteFilm, getFilm } from './films';
 import { filmReviewMetrics, metricLevel } from './reviewMetrics';
 
@@ -20,6 +21,7 @@ export function FilmDetailPage() {
   const [editing, setEditing] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [editingReview, setEditingReview] = useState<FilmReview>();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [selectedReviewDate, setSelectedReviewDate] = useState('');
   const filmQuery = useQuery({ queryKey: ['film', id], queryFn: () => getFilm(id), enabled: validId });
   const reviewDates = [...new Set((filmQuery.data?.reviews ?? []).map(review => review.watchedOn).filter((date): date is string => Boolean(date)))];
@@ -47,7 +49,7 @@ export function FilmDetailPage() {
       <div className="detail-actions">
         <button className="secondary-button" onClick={() => setEditing(true)}>✎ Editar ficha</button>
         <button className="main-button" onClick={() => setReviewing(true)}>La vimos de nuevo 🍿</button>
-        <button className="text-button" disabled={remove.isPending} onClick={() => { if (window.confirm('¿Querés borrar esta película?')) remove.mutate(); }}>{remove.isPending ? 'Borrando…' : 'Borrar película'}</button>
+        <button className="text-button" disabled={remove.isPending} onClick={() => setConfirmingDelete(true)}>{remove.isPending ? 'Borrando…' : 'Borrar película'}</button>
       </div>
     </div>
     <section className="watch-counter" aria-label="Contador de veces vistas">
@@ -63,6 +65,7 @@ export function FilmDetailPage() {
     {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
     {reviewing && <FilmReviewForm film={film} onClose={() => setReviewing(false)} />}
     {editingReview && <FilmReviewForm film={film} review={editingReview} onClose={() => setEditingReview(undefined)} />}
+    {confirmingDelete && <ConfirmDialog title="¿Borrar esta película?" message="Se eliminará de la lista junto con sus reseñas." confirmLabel="Borrar película" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}
   </section>;
 }
 
