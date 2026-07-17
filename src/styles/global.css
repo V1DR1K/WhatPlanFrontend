@@ -1041,3 +1041,25 @@ a {
 .film-detail__poster img { object-fit: cover; }
 @media (max-width: 540px) { .modal { padding-inline: 14px; } .modal form, .modal .form-columns, .modal label { min-width: 0; max-width: 100%; } .modal input[type='date'] { display: block; inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; padding-inline: 8px; font-size: 16px; -webkit-appearance: none; appearance: none; } }
 @media (max-width: 540px) { .film-hero { padding: 30px 22px; } .film-controls { justify-content: stretch; } .film-controls label { grid-template-columns: auto minmax(0, 1fr); } }
+
+/* Keep WhichFilm controls readable inside two-column phone cards. */
+.film-settings-grid .platform-settings { max-width:none; margin-top:0; }
+.genre-settings { min-width:0; }
+.genre-settings-form { grid-template-columns:64px minmax(0,1fr) auto; }
+@media (max-width:700px) { .film-settings-grid { gap:28px; } .genre-settings-form { grid-template-columns:52px minmax(0,1fr); } .genre-settings-form .main-button { grid-column:1/-1; } }
+@media (max-width:540px) {
+ .film-card__rating { grid-template-columns:minmax(0,1fr) auto; gap:3px 6px; }
+ .film-card__rating i { grid-column:1/-1; font-size:11px; }
+ .film-card__metrics>div { grid-template-columns:minmax(0,1fr) auto; gap:3px 5px; }
+ .film-card__metrics .segmented-level { grid-column:1/-1; }
+ .film-card__metrics { gap:7px; margin-bottom:9px; }
+ .film-card__body { min-height:0; }
+ .film-metric-fields { gap:13px; }
+ .film-metric-field>div:first-child { align-items:baseline; }
+ .segmented-level--input { gap:5px; }
+ .segmented-level--input button { min-height:38px; }
+ .film-review-metrics>div { grid-template-columns:minmax(0,1fr) auto; gap:3px 7px; }
+ .film-review-metrics .segmented-level { grid-column:1/-1; }
+ .film-review-card { min-height:0; }
+ .film-review-comment { overflow-wrap:anywhere; }
+}
