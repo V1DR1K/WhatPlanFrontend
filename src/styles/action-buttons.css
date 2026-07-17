@@ -3,7 +3,9 @@
 }
 
 .add-cook-button {
-  transition: transform .2s, box-shadow .2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .add-cook-button:hover,
