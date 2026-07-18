@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags, saveHighlightTag } from "./highlightTags";
 import {
   savePlace,
   savePlaceReview,
   uploadPlacePhoto,
+  deletePlace,
   type PlaceReviewInput,
 } from "./places";
 import { Modal } from "../../components/ui/Modal";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ReviewPrompt } from "../../components/ui/ReviewPrompt";
 import { StarRating } from "../../components/ui/StarRating";
 import { session } from "../../lib/api";
@@ -55,6 +58,8 @@ export function PlaceForm({
   const [tagIds, setTagIds] = useState<number[]>(() => place?.tags.map((tag) => tag.id) ?? []);
   const [newTagName, setNewTagName] = useState("");
   const [newTagEmoji, setNewTagEmoji] = useState("✨");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const navigate = useNavigate();
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: getCategories,
@@ -111,7 +116,18 @@ export function PlaceForm({
       onClose();
     },
   });
+  const deleteMutation = useMutation({
+    mutationFn: () => deletePlace(place!.id),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["places"] }),
+        qc.removeQueries({ queryKey: ["place", place!.id] }),
+      ]);
+      navigate("/food");
+    },
+  });
   if (created) return <ReviewPrompt name={created.name} reviewTo={`/food/places/${created.id}`} onClose={onClose} />;
+  if (confirmingDelete && place) return <ConfirmDialog title="¿Desactivar este lugar?" message="Dejará de aparecer en WhatPlan, pero sus datos y fotos se conservarán." confirmLabel="Desactivar lugar" pending={deleteMutation.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => deleteMutation.mutate()} />;
   return (
     <Modal onClose={onClose}>
       <form
@@ -224,7 +240,7 @@ export function PlaceForm({
             </div>
           </>
         )}
-        <button className="main-button" disabled={mutation.isPending}>
+        <button className="main-button" disabled={mutation.isPending || deleteMutation.isPending}>
           {mutation.isPending
             ? "Guardando…"
             : place
@@ -232,9 +248,11 @@ export function PlaceForm({
               : "Agendar pendiente"}{" "}
           ✦
         </button>
+        {place && canEditDetails && <button className="danger-button" type="button" disabled={mutation.isPending || deleteMutation.isPending} onClick={() => setConfirmingDelete(true)}>Desactivar lugar</button>}
         {mutation.error && (
           <p className="form-error">{mutation.error.message}</p>
         )}
+        {deleteMutation.error && <p className="form-error">{deleteMutation.error.message}</p>}
       </form>
     </Modal>
   );

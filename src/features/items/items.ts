@@ -7,7 +7,6 @@ export type ItemReviewInput = {
 };
 export type CreateItemInput = {
   name: string;
-  review: ItemReviewInput;
 };
 export const getVisits = (placeId: number) => api<PlaceVisitSummary[]>(`/places/${placeId}/visits`);
 export const getVisit = (visitId: number) => api<PlaceVisit>(`/place-visits/${visitId}`);
