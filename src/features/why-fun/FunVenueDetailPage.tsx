@@ -42,11 +42,13 @@ export function FunVenueDetailPage() {
       {venue.coverPhoto ? <img src={mediaUrl(venue.coverPhoto.url)} alt={`Foto de ${venue.name}`} /> : <span>{venue.subcategory.icon}</span>}
     </div>
     <div className="fun-detail__head">
-      <div>
-        <p className="eyebrow">{venue.category.icon} {venue.category.name} · {venue.subcategory.icon} {venue.subcategory.name}</p>
+      <div className="fun-detail__summary">
         <h1>{venue.name}</h1>
-        <a className="address-link" href={mapsSearch(venue.address)} target="_blank" rel="noreferrer">📍 {venue.address} ↗</a>
-        {venue.reviewCount > 0 && <p className="fun-detail-rating"><strong>{venue.rating.toFixed(1)} ★</strong> Promedio de las últimas opiniones de Tomás y Avril</p>}
+        <div className="fun-detail__meta">
+          <p className="eyebrow">{venue.category.icon} {venue.category.name} · {venue.subcategory.icon} {venue.subcategory.name}</p>
+          <a className="address-link" href={mapsSearch(venue.address)} target="_blank" rel="noreferrer">📍 {venue.address} ↗</a>
+          {venue.reviewCount > 0 && <p className="fun-detail-rating"><strong>{venue.rating.toFixed(1)} ★</strong> Promedio de las últimas opiniones de Tomás y Avril</p>}
+        </div>
       </div>
       <div className="detail-actions">
         {own && <button className="secondary-button" onClick={() => setEditing(true)}>✎ Editar lugar</button>}
