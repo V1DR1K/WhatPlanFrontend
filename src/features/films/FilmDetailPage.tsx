@@ -32,6 +32,12 @@ export function FilmDetailPage() {
   if (filmQuery.isLoading) return <p>Cargando película…</p>;
 
   const film = filmQuery.data!;
+  const tmdb = film.tmdb;
+  const title = tmdb?.title ?? film.title;
+  const posterUrl = tmdb?.posterUrl ?? film.posterUrl;
+  const genres = tmdb?.genres.length ? tmdb.genres : film.genres;
+  const synopsis = tmdb?.synopsis ?? film.synopsis;
+  const releaseDate = tmdb?.releaseDate ?? film.releaseDate;
   const selectedReviewIndex = reviewDates.indexOf(selectedReviewDate);
   const reviewsForDate = film.reviews.filter(review => review.watchedOn === selectedReviewDate);
   const visitNumber = reviewDates.length - selectedReviewIndex;
@@ -39,12 +45,13 @@ export function FilmDetailPage() {
   return <section className="film-detail">
     <Link to="/films">← Volver a WhichFilm</Link>
     <div className="film-detail__head">
-      <div className="film-detail__poster">{film.posterUrl ? <img src={mediaUrl(film.posterUrl)} alt={`Póster de ${film.title}`} /> : <span>🍿</span>}</div>
+      <div className="film-detail__poster">{posterUrl ? <img src={mediaUrl(posterUrl)} alt={`Póster de ${title}`} /> : <span>🍿</span>}</div>
       <div>
         <p className="eyebrow">{viewedLabel(film.lastWatchedOn)} · {film.platform ? `${film.platform.icon} ${film.platform.name}` : 'PLATAFORMA PENDIENTE'}</p>
-        <h1>{film.title}</h1>
-        <div className="genre-pills genre-pills--detail">{film.genres.map(genre => <span key={genre}>{genre}</span>)}</div>
-        <p className="film-synopsis">{film.synopsis || 'Todavía no guardamos una reseña de esta película.'}</p>
+        <h1>{title}</h1>
+        {tmdb?.originalTitle && tmdb.originalTitle !== title && <p className="tmdb-original-title">{tmdb.originalTitle}</p>}
+        <div className="genre-pills genre-pills--detail">{genres.map(genre => <span key={genre}>{genre}</span>)}</div>
+        <p className="film-synopsis">{synopsis || 'Todavía no hay una sinopsis disponible.'}</p>
       </div>
       <div className="detail-actions">
         <button className="secondary-button" onClick={() => setEditing(true)}>✎ Editar ficha</button>
@@ -52,6 +59,17 @@ export function FilmDetailPage() {
         <button className="text-button" disabled={remove.isPending} onClick={() => setConfirmingDelete(true)}>{remove.isPending ? 'Borrando…' : 'Borrar película'}</button>
       </div>
     </div>
+    {tmdb && <section className="tmdb-film-info">
+      <div className="tmdb-film-stats">
+        <article><span>Estreno</span><strong>{releaseDate ? releaseDate.slice(0, 4) : 'Sin fecha'}</strong></article>
+        <article><span>Duración</span><strong>{tmdb.runtime ? `${tmdb.runtime} min` : 'Sin dato'}</strong></article>
+        <article><span>Dirección</span><strong>{tmdb.director ?? 'Sin dato'}</strong></article>
+        <article><span>TMDB</span><strong>{tmdb.voteAverage !== undefined ? `${tmdb.voteAverage.toLocaleString('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/10` : 'Sin puntaje'}</strong>{tmdb.voteCount !== undefined && <small>{tmdb.voteCount.toLocaleString('es-AR')} votos</small>}</article>
+      </div>
+      {tmdb.trailerUrl && <a className="tmdb-trailer-link" href={tmdb.trailerUrl} target="_blank" rel="noreferrer">Ver tráiler en YouTube <span aria-hidden="true">↗</span></a>}
+      {!!tmdb.cast.length && <section className="tmdb-cast"><div className="section-title"><div><p className="eyebrow">DESDE TMDB</p><h2>El reparto</h2></div><strong>{tmdb.cast.length} integrantes</strong></div><div className="tmdb-cast-grid">{tmdb.cast.map(member => <article key={`${member.name}-${member.character ?? ''}`}>{member.profileUrl ? <img src={mediaUrl(member.profileUrl)} alt={`Foto de ${member.name}`} loading="lazy" /> : <span aria-hidden="true">🎭</span>}<div><h3>{member.name}</h3><p>{member.character || 'Reparto'}</p></div></article>)}</div></section>}
+      <p className="tmdb-attribution">Datos e imágenes de <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+    </section>}
     <section className="watch-counter" aria-label="Contador de veces vistas">
       <div><p className="eyebrow">CONTADOR COMPARTIDO</p><h2>{film.watchedCount === 0 ? 'Todavía no la vieron' : `${film.watchedCount} ${film.watchedCount === 1 ? 'vez' : 'veces'}`}</h2><p>Última vista: {viewedLabel(film.lastWatchedOn)}</p></div>
       <div><button className="counter-add" onClick={() => setReviewing(true)}>La vimos de nuevo 🍿</button></div>

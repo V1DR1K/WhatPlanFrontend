@@ -1176,3 +1176,47 @@ a {
 .fun-active-toggle input { width:auto!important; }
 @media (max-width:820px) { .fun-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .fun-photo-gallery { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:540px) { .fun-hero { grid-template-columns:minmax(0,1fr) 94px; min-height:210px; padding:30px 22px; overflow:clip; } .fun-hero h1 { font-size:45px; letter-spacing:-2px; } .fun-hero-art { justify-self:end; font-size:82px; transform:rotate(-4deg); } .fun-hero-art span,.fun-hero-art b { right:0; } .fun-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; } .fun-card__body { min-height:0; padding:10px; } .fun-card__body h3 { font-size:17px; } .fun-card__body footer { display:grid; gap:4px; } .fun-detail__cover { height:250px; margin:18px 0; border-radius:13px; font-size:64px; } .fun-detail__head { gap:17px; } .fun-detail__head .detail-actions { gap:8px; } .fun-detail__head .detail-actions button { padding:10px 7px; font-size:12px; } .fun-detail-grid,.fun-review-columns { grid-template-columns:1fr; } .fun-detail-panel { min-height:0; } .fun-photo-gallery { grid-template-columns:repeat(2,minmax(0,1fr)); } .fun-schedule-day { grid-template-columns:1fr; gap:6px; } .fun-schedule-day>div { align-items:flex-start; flex-direction:column; } .fun-catalog-form,.fun-catalog-form:has(select) { grid-template-columns:minmax(0,1fr) 52px; } .fun-catalog-form select { grid-column:1/-1; } .fun-catalog-form .main-button { grid-column:1/-1; } .fun-catalog-list header { grid-template-columns:39px minmax(0,1fr) auto; } .fun-catalog-list header .text-button:last-child { grid-column:2/4; justify-self:start; } .fun-catalog-list article>div { margin-left:0; } }
+.tmdb-search { display:grid; gap:10px; margin-top:14px; }
+.tmdb-search-results { display:grid; gap:8px; max-height:360px; overflow-y:auto; overscroll-behavior:contain; padding:2px; }
+.tmdb-search-result { display:grid; grid-template-columns:52px minmax(0,1fr); gap:11px; width:100%; min-width:0; padding:8px; border:1px solid #5d5484; border-radius:12px; background:#29243c; color:var(--cream); text-align:left; }
+.tmdb-search-result:hover,.tmdb-search-result:focus-visible { border-color:#c1b7ff; background:#332d4d; outline:none; }
+.tmdb-search-result>img,.tmdb-search-result>span:first-child { width:52px; height:78px; border-radius:8px; object-fit:cover; background:#1a1725; }
+.tmdb-search-result>span:first-child { display:grid; place-items:center; font-size:24px; }
+.tmdb-search-result>span:last-child { min-width:0; display:grid; align-content:center; gap:3px; }
+.tmdb-search-result strong,.tmdb-search-result em,.tmdb-search-result i { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tmdb-search-result strong { font:600 16px/1.1 "Fraunces"; }
+.tmdb-search-result small { color:#c1b7ff; font:500 10px "DM Mono"; }
+.tmdb-search-result em { color:var(--muted); font-size:11px; font-style:italic; }
+.tmdb-search-result i { color:#d1cad3; font-size:11px; font-style:normal; }
+.tmdb-manual-toggle { justify-self:start; margin-top:3px; }
+.tmdb-selection { display:grid; gap:11px; margin:16px 0 8px; padding:12px; border:1px solid #7467ad; border-radius:14px; background:linear-gradient(135deg,#2f2946,#24212b); }
+.tmdb-selection>div { display:grid; grid-template-columns:58px minmax(0,1fr); gap:11px; align-items:start; }
+.tmdb-selection img,.tmdb-selection>div>span { width:58px; height:82px; border-radius:8px; object-fit:cover; background:#181523; }
+.tmdb-selection>div>span { display:grid; place-items:center; font-size:25px; }
+.tmdb-selection h3,.tmdb-selection p { margin:0; }
+.tmdb-selection h3 { font:600 20px/1.05 "Fraunces"; overflow-wrap:anywhere; }
+.tmdb-selection small { color:#c1b7ff; font:500 10px "DM Mono"; }
+.tmdb-selection p:not(.eyebrow) { margin-top:7px; color:#d3ccd6; font-size:11px; line-height:1.4; }
+.tmdb-selection--saved { margin-top:15px; }
+.tmdb-attribution { margin:10px 0 0; color:var(--muted); font-size:10px; line-height:1.4; }
+.tmdb-attribution a { color:#c1b7ff; }
+.tmdb-original-title { margin:0; color:var(--muted); font-size:14px; font-style:italic; }
+.tmdb-film-info { margin:32px 0; padding:20px; border:1px solid #5f5687; border-radius:17px; background:linear-gradient(125deg,#29263e,#211e25); }
+.tmdb-film-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.tmdb-film-stats article { min-width:0; padding:10px; border:1px solid #ffffff12; border-radius:10px; background:#18162155; }
+.tmdb-film-stats span,.tmdb-film-stats small { display:block; color:var(--muted); font:500 9px "DM Mono"; letter-spacing:.4px; }
+.tmdb-film-stats strong { display:block; margin:5px 0 2px; overflow-wrap:anywhere; color:#f3eef5; font-size:13px; }
+.tmdb-trailer-link { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; padding:12px 14px; border:1px solid #8a7fcb; border-radius:11px; background:#b8adff; color:#281f40; font-size:13px; font-weight:800; text-decoration:none; }
+.tmdb-trailer-link span { font-size:18px; }
+.tmdb-cast .section-title { padding-bottom:16px; }
+.tmdb-cast-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.tmdb-cast-grid article { min-width:0; overflow:hidden; border:1px solid #ffffff14; border-radius:12px; background:#1a1821; }
+.tmdb-cast-grid img,.tmdb-cast-grid>article>span { display:block; width:100%; aspect-ratio:1/1; object-fit:cover; background:#29243c; }
+.tmdb-cast-grid>article>span { display:grid; place-items:center; font-size:32px; }
+.tmdb-cast-grid article>div { padding:9px; }
+.tmdb-cast-grid h3,.tmdb-cast-grid p { margin:0; overflow-wrap:anywhere; }
+.tmdb-cast-grid h3 { font-size:12px; line-height:1.2; }
+.tmdb-cast-grid p { margin-top:3px; color:var(--muted); font-size:10px; line-height:1.25; }
+.tmdb-film-info>.tmdb-attribution { margin-top:18px; }
+@media (max-width:820px) { .tmdb-cast-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .tmdb-film-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:540px) { .tmdb-search-results { max-height:300px; } .tmdb-search-result { grid-template-columns:46px minmax(0,1fr); } .tmdb-search-result>img,.tmdb-search-result>span:first-child { width:46px; height:69px; } .tmdb-search-result strong { font-size:15px; } .tmdb-film-info { margin:24px 0; padding:15px; } .tmdb-film-stats { gap:7px; } .tmdb-film-stats article { padding:9px; } .tmdb-cast-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .tmdb-cast .section-title { padding:28px 0 13px; } .tmdb-trailer-link { min-height:46px; } }
