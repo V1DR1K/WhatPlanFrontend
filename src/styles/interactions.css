@@ -771,22 +771,31 @@
     font-size: 20px;
   }
   .home-recipe-detail__photo {
-    min-height: 158px;
+    grid-row: 1;
+    width: 100%;
+    min-height: 220px;
+    height: min(38svh, 280px);
+    aspect-ratio: auto;
     border-radius: 13px;
     box-shadow: 4px 4px 0 #303b20;
   }
   .home-recipe-detail__head {
-    grid-template-columns: 105px minmax(0, 1fr);
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 13px;
   }
   .home-recipe-detail__summary h1 {
-    font-size: 35px;
+    font-size: clamp(34px, 9.5vw, 40px);
     letter-spacing: -2px;
   }
+  .home-recipe-detail__summary {
+    grid-row: 2;
+  }
   .home-recipe-detail__author {
-    margin-top: 12px;
+    margin-top: 14px;
   }
   .home-recipe-detail__actions {
+    grid-column: 1;
+    grid-row: 3;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
