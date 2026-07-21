@@ -526,18 +526,15 @@
 .home-recipe-detail {
   padding-top: 22px;
 }
-.home-recipe-detail__hero {
-  display: grid;
-  gap: 17px;
-  margin-top: 20px;
-}
 .home-recipe-detail__photo {
-  position: relative;
-  height: clamp(280px, 38vw, 440px);
+  display: grid;
+  min-height: 225px;
+  aspect-ratio: 4 / 5;
+  place-items: center;
   overflow: hidden;
-  border: 1px solid #536438;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #303d20, #171b14);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #2b3120;
   box-shadow: 6px 6px 0 #303b20;
 }
 .home-recipe-detail__image {
@@ -551,28 +548,6 @@
   object-fit: contain;
   background: #10140e;
 }
-.home-recipe-detail__photo::after {
-  position: absolute;
-  inset: auto 0 0;
-  height: 34%;
-  content: '';
-  pointer-events: none;
-  background: linear-gradient(transparent, #10140eb8);
-}
-.home-recipe-detail__photo-label {
-  position: absolute;
-  z-index: 1;
-  bottom: 13px;
-  left: 15px;
-  padding: 6px 8px;
-  border: 1px solid #d4ef5566;
-  border-radius: 8px;
-  background: #10140ecf;
-  color: var(--cream);
-  font: 500 10px "DM Mono";
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
 .home-recipe-detail__photo-empty {
   display: grid;
   height: 100%;
@@ -582,26 +557,23 @@
   text-align: center;
 }
 .home-recipe-detail__photo-empty span {
-  font-size: 72px;
+  font-size: 65px;
 }
 .home-recipe-detail__photo-empty p {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
 }
 .home-recipe-detail__head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(245px, 0.44fr);
-  align-items: end;
-  gap: 24px;
-  padding: 25px;
-  border: 1px solid #4c5930;
-  border-radius: 20px;
-  background: linear-gradient(125deg, #222a18, #191d16);
+  grid-template-columns: clamp(160px, 24vw, 265px) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 26px;
+  margin-top: 20px;
 }
 .home-recipe-detail__summary h1 {
-  margin: 8px 0 0;
-  font: 700 clamp(36px, 5vw, 54px)/0.95 "Fraunces";
-  letter-spacing: -1.5px;
+  margin: 8px 0 2px;
+  font: 600 clamp(35px, 5vw, 58px)/0.96 "Fraunces";
+  letter-spacing: -2px;
 }
 .home-recipe-detail__author {
   display: flex;
@@ -640,19 +612,18 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
-  width: 100%;
+  min-width: 190px;
 }
 .home-recipe-detail__actions button {
   display: flex;
-  width: 100%;
-  min-height: 48px;
+  min-height: 45px;
   align-items: center;
   justify-content: center;
   gap: 7px;
   padding: 11px 13px;
 }
 .home-recipe-detail__actions .main-button {
-  min-height: 54px;
+  min-height: 48px;
 }
 .home-recipe-detail__content {
    display: grid;
@@ -748,10 +719,12 @@
 }
 @media (max-width: 820px) {
   .home-recipe-detail__head {
-    grid-template-columns: 1fr;
+    grid-template-columns: 180px minmax(0, 1fr);
   }
   .home-recipe-detail__actions {
+    grid-column: 1 / -1;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
   }
 }
 @media (max-width: 540px) {
@@ -797,44 +770,35 @@
   .home-recipe-card h3 {
     font-size: 20px;
   }
-  .home-recipe-detail__hero {
-    gap: 13px;
-  }
   .home-recipe-detail__photo {
-    height: min(48svh, 370px);
-    min-height: 280px;
-    border-radius: 15px;
+    min-height: 158px;
+    border-radius: 13px;
     box-shadow: 4px 4px 0 #303b20;
   }
-  .home-recipe-detail__photo-label {
-    bottom: 10px;
-    left: 11px;
-    font-size: 9px;
-  }
   .home-recipe-detail__head {
-    gap: 20px;
-    padding: 20px 17px 17px;
-    border-radius: 15px;
+    grid-template-columns: 105px minmax(0, 1fr);
+    gap: 15px;
   }
   .home-recipe-detail__summary h1 {
-    font-size: clamp(36px, 10vw, 43px);
-    letter-spacing: -1.8px;
+    font-size: 35px;
+    letter-spacing: -2px;
   }
   .home-recipe-detail__author {
-    margin-top: 15px;
+    margin-top: 12px;
   }
   .home-recipe-detail__actions {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.35fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
   .home-recipe-detail__actions button {
-    min-height: 50px;
-    padding: 9px 7px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 7px;
     font-size: 12px;
     line-height: 1.15;
   }
   .home-recipe-detail__actions .main-button {
-    min-height: 50px;
+    min-height: 48px;
   }
   .home-recipe-detail__content {
     grid-template-columns: 1fr;
