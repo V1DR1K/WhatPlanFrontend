@@ -20,7 +20,7 @@ type Scores = Record<ScoreKey, number | undefined>;
 
 export function PlaceForm({ onClose, place, mode = "details" }: { onClose: () => void; place?: Place; mode?: "details" | "review" }) {
   const username = session.get()?.username;
-  const canEditDetails = !place || place.author === username;
+  const canEditDetails = !place || session.get()?.role === "ADMIN" || place.author === username;
   const reviewing = Boolean(place && mode === "review");
   const ownReview = place?.reviews.find(review => review.author === username);
   const [scores, setScores] = useState<Scores>({

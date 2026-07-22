@@ -88,7 +88,7 @@ export function FunVenueDetailPage() {
   if (planQuery.isLoading) return <p>Cargando salida…</p>;
   const plan = planQuery.data!;
   const username = session.get()?.username;
-  const own = plan.author === username;
+  const canManagePlan = session.get()?.role === "ADMIN" || plan.author === username;
   const review = plan.reviews.find((value) => value.author === username);
   const hasOccurred = Boolean(
     plan.scheduledAt && new Date(plan.scheduledAt) <= new Date(),
@@ -139,7 +139,7 @@ export function FunVenueDetailPage() {
           </div>
         </div>
         <div className="detail-actions">
-          {own && (
+          {canManagePlan && (
             <button
               className="secondary-button"
               onClick={() => setEditing(true)}
@@ -152,7 +152,7 @@ export function FunVenueDetailPage() {
               {review ? "✎ Editar opinión" : "★ Opinar sobre la salida"}
             </button>
           )}
-          {own && (
+          {canManagePlan && (
             <button
               className="text-button"
               onClick={() => setConfirmingDelete(true)}
@@ -206,8 +206,8 @@ export function FunVenueDetailPage() {
             photos={plan.photos}
             planName={plan.name}
             coverPhotoId={plan.coverPhoto?.id}
-            onDelete={own ? setDeletingPhoto : undefined}
-            onSetCover={own ? (photo) => cover.mutate(photo.id) : undefined}
+            onDelete={canManagePlan ? setDeletingPhoto : undefined}
+            onSetCover={canManagePlan ? (photo) => cover.mutate(photo.id) : undefined}
           />
         ) : (
           <p className="empty-state">Todavía no hay fotos de esta salida.</p>

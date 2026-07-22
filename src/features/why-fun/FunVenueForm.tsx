@@ -14,7 +14,7 @@ export function FunVenueForm({ plan, reviewOnly = false, onClose }: { plan?: Fun
   const qc = useQueryClient();
   const username = session.get()?.username;
   const ownReview = plan?.reviews.find(review => review.author === username);
-  const canEditDetails = !plan || plan.author === username;
+  const canEditDetails = !plan || session.get()?.role === "ADMIN" || plan.author === username;
   const [categoryId, setCategoryId] = useState<number | undefined>(plan?.category.id);
   const [subcategoryId, setSubcategoryId] = useState<number | undefined>(plan?.subcategory.id);
   const [files, setFiles] = useState<File[]>([]);

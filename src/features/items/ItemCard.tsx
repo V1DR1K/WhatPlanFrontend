@@ -6,6 +6,7 @@ import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { StarRating } from "../../components/ui/StarRating";
 import { showNotice } from "../../lib/flash";
+import { session } from "../../lib/api";
 
 export function ItemCard({ item, username, onEditItem, onEditReview }: { item: Item; username?: string; onEditItem: (item: Item) => void; onEditReview: (item: Item) => void }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -24,7 +25,7 @@ export function ItemCard({ item, username, onEditItem, onEditReview }: { item: I
   });
   const hasPhoto = item.photoUrl ?? item.thumbnailUrl;
   const ownReview = item.reviews.find((review) => review.author === username);
-  const canManageItem = item.createdBy === username;
+  const canManageItem = session.get()?.role === "ADMIN" || item.createdBy === username;
 
   if (confirmingDelete) return <ConfirmDialog title="¿Borrar este ítem?" message={remove.error ? remove.error.message : "Dejará de mostrarse en esta visita."} confirmLabel="Borrar ítem" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />;
 
