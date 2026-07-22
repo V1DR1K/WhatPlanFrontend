@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
@@ -93,11 +94,13 @@ function FilmSection({
   eyebrow,
   films,
   empty,
+  filtered,
 }: {
   title: string;
   eyebrow: string;
   films: Film[];
   empty: string;
+  filtered: boolean;
 }) {
   return (
     <section className="film-section">
@@ -106,7 +109,7 @@ function FilmSection({
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
         </div>
-        <strong>{films.length} películas</strong>
+        <strong>{films.length} película{films.length === 1 ? "" : "s"}</strong>
       </div>
       {films.length ? (
         <div className="film-grid">
@@ -115,20 +118,30 @@ function FilmSection({
           ))}
         </div>
       ) : (
-        <p className="empty-state">{empty}</p>
+        <p className="empty-state">{filtered ? "No encontramos películas con estos filtros." : empty}</p>
       )}
     </section>
   );
 }
 
 export function WhichFilmPage() {
-  const [genre, setGenre] = useState("");
-  const [platformId, setPlatformId] = useState<number>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");
+  const [platformId, setPlatformId] = useState<number | undefined>(() => {
+    const value = Number(searchParams.get("platform"));
+    return Number.isInteger(value) && value > 0 ? value : undefined;
+  });
   const [showForm, setShowForm] = useState(false);
   const filmsQuery = useQuery({
     queryKey: ["films", genre, platformId],
     queryFn: () => getFilms({ genre: genre || undefined, platformId }),
   });
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (genre) next.set("genre", genre);
+    if (platformId) next.set("platform", String(platformId));
+    setSearchParams(next, { replace: true });
+  }, [genre, platformId, setSearchParams]);
   const platforms = useQuery({
     queryKey: ["watch-platforms"],
     queryFn: getPlatforms,
@@ -153,6 +166,7 @@ export function WhichFilmPage() {
     : genres.map((name) => ({ id: name, label: name }));
   const pending = all.filter((film) => film.watchedCount === 0);
   const watched = all.filter((film) => film.watchedCount > 0);
+  const filtered = Boolean(genre || platformId);
   return (
     <>
       <section className="film-hero">
@@ -202,8 +216,11 @@ export function WhichFilmPage() {
           }
         />
       </section>
+      {(platforms.isError || genreOptions.isError) && <p className="form-error">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
       {filmsQuery.isError ? (
         <p className="form-error">{filmsQuery.error.message}</p>
+      ) : filmsQuery.isLoading ? (
+        <p aria-busy="true" className="muted">Cargando la sala…</p>
       ) : (
         <>
           <FilmSection
@@ -211,12 +228,14 @@ export function WhichFilmPage() {
             eyebrow="EN LA LISTA"
             title="Para ver"
             empty="Todavía no hay películas en la lista. ¡Busquen la primera!"
+            filtered={filtered}
           />
           <FilmSection
             films={watched}
             eyebrow="YA PASARON POR LA SALA"
-            title="Vistas y reseñadas"
+            title="Vistas registradas"
             empty="Cuando sumen la primera vista, aparecerá acá."
+            filtered={filtered}
           />
         </>
       )}

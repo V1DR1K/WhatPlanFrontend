@@ -15,7 +15,9 @@ export const searchTmdbMovies = (query: string) => api<TmdbMovie[]>(`/tmdb/movie
 export const saveFilm = (input: FilmInput, id?: number) => api<Film>(`/films${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const uploadFilmPhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Film>(`/films/${id}/photo`, { method: 'POST', body: data }); };
 export const deleteFilm = (id: number) => api<void>(`/films/${id}`, { method: 'DELETE' });
-export const addFilmView = (id: number, watchedOn: string) => api<FilmView>(`/films/${id}/views`, { method: 'POST', body: JSON.stringify({ watchedOn }) });
+export const addFilmView = (id: number, watchedOn: string, watchedAt: string) => api<FilmView>(`/films/${id}/views`, { method: 'POST', body: JSON.stringify({ watchedOn, watchedAt }) });
+export const updateFilmView = (filmId: number, viewId: number, watchedOn: string, watchedAt: string) => api<FilmView>(`/films/${filmId}/views/${viewId}`, { method: 'PUT', body: JSON.stringify({ watchedOn, watchedAt }) });
+export const deleteFilmView = (filmId: number, viewId: number) => api<void>(`/films/${filmId}/views/${viewId}`, { method: 'DELETE' });
 export const saveFilmReview = (filmId: number, viewId: number, input: Pick<FilmReview, 'rating' | 'comment' | 'metrics'>) => api<FilmReview>(`/films/${filmId}/views/${viewId}/reviews`, { method: 'POST', body: JSON.stringify(input) });
 export const updateFilmReview = (filmId: number, reviewId: number, input: Pick<FilmReview, 'rating' | 'comment' | 'metrics'>) => api<FilmReview>(`/films/${filmId}/reviews/${reviewId}`, { method: 'PUT', body: JSON.stringify(input) });
 export const getPlatforms = () => api<WatchPlatform[]>('/watch-platforms');

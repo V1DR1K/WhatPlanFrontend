@@ -6,6 +6,7 @@ import { StarRating } from '../../components/ui/StarRating';
 import type { Film, FilmReview, FilmView } from '../../types/domain';
 import { saveFilmReview, updateFilmReview } from './films';
 import { filmReviewMetrics, metricLevel } from './reviewMetrics';
+import { showNotice } from '../../lib/flash';
 
 const dateLabel = (date: string) => new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
 
@@ -20,11 +21,12 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
     },
     onSuccess: async () => {
       await Promise.all([qc.invalidateQueries({ queryKey: ['film', film.id] }), qc.invalidateQueries({ queryKey: ['films'] })]);
+      showNotice(review ? 'Actualizamos tu reseña.' : 'Guardamos tu reseña.');
       onClose();
     },
   });
 
-  return <Modal onClose={onClose}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
+  return <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
     <p className="eyebrow">{review ? 'EDITAR RESEÑA' : 'RESEÑA DE LA VISTA'}</p>
     <h2>{film.tmdb?.title ?? film.title}</h2>
     <p className="muted">Vista del {dateLabel(view.watchedOn)}</p>
