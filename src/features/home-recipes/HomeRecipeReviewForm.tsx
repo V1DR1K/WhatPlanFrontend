@@ -5,6 +5,7 @@ import { StarRating } from '../../components/ui/StarRating';
 import { session } from '../../lib/api';
 import type { HomeRecipe } from '../../types/domain';
 import { saveHomeRecipeReview } from './homeRecipes';
+import { showNotice } from '../../lib/flash';
 
 export function HomeRecipeReviewForm({ recipe, onClose }: { recipe: HomeRecipe; onClose: () => void }) {
   const qc = useQueryClient();
@@ -15,11 +16,12 @@ export function HomeRecipeReviewForm({ recipe, onClose }: { recipe: HomeRecipe; 
     mutationFn: () => saveHomeRecipeReview(recipe.id, { rating, comment: comment.trim() || undefined }),
     onSuccess: async () => {
       await Promise.all([qc.invalidateQueries({ queryKey: ['home-recipe', recipe.id] }), qc.invalidateQueries({ queryKey: ['home-recipes', recipe.home] })]);
+      showNotice(ownReview ? 'Actualizamos tu reseña.' : 'Guardamos tu reseña.');
       onClose();
     },
   });
 
-  return <Modal onClose={onClose}><form className="home-recipe-review-form" onSubmit={event => { event.preventDefault(); mutation.mutate(); }}>
+  return <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}><form className="home-recipe-review-form" onSubmit={event => { event.preventDefault(); mutation.mutate(); }}>
     <p className="eyebrow">TU RESEÑA</p>
     <h2>{recipe.name}</h2>
     <label>¿Qué tan rica estuvo?<StarRating label="Puntuación de la receta" value={rating} onChange={setRating} /></label>

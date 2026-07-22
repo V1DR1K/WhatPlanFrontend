@@ -11,6 +11,7 @@ import { getHomeRecipe } from './homeRecipes';
 const homeName = (home: HomeRecipe['home']) => home === 'TOMAS' ? 'Tomás' : 'Avril';
 const mealName = (meal: HomeRecipe['mealType']) => ({ DESAYUNO: 'Desayuno', ALMUERZO: 'Almuerzo', MERIENDA: 'Merienda', CENA: 'Cena' })[meal];
 const dateLabel = (date: string) => new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
+const ingredientLabel = (ingredient: HomeRecipe['ingredients'][number]) => `${ingredient.quantity === undefined ? '' : `${ingredient.quantity} `}${ingredient.unit} ${ingredient.name}`;
 const reviewers = ['tomas', 'avril'];
 
 export function HomeRecipeDetailPage() {
@@ -22,31 +23,13 @@ export function HomeRecipeDetailPage() {
   const [reviewing, setReviewing] = useState(false);
   const recipeQuery = useQuery({ queryKey: ['home-recipe', id], queryFn: () => getHomeRecipe(id), enabled: validId });
 
-  if (!validId || recipeQuery.isError || (!recipeQuery.isLoading && !recipeQuery.data)) return <p className="form-error">No pudimos abrir esa receta. Volvé a HowCook e intentá otra vez.</p>;
+  if (!validId || recipeQuery.isError || (!recipeQuery.isLoading && !recipeQuery.data)) return <section className="home-recipe-detail"><Link to="/how-cook">← Volver a HowCook</Link><p className="form-error">No pudimos abrir esta receta. Probá nuevamente desde HowCook.</p></section>;
   if (recipeQuery.isLoading) return <p>Cargando receta…</p>;
 
   const recipe = recipeQuery.data!;
   const username = session.get()?.username;
-
-  return <section className="home-recipe-detail">
-    <Link to="/how-cook">← Volver a HowCook</Link>
-    <div className="home-recipe-detail__head">
-      <RecipePhoto key={recipe.id} recipe={recipe} />
-      <div className="home-recipe-detail__summary"><p className="eyebrow">{recipe.home === 'TOMAS' ? '🏠 CASA TOMÁS' : '🏡 CASA AVRIL'} · {mealName(recipe.mealType).toUpperCase()}</p><h1>{recipe.name}</h1><div className="home-recipe-detail__author"><span>{recipe.author[0]?.toUpperCase()}</span><p><strong>Preparó {recipe.author}</strong><small>{dateLabel(recipe.preparedOn)} · Casa de {homeName(recipe.home)}</small></p></div></div>
-      <div className="detail-actions home-recipe-detail__actions"><button className="secondary-button" type="button" onClick={() => setEditing(true)}><span aria-hidden="true">✎</span> Editar receta</button><button className="main-button" type="button" onClick={() => setRepeating(true)}><span aria-hidden="true">↻</span> Repetir receta</button></div>
-    </div>
-    <section className="home-recipe-detail__content">
-      <div className="home-recipe-detail__panel"><p className="eyebrow">INGREDIENTES</p><h2>Para preparar</h2><ul>{recipe.ingredients.map((ingredient, index) => <li key={`${ingredient.name}-${index}`}><strong>{ingredient.grams} g</strong> {ingredient.name}</li>)}</ul></div>
-      <div className="home-recipe-detail__panel"><p className="eyebrow">RECETA</p><h2>Cómo se hace</h2>{recipe.recipeUrl ? <a className="main-button recipe-detail-button" href={recipe.recipeUrl} target="_blank" rel="noreferrer">Abrir receta original ↗</a> : <p className="muted">Todavía no guardaron un enlace para esta receta.</p>}</div>
-    </section>
-    <section className="reviews-section home-recipe-reviews">
-      <div className="section-title"><div><p className="eyebrow">RESEÑAS DE LA RECETA</p><h2>Tomás y Avril</h2></div><strong>{recipe.reviews.length}/2</strong></div>
-      <div className="home-recipe-review-columns">{reviewers.map(author => <ReviewCard key={author} author={author} currentUser={username} review={recipe.reviews.find(value => value.author === author)} onReview={() => setReviewing(true)} />)}</div>
-    </section>
-    {editing && <HomeRecipeForm home={recipe.home} recipe={recipe} onClose={() => setEditing(false)} onDeleted={() => navigate('/how-cook')} />}
-    {repeating && <HomeRecipeForm home={recipe.home} copyOf={recipe} onClose={() => setRepeating(false)} />}
-    {reviewing && <HomeRecipeReviewForm recipe={recipe} onClose={() => setReviewing(false)} />}
-  </section>;
+  const ownRecipe = recipe.author === username;
+  return <section className="home-recipe-detail"><Link to="/how-cook">← Volver a HowCook</Link><div className="home-recipe-detail__head"><RecipePhoto key={recipe.id} recipe={recipe} /><div className="home-recipe-detail__summary"><p className="eyebrow">{recipe.home === 'TOMAS' ? '🏠 CASA TOMÁS' : '🏡 CASA AVRIL'} · {mealName(recipe.mealType).toUpperCase()}</p><h1>{recipe.name}</h1><div className="home-recipe-detail__author"><span>{recipe.author[0]?.toUpperCase()}</span><p><strong>Preparó {recipe.author}</strong><small>{dateLabel(recipe.preparedOn)} · Casa de {homeName(recipe.home)} · {recipe.servings} porciones</small></p></div>{recipe.repeatedFrom && <p className="muted">↻ Esta preparación repite <Link to={`/how-cook/${recipe.repeatedFrom.id}`}>{recipe.repeatedFrom.name}</Link>.</p>}</div><div className="detail-actions home-recipe-detail__actions">{ownRecipe && <button className="secondary-button" type="button" onClick={() => setEditing(true)}><span aria-hidden="true">✎</span> Editar receta</button>}<button className="main-button" type="button" onClick={() => setRepeating(true)}><span aria-hidden="true">↻</span> Repetir receta</button></div></div><section className="home-recipe-detail__content"><div className="home-recipe-detail__panel"><p className="eyebrow">INGREDIENTES</p><h2>Para {recipe.servings} porciones</h2><ul>{recipe.ingredients.map((ingredient, index) => <li key={`${ingredient.name}-${index}`}><strong>{ingredientLabel(ingredient)}</strong></li>)}</ul></div><div className="home-recipe-detail__panel"><p className="eyebrow">RECETA</p><h2>Cómo se hace</h2><ol className="recipe-steps">{recipe.steps.map((step, index) => <li key={`${step.instruction}-${index}`}>{step.instruction}</li>)}</ol>{recipe.recipeUrl && <a className="secondary-button recipe-detail-button" href={recipe.recipeUrl} target="_blank" rel="noreferrer">Ver fuente original ↗</a>}</div></section>{recipe.repetitions.length > 0 && <section className="home-recipe-repetitions"><p className="eyebrow">HISTORIAL</p><h2>La volvieron a preparar</h2><div>{recipe.repetitions.map(repetition => <Link key={repetition.id} to={`/how-cook/${repetition.id}`}>↻ {repetition.name}</Link>)}</div></section>}<section className="reviews-section home-recipe-reviews"><div className="section-title"><div><p className="eyebrow">RESEÑAS DE ESTA PREPARACIÓN</p><h2>Tomás y Avril</h2></div><strong>{recipe.reviews.length}/2</strong></div><div className="home-recipe-review-columns">{reviewers.map(author => <ReviewCard key={author} author={author} currentUser={username} review={recipe.reviews.find(value => value.author === author)} onReview={() => setReviewing(true)} />)}</div></section>{editing && <HomeRecipeForm home={recipe.home} recipe={recipe} onClose={() => setEditing(false)} onDeleted={() => navigate('/how-cook')} />}{repeating && <HomeRecipeForm home={recipe.home} copyOf={recipe} onClose={() => setRepeating(false)} />}{reviewing && <HomeRecipeReviewForm recipe={recipe} onClose={() => setReviewing(false)} />}</section>;
 }
 
 function RecipePhoto({ recipe }: { recipe: HomeRecipe }) {

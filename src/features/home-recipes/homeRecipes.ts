@@ -1,8 +1,8 @@
 import { api } from '../../lib/api';
-import type { Home, HomeRecipe, HomeRecipeIngredient, HomeRecipeReview, MealType } from '../../types/domain';
+import type { Home, HomeRecipe, HomeRecipeIngredient, HomeRecipeReview, HomeRecipeStep, MealType } from '../../types/domain';
 
-export type HomeRecipeInput = { home: Home; name: string; recipeUrl?: string; preparedOn: string; mealType: MealType; ingredients: HomeRecipeIngredient[]; copyPhotoFromId?: number };
-export const getHomeRecipes = (home: Home) => api<HomeRecipe[]>(`/how-cook?home=${home}`);
+export type HomeRecipeInput = { home: Home; name: string; servings: number; recipeUrl?: string; preparedOn: string; mealType: MealType; ingredients: HomeRecipeIngredient[]; steps: HomeRecipeStep[]; repeatedFromId?: number };
+export const getHomeRecipes = (home: Home, search?: string) => api<HomeRecipe[]>(`/how-cook?${new URLSearchParams({ home, ...(search ? { search } : {}) })}`);
 export const getHomeRecipe = (id: number) => api<HomeRecipe>(`/how-cook/${id}`);
 export const saveHomeRecipe = (input: HomeRecipeInput, id?: number) => api<HomeRecipe>(`/how-cook${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const uploadHomeRecipePhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<HomeRecipe>(`/how-cook/${id}/photo`, { method: 'POST', body: data }); };
