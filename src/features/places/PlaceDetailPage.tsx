@@ -13,7 +13,7 @@ import { mediaUrl, session } from "../../lib/api";
 import type { Item, PlaceVisitSummary } from "../../types/domain";
 
 const mapsSearch = (address?: string) => address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : undefined;
-const dateTimeLabel = (date: string, time?: string) => `${new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`))}${time ? ` · ${time.slice(0, 5)}` : " · sin hora registrada"}`;
+const dateTimeLabel = (date: string, _time?: string) => new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`));
 
 export function PlaceDetailPage() {
   const id = Number(useParams().id);

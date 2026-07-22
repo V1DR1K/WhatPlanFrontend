@@ -4,7 +4,7 @@ const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 export const apiUrl = (path: string) => `${BASE}${path}`;
 export const mediaUrl = (path: string) =>
-  path.startsWith('data:') || /^https?:\/\//.test(path) ? path : apiUrl(path);
+  path.startsWith('data:') || path.startsWith('/api/') || /^https?:\/\//.test(path) ? path : apiUrl(path);
 
 export const session = {
   get: (): Session | null => {

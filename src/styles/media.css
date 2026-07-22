@@ -88,6 +88,32 @@
   margin-top: auto;
 }
 
+.detail > .detail-heading > .detail-actions .main-button {
+  display: none;
+}
+
+.detail > .detail-heading > .detail-actions .secondary-button,
+.detail .item-date-pager ~ .detail-heading .detail-actions .secondary-button {
+  min-height: 44px;
+  border-color: var(--action-accent);
+  color: var(--action-accent);
+  background: color-mix(in srgb, var(--action-accent) 14%, var(--panel));
+  font-weight: 800;
+}
+
+.detail .item-date-pager ~ .detail-heading .detail-actions {
+  width: 100%;
+}
+
+.detail .item-date-pager ~ .detail-heading .detail-actions .secondary-button {
+  width: 100%;
+}
+
+.detail .watch-counter .counter-add::before {
+  content: "🍽️";
+  margin-right: 7px;
+}
+
 .food-poster {
   height: auto;
   aspect-ratio: var(--media-aspect-ratio, 4 / 3);
@@ -133,6 +159,16 @@
 }
 
 @media (max-width: 540px) {
+  .place-section .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .place-section .section-title strong {
+    padding-left: 1px;
+  }
+
   .place-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 11px;

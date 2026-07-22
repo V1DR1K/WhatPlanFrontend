@@ -10,15 +10,15 @@ export type CreateItemInput = {
 };
 export const getVisits = (placeId: number) => api<PlaceVisitSummary[]>(`/places/${placeId}/visits`);
 export const getVisit = (visitId: number) => api<PlaceVisit>(`/place-visits/${visitId}`);
-export const createVisit = (placeId: number, visitedOn: string, visitedAt: string) =>
+export const createVisit = (placeId: number, visitedOn: string) =>
   api<PlaceVisitSummary>(`/places/${placeId}/visits`, {
     method: "POST",
-    body: JSON.stringify({ visitedOn, visitedAt }),
+    body: JSON.stringify({ visitedOn }),
   });
-export const updateVisit = (visitId: number, visitedOn: string, visitedAt: string) =>
+export const updateVisit = (visitId: number, visitedOn: string) =>
   api<PlaceVisitSummary>(`/place-visits/${visitId}`, {
     method: "PUT",
-    body: JSON.stringify({ visitedOn, visitedAt }),
+    body: JSON.stringify({ visitedOn }),
   });
 export const deleteVisit = (visitId: number) => api<void>(`/place-visits/${visitId}`, { method: "DELETE" });
 export const createItem = (visitId: number, input: CreateItemInput) =>
