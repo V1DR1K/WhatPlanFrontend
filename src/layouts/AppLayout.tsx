@@ -6,6 +6,7 @@ import '../styles/interactions.css';
 import '../styles/action-buttons.css';
 import '../styles/touch.css';
 import '../styles/item-scores.css';
+import '../styles/media.css';
 
 export function AppLayout() {
   const navigate = useNavigate();

@@ -1,40 +1,96 @@
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type MouseEventHandler } from "react";
+import { mediaUrl } from "../../lib/api";
 
-export type PhotoOrientation = "landscape" | "portrait";
+export type PhotoOrientation = "landscape" | "portrait" | "square";
 
-export function getPhotoOrientation(width?: number, height?: number): PhotoOrientation {
-  return typeof width === "number" &&
-    typeof height === "number" &&
-    width > 0 &&
-    height > width
-    ? "portrait"
-    : "landscape";
+export function getPhotoOrientation(
+  width?: number,
+  height?: number,
+  fallback: PhotoOrientation = "landscape",
+): PhotoOrientation {
+  if (
+    typeof width !== "number" ||
+    typeof height !== "number" ||
+    width <= 0 ||
+    height <= 0
+  ) return fallback;
+  if (width === height) return "square";
+  return height > width ? "portrait" : "landscape";
+}
+
+export function photoAspectRatioStyle(
+  width?: number,
+  height?: number,
+  property = "--media-aspect-ratio",
+): CSSProperties | undefined {
+  if (
+    typeof width !== "number" ||
+    typeof height !== "number" ||
+    width <= 0 ||
+    height <= 0
+  ) return undefined;
+  return { [property]: `${width} / ${height}` } as CSSProperties;
+}
+
+export function photoSource(
+  mode: "full" | "thumbnail",
+  fullSrc?: string,
+  thumbnailSrc?: string,
+) {
+  return mode === "full" ? fullSrc ?? thumbnailSrc : thumbnailSrc ?? fullSrc;
+}
+
+type ResponsiveImageProps = {
+  alt: string;
+  className?: string;
+  fullSrc?: string;
+  height?: number;
+  loading?: "eager" | "lazy";
+  mode?: "full" | "thumbnail";
+  onClick?: MouseEventHandler<HTMLImageElement>;
+  thumbnailSrc?: string;
+  width?: number;
+};
+
+export function ResponsiveImage({
+  alt,
+  className,
+  fullSrc,
+  height,
+  loading = "lazy",
+  mode = "thumbnail",
+  onClick,
+  thumbnailSrc,
+  width,
+}: ResponsiveImageProps) {
+  const src = photoSource(mode, fullSrc, thumbnailSrc);
+  if (!src) return null;
+  return <img className={className} src={mediaUrl(src)} alt={alt} width={width} height={height} loading={loading} decoding="async" onClick={onClick} />;
 }
 
 type AdaptivePhotoProps = {
   alt: string;
   context: "place" | "item";
+  fullSrc?: string;
   height?: number;
-  src: string;
+  src?: string;
+  thumbnailSrc?: string;
   width?: number;
 };
 
 export function AdaptivePhoto({
   alt,
   context,
+  fullSrc,
   height,
   src,
+  thumbnailSrc,
   width,
 }: AdaptivePhotoProps) {
   const [expanded, setExpanded] = useState(false);
+  const resolvedFullSrc = fullSrc ?? src;
   const orientation = getPhotoOrientation(width, height);
-  const ratioStyle =
-    typeof width === "number" &&
-    typeof height === "number" &&
-    width > 0 &&
-    height > 0
-      ? ({ "--photo-aspect-ratio": `${width} / ${height}` } as CSSProperties)
-      : undefined;
+  const ratioStyle = photoAspectRatioStyle(width, height, "--photo-aspect-ratio");
   return (
     <>
       <button
@@ -45,7 +101,7 @@ export function AdaptivePhoto({
         style={ratioStyle}
         type="button"
       >
-        <img className="adaptive-photo__image" src={src} alt={alt} />
+        <ResponsiveImage className="adaptive-photo__image" alt={alt} fullSrc={resolvedFullSrc} height={height} loading="eager" mode="full" thumbnailSrc={thumbnailSrc} width={width} />
       </button>
       {expanded && (
         <div
@@ -63,10 +119,13 @@ export function AdaptivePhoto({
           >
             ×
           </button>
-          <img
-            src={src}
+          <ResponsiveImage
             alt={`Foto ampliada: ${alt}`}
+            fullSrc={resolvedFullSrc}
+            loading="eager"
+            mode="full"
             onClick={(event) => event.stopPropagation()}
+            thumbnailSrc={thumbnailSrc}
           />
         </div>
       )}

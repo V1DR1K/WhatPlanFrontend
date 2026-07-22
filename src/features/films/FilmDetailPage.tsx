@@ -46,7 +46,7 @@ export function FilmDetailPage() {
   const ownReview = selectedView?.reviews.find(review => review.author === username);
   const tmdb = film.tmdb;
   const title = tmdb?.title ?? film.title;
-  const posterUrl = tmdb?.posterUrl ?? film.posterUrl;
+  const posterUrl = film.posterUrl ?? tmdb?.posterFullUrl ?? tmdb?.posterUrl;
   const genres = tmdb?.genres.length ? tmdb.genres : film.genres;
   const synopsis = tmdb?.synopsis ?? film.synopsis;
   const releaseDate = tmdb?.releaseDate ?? film.releaseDate;

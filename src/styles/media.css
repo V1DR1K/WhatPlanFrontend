@@ -1,0 +1,101 @@
+:root {
+  --media-gap: 16px;
+  --media-surface: #090909;
+}
+
+.place-grid,
+.film-grid,
+.fun-grid,
+.fun-photo-gallery {
+  grid-auto-flow: dense;
+}
+
+.place-grid > .media-card--landscape,
+.film-grid > .media-card--landscape,
+.fun-grid > .media-card--landscape,
+.fun-photo-gallery > .media-card--landscape {
+  grid-column: span 2;
+}
+
+.place-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.place-card .card-body {
+  display: flex;
+  height: 100%;
+  flex: 1;
+  flex-direction: column;
+}
+
+.place-card .card-body footer {
+  margin-top: auto;
+}
+
+.food-poster {
+  height: auto;
+  aspect-ratio: var(--media-aspect-ratio, 4 / 3);
+  background: var(--media-surface);
+}
+
+.food-poster .food-poster__image,
+.film-poster .film-poster__image,
+.fun-card__photo .fun-card__photo-image,
+.home-recipe-card > .home-recipe-card__image,
+.fun-photo-gallery .fun-photo-gallery__image {
+  object-fit: contain;
+  background: var(--media-surface);
+}
+
+.film-poster .film-poster__image,
+.fun-card__photo .fun-card__photo-image {
+  width: 100%;
+  height: 100%;
+}
+
+.fun-card__photo {
+  aspect-ratio: var(--media-aspect-ratio, 4 / 3);
+  background: var(--media-surface);
+}
+
+.fun-photo-gallery .fun-photo-gallery__photo > button:first-child {
+  height: auto;
+  aspect-ratio: var(--media-aspect-ratio, 1 / 1);
+}
+
+.fun-photo-gallery .fun-photo-gallery__image {
+  width: 100%;
+  height: 100%;
+}
+
+.film-detail__poster img,
+.fun-detail__cover img,
+.home-recipe-detail__image,
+.form-photo-preview {
+  object-fit: contain;
+  background: var(--media-surface);
+}
+
+@media (max-width: 540px) {
+  .place-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .place-grid > .media-card--landscape,
+  .film-grid > .media-card--landscape,
+  .fun-grid > .media-card--landscape,
+  .fun-photo-gallery > .media-card--landscape {
+    grid-column: 1 / -1;
+  }
+
+  .place-card .card-body {
+    padding: 12px;
+  }
+
+  .place-card .rating-preview {
+    margin: 10px 0;
+  }
+}

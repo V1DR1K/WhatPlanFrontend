@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { mediaUrl } from '../../lib/api';
+import { getPhotoOrientation, photoAspectRatioStyle, ResponsiveImage } from '../../components/ui/AdaptivePhoto';
 import type { Home, HomeRecipe } from '../../types/domain';
 import { HomeRecipeForm } from './HomeRecipeForm';
 import { getHomeRecipes } from './homeRecipes';
@@ -29,11 +29,12 @@ function RecipeSection({ home, search, onAdd }: { home: Home; search: string; on
 }
 
 function RecipeCard({ recipe }: { recipe: HomeRecipe }) {
-  const image = recipe.thumbnailUrl ?? recipe.photoUrl;
+  const hasImage = recipe.photoUrl ?? recipe.thumbnailUrl;
   const rating = average(recipe.reviews.map(review => review.rating));
-  return <Link className="home-recipe-card-link" to={`/how-cook/${recipe.id}`} aria-label={`Ver detalle de ${recipe.name}`}>
+  const orientation = getPhotoOrientation(recipe.photoWidth, recipe.photoHeight);
+  return <Link className={`home-recipe-card-link media-card media-card--${orientation}`} style={photoAspectRatioStyle(recipe.photoWidth, recipe.photoHeight)} to={`/how-cook/${recipe.id}`} aria-label={`Ver detalle de ${recipe.name}`}>
     <article className="home-recipe-card">
-      {image ? <img src={mediaUrl(image)} alt={`Foto de ${recipe.name}`} loading="lazy" decoding="async" /> : <div className="home-recipe-card__empty">🍳</div>}
+      {hasImage ? <ResponsiveImage alt={`Foto de ${recipe.name}`} className="home-recipe-card__image" fullSrc={recipe.photoUrl} height={recipe.photoHeight} thumbnailSrc={recipe.thumbnailUrl} width={recipe.photoWidth} /> : <div className="home-recipe-card__empty">🍳</div>}
       <div className="home-recipe-card__body">
         <div className="home-recipe-card__heading"><div><p>{mealName(recipe.mealType)} · {dateLabel(recipe.preparedOn)}</p><h3>{recipe.name}</h3></div>{rating !== undefined && <span className="home-recipe-card__rating">{rating.toFixed(1)} ★</span>}</div>
         <div className="ingredient-pills">{recipe.ingredients.slice(0, 4).map((ingredient, index) => <span key={`${ingredient.name}-${index}`}>{ingredientLabel(ingredient)}</span>)}</div>

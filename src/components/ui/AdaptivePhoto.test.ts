@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getPhotoOrientation } from "./AdaptivePhoto";
+import { getPhotoOrientation, photoSource } from "./AdaptivePhoto";
 
 describe("getPhotoOrientation", () => {
   it("classifies a taller image as portrait", () => {
@@ -10,7 +10,16 @@ describe("getPhotoOrientation", () => {
     expect(getPhotoOrientation(1600, 1200)).toBe("landscape");
   });
 
-  it("keeps square photos in the landscape variant", () => {
-    expect(getPhotoOrientation(1200, 1200)).toBe("landscape");
+  it("classifies square photos separately", () => {
+    expect(getPhotoOrientation(1200, 1200)).toBe("square");
+  });
+
+  it("uses the supplied fallback when dimensions are unavailable", () => {
+    expect(getPhotoOrientation(undefined, undefined, "portrait")).toBe("portrait");
+  });
+
+  it("uses a thumbnail in compact contexts and the full image in detail", () => {
+    expect(photoSource("thumbnail", "/photo", "/thumbnail")).toBe("/thumbnail");
+    expect(photoSource("full", "/photo", "/thumbnail")).toBe("/photo");
   });
 });

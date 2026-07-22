@@ -1,25 +1,28 @@
 import { Link } from "react-router-dom";
-import type { Place } from "../../types/domain";
+import { getPhotoOrientation, photoAspectRatioStyle, ResponsiveImage } from "../../components/ui/AdaptivePhoto";
 import { StarRating } from "../../components/ui/StarRating";
-import { mediaUrl } from "../../lib/api";
+import type { Place } from "../../types/domain";
+
 export function PlaceCard({ place }: { place: Place }) {
   const pending = place.status === "PENDING";
-  const photo = place.thumbnailUrl ?? place.photoUrl;
-  const photoSrc = photo ? mediaUrl(photo) : undefined;
+  const orientation = getPhotoOrientation(place.photoWidth, place.photoHeight);
+  const photoStyle = photoAspectRatioStyle(place.photoWidth, place.photoHeight);
   return (
     <Link
-      className="place-card-link"
+      className={`place-card-link media-card media-card--${orientation}`}
       to={`/food/places/${place.id}`}
       aria-label={`Ver detalle de ${place.name}`}
     >
-      <article className={`place-card ${pending ? "pending-card" : ""}`}>
+      <article className={`place-card ${pending ? "pending-card" : ""}`} style={photoStyle}>
         <div className="food-poster">
-          {photoSrc ? (
-            <img
-              src={photoSrc}
+          {place.photoUrl || place.thumbnailUrl ? (
+            <ResponsiveImage
               alt={`Foto de ${place.name}`}
-              decoding="async"
-              loading="lazy"
+              className="food-poster__image"
+              fullSrc={place.photoUrl}
+              height={place.photoHeight}
+              thumbnailSrc={place.thumbnailUrl}
+              width={place.photoWidth}
             />
           ) : (
             <span>{place.category.icon}</span>
