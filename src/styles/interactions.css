@@ -900,6 +900,7 @@
   margin: 14px 0 10px;
 }
 .home-recipe-review p:not(.muted) {
+  margin-top: 14px;
   color: #d0d3c4;
   font-size: 13px;
   line-height: 1.45;

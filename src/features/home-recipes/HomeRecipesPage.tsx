@@ -10,7 +10,6 @@ const homeName = (home: Home) => home === 'TOMAS' ? 'Tomás' : 'Avril';
 const mealName = (meal: HomeRecipe['mealType']) => ({ DESAYUNO: 'Desayuno', ALMUERZO: 'Almuerzo', MERIENDA: 'Merienda', CENA: 'Cena' })[meal];
 const dateLabel = (date: string) => new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${date}T12:00:00`));
 const average = (values: number[]) => values.length ? values.reduce((total, value) => total + value, 0) / values.length : undefined;
-const ingredientLabel = (ingredient: HomeRecipe['ingredients'][number]) => `${ingredient.quantity === undefined ? '' : `${ingredient.quantity} `}${ingredient.unit} · ${ingredient.name}`;
 
 function RecipeSection({ home, search, onAdd }: { home: Home; search: string; onAdd: (home: Home) => void }) {
   const recipes = useQuery({ queryKey: ['home-recipes', home, search], queryFn: () => getHomeRecipes(home, search) });
@@ -37,7 +36,6 @@ function RecipeCard({ recipe }: { recipe: HomeRecipe }) {
       {hasImage ? <ResponsiveImage alt={`Foto de ${recipe.name}`} className="home-recipe-card__image" fullSrc={recipe.photoUrl} height={recipe.photoHeight} thumbnailSrc={recipe.thumbnailUrl} width={recipe.photoWidth} /> : <div className="home-recipe-card__empty">🍳</div>}
       <div className="home-recipe-card__body">
         <div className="home-recipe-card__heading"><div><p>{mealName(recipe.mealType)} · {dateLabel(recipe.preparedOn)}</p><h3>{recipe.name}</h3></div>{rating !== undefined && <span className="home-recipe-card__rating">{rating.toFixed(1)} ★</span>}</div>
-        <div className="ingredient-pills">{recipe.ingredients.slice(0, 4).map((ingredient, index) => <span key={`${ingredient.name}-${index}`}>{ingredientLabel(ingredient)}</span>)}</div>
         <footer className="recipe-card-actions"><small>{recipe.repeatedFrom ? `↻ Repite ${recipe.repeatedFrom.name}` : `Preparó ${recipe.author}`} · {recipe.servings} porciones</small><span>{recipe.reviews.length ? `💬 ${recipe.reviews.length} reseña${recipe.reviews.length === 1 ? '' : 's'}` : 'Ver detalle'} →</span></footer>
       </div>
     </article>

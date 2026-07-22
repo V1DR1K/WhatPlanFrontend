@@ -147,10 +147,14 @@
 .food-poster .food-poster__image,
 .film-poster .film-poster__image,
 .fun-card__photo .fun-card__photo-image,
-.home-recipe-card > .home-recipe-card__image,
 .fun-photo-gallery .fun-photo-gallery__image {
   object-fit: contain;
   background: var(--media-surface);
+}
+
+.home-recipe-card > .home-recipe-card__image {
+  object-fit: cover;
+  background: #2b3120;
 }
 
 .film-poster .film-poster__image,
