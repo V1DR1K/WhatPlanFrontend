@@ -36,7 +36,7 @@ export function HomeRecipeDetailPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [repeating, setRepeating] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
+  const [reviewing, setReviewing] = useState<HomeRecipeReview | null>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const recipeQuery = useQuery({
     queryKey: ["home-recipe", id],
@@ -73,7 +73,7 @@ export function HomeRecipeDetailPage() {
 
   const recipe = recipeQuery.data!;
   const username = session.get()?.username;
-  const ownRecipe = recipe.author === username;
+  const canManageRecipe = session.get()?.role === "ADMIN" || recipe.author === username;
 
   return (
     <section className="home-recipe-detail">
@@ -107,7 +107,7 @@ export function HomeRecipeDetailPage() {
           )}
         </div>
         <div className="detail-actions home-recipe-detail__actions">
-          {ownRecipe && (
+          {canManageRecipe && (
             <button
               className="secondary-button"
               type="button"
@@ -123,7 +123,7 @@ export function HomeRecipeDetailPage() {
           >
             <span aria-hidden="true">↻</span> Repetir receta
           </button>
-          {ownRecipe && (
+          {canManageRecipe && (
             <button
               className="text-button home-recipe-delete"
               type="button"
@@ -195,7 +195,8 @@ export function HomeRecipeDetailPage() {
               author={author}
               currentUser={username}
               review={recipe.reviews.find((value) => value.author === author)}
-              onReview={() => setReviewing(true)}
+              canManage={session.get()?.role === "ADMIN" || author === username}
+              onReview={(review) => setReviewing(review ?? null)}
             />
           ))}
         </div>
@@ -229,10 +230,11 @@ export function HomeRecipeDetailPage() {
           onClose={() => setRepeating(false)}
         />
       )}
-      {reviewing && (
+      {reviewing !== undefined && (
         <HomeRecipeReviewForm
           recipe={recipe}
-          onClose={() => setReviewing(false)}
+          review={reviewing ?? undefined}
+          onClose={() => setReviewing(undefined)}
         />
       )}
     </section>
@@ -289,12 +291,14 @@ function ReviewCard({
   author,
   currentUser,
   review,
+  canManage,
   onReview,
 }: {
   author: string;
   currentUser?: string;
   review?: HomeRecipeReview;
-  onReview: () => void;
+  canManage: boolean;
+  onReview: (review?: HomeRecipeReview) => void;
 }) {
   const name = author === "tomas" ? "Tomás" : "Avril";
   const own = author === currentUser;
@@ -303,12 +307,12 @@ function ReviewCard({
       <div>
         <span className="review-avatar">{name[0]}</span>
         <h3>{own ? "Tu reseña" : `Reseña de ${name}`}</h3>
-        {own && review && (
+        {canManage && review && (
           <button
             className="icon-edit"
             type="button"
             aria-label={`Editar reseña de ${name}`}
-            onClick={onReview}
+            onClick={() => onReview(review)}
           >
             ✎
           </button>
@@ -328,7 +332,7 @@ function ReviewCard({
           </small>
         </>
       ) : own ? (
-        <button className="secondary-button" type="button" onClick={onReview}>
+        <button className="secondary-button" type="button" onClick={() => onReview()}>
           Escribir mi reseña
         </button>
       ) : (

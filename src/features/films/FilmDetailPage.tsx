@@ -88,7 +88,8 @@ export function FilmDetailPage() {
   const visitNumber =
     selectedViewIndex < 0 ? 0 : views.length - selectedViewIndex;
   const username = session.get()?.username;
-  const ownFilm = film.author === username;
+  const canManageFilm = session.get()?.role === "ADMIN" || film.author === username;
+  const canManageSelectedView = session.get()?.role === "ADMIN" || selectedView?.createdBy === username;
   const ownReview = selectedView?.reviews.find(
     (review) => review.author === username,
   );
@@ -134,7 +135,7 @@ export function FilmDetailPage() {
           </p>
         </div>
         <div className="detail-actions">
-          {ownFilm && (
+          {canManageFilm && (
             <>
               <button
                 className="secondary-button"
@@ -283,7 +284,7 @@ export function FilmDetailPage() {
                 ))}
               </select>
             </label>
-            {selectedView?.createdBy === username && (
+            {canManageSelectedView && selectedView && (
               <>
                 <button
                   className="secondary-button"
@@ -323,6 +324,7 @@ export function FilmDetailPage() {
                   key={review.id}
                   review={review}
                   visitNumber={visitNumber}
+                  canManage={session.get()?.role === "ADMIN" || review.author === username}
                   onEdit={() => setReviewing({ view: selectedView, review })}
                 />
               ))}
@@ -414,10 +416,12 @@ export function FilmDetailPage() {
 function ReviewCard({
   review,
   visitNumber,
+  canManage,
   onEdit,
 }: {
   review: FilmReview;
   visitNumber: number;
+  canManage: boolean;
   onEdit: () => void;
 }) {
   const own = review.author === session.get()?.username;
@@ -434,7 +438,7 @@ function ReviewCard({
       <div>
         <span className="review-avatar">{initial}</span>
         <h3>{own ? "Tu reseña" : `Reseña de ${authorLabel}`}</h3>
-        {own && (
+        {canManage && (
           <button
             className="icon-edit"
             type="button"
