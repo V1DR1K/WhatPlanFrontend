@@ -970,7 +970,7 @@
 .home-recipe-add {
   margin-bottom: 16px;
 }
-.item-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.item-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-around; }
 .item-card-actions .secondary-button { padding: 7px 9px; font-size: 12px; }
 .item-delete-button { color: #ff9e90; border-color: #ff7b6b; }
 .item-review-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
@@ -979,4 +979,4 @@
 .item-review h4 { font-size: 13px; }
 .item-review p { color: var(--muted); font-size: 13px; line-height: 1.4; }
 .visit-history { margin-top: 34px; }
-@media (max-width: 540px) { .item-review-columns, .home-recipe-review-columns { grid-template-columns: 1fr; } .item-card-actions { justify-content: flex-start; } .item-date-pager { align-items: center; flex-wrap: wrap; } .item-date-pager label { order: -1; width: 100%; } }
+@media (max-width: 540px) { .item-review-columns, .home-recipe-review-columns { grid-template-columns: 1fr; } .item-card-actions { justify-content: space-around; } .item-date-pager { align-items: center; flex-wrap: wrap; } .item-date-pager label { order: -1; width: 100%; } }

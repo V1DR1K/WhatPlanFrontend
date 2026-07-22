@@ -146,6 +146,42 @@
   font-weight: 800;
 }
 
+.home-recipe-detail__actions .home-recipe-delete,
+.detail > .detail-heading > .detail-actions .food-detail-delete {
+  min-height: 44px;
+  padding-inline: 13px;
+  border: 1px solid #ff8f80;
+  border-radius: 12px;
+  color: #ffb5aa;
+  background: #472522;
+  box-shadow: 3px 3px 0 #742f2a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.home-recipe-detail__actions .home-recipe-delete {
+  grid-column: 1 / -1;
+}
+
+.detail > .detail-heading > .detail-actions .food-detail-action {
+  min-height: 44px;
+  border-color: var(--lime);
+  color: var(--lime);
+  background: color-mix(in srgb, var(--lime) 14%, var(--panel));
+  font-weight: 800;
+}
+
+.detail > .detail-heading > .detail-actions .food-detail-action--item {
+  color: #26351d;
+  background: var(--lime);
+  box-shadow: 3px 3px 0 #394321;
+}
+
+.detail .item-date-pager .secondary-button {
+  flex-basis: 100%;
+  width: 100%;
+}
+
 .home-recipe-form .danger-button,
 .modal form .danger-button {
   border-color: #ff8f80;

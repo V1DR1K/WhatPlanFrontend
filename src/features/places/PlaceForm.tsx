@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags, saveHighlightTag } from "./highlightTags";
-import { savePlace, savePlaceReview, uploadPlacePhoto, deletePlace, type PlaceReviewInput } from "./places";
+import { savePlace, savePlaceReview, uploadPlacePhoto, type PlaceReviewInput } from "./places";
 import { Modal } from "../../components/ui/Modal";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ReviewPrompt } from "../../components/ui/ReviewPrompt";
 import { StarRating } from "../../components/ui/StarRating";
 import { showNotice } from "../../lib/flash";
@@ -35,8 +33,6 @@ export function PlaceForm({ onClose, place, mode = "details" }: { onClose: () =>
   const [tagIds, setTagIds] = useState<number[]>(() => place?.tags.map(tag => tag.id) ?? []);
   const [newTagName, setNewTagName] = useState("");
   const [newTagEmoji, setNewTagEmoji] = useState("✨");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: getCategories, enabled: canEditDetails && !reviewing });
   const tagsQuery = useQuery({ queryKey: ["highlight-tags"], queryFn: getHighlightTags, enabled: canEditDetails && !reviewing });
@@ -70,15 +66,9 @@ export function PlaceForm({ onClose, place, mode = "details" }: { onClose: () =>
       onClose();
     },
   });
-  const deleteMutation = useMutation({
-    mutationFn: () => deletePlace(place!.id),
-    onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ["places"] }), qc.removeQueries({ queryKey: ["place", place!.id] })]); showNotice("Movimos el lugar a archivados. Podés restaurarlo cuando quieras."); navigate("/food"); },
-  });
-
   if (created) return <ReviewPrompt name={created.name} reviewTo={`/food/places/${created.id}`} onClose={onClose} actionLabel="Registrar una visita" message="El lugar ya está guardado. Cuando vayan, registren la visita y después agreguen los ítems." />;
-  if (confirmingDelete && place) return <ConfirmDialog title="¿Archivar este lugar?" message="Dejará de aparecer en la lista, pero conservará sus fotos y reseñas. Podés restaurarlo desde Archivados." confirmLabel="Archivar lugar" pending={deleteMutation.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => deleteMutation.mutate()} />;
 
-  const pending = mutation.isPending || deleteMutation.isPending;
+  const pending = mutation.isPending;
   return <Modal onClose={onClose} confirmDiscard pending={pending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}><p className="eyebrow">{reviewing ? "CALIFICAR LUGAR" : place ? "EDITAR LUGAR" : "NUEVO PENDIENTE"}</p><h2>{reviewing ? "Tu experiencia en el lugar" : place ? "Ajustemos los datos" : "Guardalo para ir"}</h2>{!reviewing && <>
     <label>Nombre<input name="name" defaultValue={place?.name} required autoFocus /></label>
     <label>Dirección <small className="tiny">Opcional</small><input name="address" defaultValue={place?.address} placeholder="Calle 123, Rosario" /></label>
@@ -94,7 +84,6 @@ export function PlaceForm({ onClose, place, mode = "details" }: { onClose: () =>
     <div className="venue-score-grid">{scoreCategories.map(([key, label]) => <label className="score-field" key={key}>{label}<span className="place-score-input"><StarRating label={label} value={scores[key]} onChange={value => setScores(current => ({ ...current, [key]: value }))} /><button className="text-button" type="button" onClick={() => setScores(current => ({ ...current, [key]: undefined }))} disabled={scores[key] === undefined}>No aplica</button></span></label>)}</div>
   </>}
   <button className="main-button" disabled={pending || Boolean(photoError)}>{mutation.isPending ? "Guardando…" : reviewing ? "Guardar reseña" : place ? "Guardar lugar" : "Agendar pendiente"} ✦</button>
-  {place && !reviewing && canEditDetails && <button className="danger-button" type="button" disabled={pending} onClick={() => setConfirmingDelete(true)}>Archivar lugar</button>}
-  {(mutation.error || deleteMutation.error) && <p className="form-error">{(mutation.error || deleteMutation.error)!.message}</p>}
+  {mutation.error && <p className="form-error">{mutation.error.message}</p>}
   </form></Modal>;
 }
