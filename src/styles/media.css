@@ -109,18 +109,10 @@
     gap: 8px;
   }
 
-  .place-section .section-title strong {
-    padding-left: 1px;
-  }
-
   .fun-section .section-title {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
-  }
-
-  .fun-section .section-title strong {
-    padding-left: 1px;
   }
 
   .place-grid {

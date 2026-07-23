@@ -232,7 +232,7 @@ export function FilmDetailPage() {
         </section>
       )}
       <section className="watch-counter" aria-label="Contador de veces vistas">
-        <div>
+        <div className="watch-counter__content">
           <p className="eyebrow">HISTORIAL COMPARTIDO</p>
           <h2>
             {film.watchedCount === 0

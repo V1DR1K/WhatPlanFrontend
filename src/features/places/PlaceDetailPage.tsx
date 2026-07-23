@@ -171,7 +171,7 @@ export function PlaceDetailPage() {
         {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
       </section>
       <section className="watch-counter">
-        <div>
+        <div className="watch-counter__content">
           <p className="eyebrow">HISTORIAL DE VISITAS</p>
           <h2>{visitList.length ? `${visitList.length} visita${visitList.length === 1 ? "" : "s"}` : "Todavía no fueron"}</h2>
           <p>{visitList[0] ? `Última: ${dateLabel(visitList[0].visitedOn)}` : "Registren una fecha al ir."}</p>

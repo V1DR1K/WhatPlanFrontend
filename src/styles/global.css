@@ -333,9 +333,8 @@ a {
   margin: 0;
   letter-spacing: -1px;
 }
-.section-title strong {
-  font: 500 12px "DM Mono";
-  color: var(--muted);
+.section-title > strong {
+  display: none;
 }
 @media (max-width: 540px) {
   .section-title {
@@ -1716,6 +1715,7 @@ a {
 }
 .watch-counter {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
@@ -1726,19 +1726,24 @@ a {
   background: linear-gradient(120deg, #2a2642, #222025);
 }
 .watch-counter h2 {
-  margin: 4px 0;
+  margin: 0;
   font: 600 29px "Fraunces";
+}
+.watch-counter__content {
+  display: flex;
+  flex: 1;
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  min-width: 0;
+}
+.watch-counter .eyebrow {
+  margin: 0;
 }
 .watch-counter p:not(.eyebrow) {
   margin: 0;
   color: var(--muted);
   font-size: 12px;
-}
-.watch-counter > div:last-of-type {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
 }
 .counter-button,
 .counter-add {
@@ -2063,12 +2068,15 @@ a {
     font-size: 35px;
   }
   .watch-counter {
-    align-items: stretch;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
     padding: 17px;
   }
-  .watch-counter > div:last-of-type {
-    display: block;
+  .watch-counter__content {
+    gap: 7px 12px;
+  }
+  .watch-counter h2 {
+    font-size: 24px;
   }
   .film-review-columns {
     grid-template-columns: 1fr;
