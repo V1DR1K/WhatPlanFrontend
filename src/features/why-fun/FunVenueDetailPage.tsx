@@ -99,7 +99,7 @@ export function FunVenueDetailPage() {
         actions={
           <EntityDetailActions
             destructive={{ label: "Borrar actividad", onClick: () => setConfirmingDelete(true) }}
-            primary={{ label: "Registrar salida", onClick: () => setEditingVisit(null) }}
+            primary={{ icon: value.subcategory.icon, label: "Registrar salida", onClick: () => setEditingVisit(null) }}
             secondary={{ label: "Editar actividad", onClick: () => setEditing(true) }}
           />
         }
@@ -136,12 +136,9 @@ export function FunVenueDetailPage() {
                 {list.map((visit) => <option key={visit.id} value={visit.id}>{dateLabel(visit.scheduledAt)} · {visit.createdBy}</option>)}
               </select>
             </label>
-            {current && <>
-              <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button>
-              <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
-            </>}
+            {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}
           </div>
-          {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList reviews={current.reviews} /></div>}
+          {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
         </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
       {editing && <ActivityForm activity={value} onClose={() => setEditing(false)} />}
@@ -153,11 +150,16 @@ export function FunVenueDetailPage() {
   );
 }
 
-function ReviewList({ reviews }: { reviews: ActivityReview[] }) {
+function ReviewList({ onReview, ownReview, reviews }: { onReview: () => void; ownReview: boolean; reviews: ActivityReview[] }) {
   return (
     <section className="reviews-section">
       <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS DE ESTA SALIDA</p><h2>Cómo la pasaron</h2></div><strong>{reviews.length}</strong></div>
-      {reviews.length ? <div className="fun-review-columns">{reviews.map((review) => <article className="fun-review-card" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas.</p>}
+      {reviews.length ? <div className="fun-review-columns">{reviews.map((review) => <article className="fun-review-card" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><div className="review-score"><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><span>{scoreLabel(review.rating)}</span></div><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas.</p>}
+      <div className="experience-review-action"><Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button></div>
     </section>
   );
+}
+
+function scoreLabel(value?: number) {
+  return value === undefined || value === null ? "—" : `${value}/5`;
 }

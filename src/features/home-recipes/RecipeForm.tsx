@@ -160,12 +160,12 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
                   }
                 />
               </label>
-              <Button variant="tertiary" icon="×" type="button" onClick={() => setIngredients((current) => current.filter((_, position) => position !== index))}>
+              <Button variant="tertiary" icon="✕" type="button" onClick={() => setIngredients((current) => current.filter((_, position) => position !== index))}>
                 Quitar
               </Button>
             </div>
           ))}
-          <Button variant="secondary" icon="＋" type="button" onClick={() => setIngredients((current) => [...current, emptyIngredient()])}>
+          <Button variant="secondary" icon="➕" type="button" onClick={() => setIngredients((current) => [...current, emptyIngredient()])}>
             Agregar ingrediente
           </Button>
         </fieldset>
@@ -187,16 +187,16 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
                   }
                 />
               </label>
-              <Button variant="tertiary" icon="×" type="button" onClick={() => setSteps((current) => current.filter((_, position) => position !== index))}>
+              <Button variant="tertiary" icon="✕" type="button" onClick={() => setSteps((current) => current.filter((_, position) => position !== index))}>
                 Quitar
               </Button>
             </div>
           ))}
-          <Button variant="secondary" icon="＋" type="button" onClick={() => setSteps((current) => [...current, emptyStep()])}>
+          <Button variant="secondary" icon="➕" type="button" onClick={() => setSteps((current) => [...current, emptyStep()])}>
             Agregar paso
           </Button>
         </fieldset>
-        <Button icon={recipe ? "✓" : "＋"} disabled={mutation.isPending}>
+        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending}>
           {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
         </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}

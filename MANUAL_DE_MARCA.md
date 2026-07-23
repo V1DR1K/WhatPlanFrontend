@@ -10,7 +10,7 @@ WhatPlan reúne planes compartidos con una estética nocturna, cercana y un poco
 
 | Sección | Territorio | Color distintivo |
 | --- | --- | --- |
-| WhereFood | Comer y descubrir lugares | Ámbar gastronómico `#F3AF5F` |
+| WhereFood | Comer y descubrir lugares | Naranja luminoso `#FF8A00` |
 | WhichMovie | Películas y noches de cine | Lavanda eléctrica `#B8ADFF` |
 | WhoCook | Recetas y cocina en casa | Lima cítrico `#D4EF55` |
 | WhyFun | Salidas, juegos y experiencias | Rosa chicle `#FF8BCA` |
@@ -26,25 +26,26 @@ Estos colores no identifican a una sección: ordenan todo el ecosistema y deben 
 | Borde | `#312E31` | Gris carbón con subtono malva. | Divisores y contornos discretos. |
 | Texto principal | `#FFFAF0` | Crema cálido, similar a papel marfil. | Títulos y texto de lectura sobre fondo oscuro. |
 | Texto secundario | `#AAA3A3` | Gris rosado apagado. | Metadatos, ayudas y contenido de menor jerarquía. |
+| Rojo de marca | `#FF6049` | Coral luminoso original de WhatPlan. | Palabra destacada del logo y acciones fuera de una sección. |
 | Violeta de sistema | `#A978FF` | Violeta brillante, como uva/neón suave. | Foco de inputs y selecciones genéricas; no reemplaza el acento de cada sección. |
 
 **Regla:** mantener fondos, texto y bordes de esta base. Al entrar a una sección, cambiar los elementos de énfasis por su acento correspondiente.
 
 ## 3. Paletas por sección
 
-### WhereFood · ámbar gastronómico
+### WhereFood · naranja luminoso
 
-La sección más gastronómica y directa. El ámbar debe sentirse cálido, apetitoso y sereno, sin convertir la experiencia en una pantalla roja o coral.
+La sección más gastronómica y directa. El naranja debe sentirse brillante, apetitoso y expresivo, con la misma energía visual que la lavanda de WhichMovie sin invadir toda la pantalla.
 
 | Rol | Color | Cómo se ve / ejemplo | Uso recomendado |
 | --- | --- | --- | --- |
-| Acento principal | `#F3AF5F` | Ámbar tostado, como miel bajo luz cálida. | CTA principales, palabra destacada del nombre y bordes activos. |
-| Contraste de acción | `#2A1A0B` | Marrón profundo. | Texto e íconos sobre acciones ámbar. |
-| Fondo temático oscuro | `#2A1A0B` | Marrón profundo, como una cocina nocturna. | Hero, piezas editoriales o fondos de destaque. |
-| Superficie temática | `#322617` | Marrón especiado oscuro. | Cards e ilustraciones gastronómicas. |
-| Sombra de acción | `#9C6630` | Caramelo tostado. | Sombra sólida de botones. |
+| Acento principal | `#FF8A00` | Naranja intenso, como fuego de cocina bajo luz nocturna. | CTA principales, palabra destacada del nombre y bordes activos. |
+| Contraste de acción | `#2A1600` | Marrón profundo. | Texto e íconos sobre acciones naranja. |
+| Fondo temático oscuro | `#241600` | Marrón profundo, como una cocina nocturna. | Hero, piezas editoriales o fondos de destaque. |
+| Superficie temática | `#332000` | Marrón especiado oscuro. | Cards e ilustraciones gastronómicas. |
+| Sombra de acción | `#6B3600` | Naranja tostado profundo. | Sombra sólida de botones. |
 
-**Aplicación:** usar ámbar para un único CTA dominante por vista. Texto sobre botón ámbar: `#2A1A0B`.
+**Aplicación:** usar naranja para un único CTA dominante por vista. Texto sobre botón naranja: `#2A1600`.
 
 ### WhichMovie · lavanda cinematográfica
 
@@ -237,7 +238,7 @@ Centralizar estos tokens ayuda a que las próximas pantallas respeten la identid
   --wf-muted: #aaa3a3;
 }
 
-.wherefood { --section-accent: #f3af5f; --section-contrast: #2a1a0b; --section-shadow: #9c6630; }
+.wherefood { --section-accent: #ff8a00; --section-contrast: #2a1600; --section-shadow: #6b3600; }
 .whichmovie { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
 .whocook { --section-accent: #d4ef55; --section-contrast: #26351d; --section-shadow: #394321; }
 .whyfun { --section-accent: #ff8bca; --section-contrast: #351528; --section-shadow: #7c376b; }
@@ -245,4 +246,4 @@ Centralizar estos tokens ayuda a que las próximas pantallas respeten la identid
 
 ## 9. Referencia rápida
 
-`WhereFood #F3AF5F` · `WhichMovie #B8ADFF` · `WhoCook #D4EF55` · `WhyFun #FF8BCA`
+`WhatPlan #FF6049` · `WhereFood #FF8A00` · `WhichMovie #B8ADFF` · `WhoCook #D4EF55` · `WhyFun #FF8BCA`

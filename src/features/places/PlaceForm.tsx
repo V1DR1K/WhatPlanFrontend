@@ -159,7 +159,7 @@ export function PlaceForm({
             ))}
           </div>
         </fieldset>
-        <Button icon={place ? "✓" : "＋"} disabled={pending}>
+        <Button icon={place ? "💾" : "➕"} disabled={pending}>
           {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
         </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}

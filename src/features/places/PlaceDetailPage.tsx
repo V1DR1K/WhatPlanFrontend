@@ -121,7 +121,7 @@ export function PlaceDetailPage() {
         actions={
           <EntityDetailActions
             destructive={{ label: "Borrar lugar", onClick: () => setConfirmingDelete(true) }}
-            primary={{ label: "Registrar visita", onClick: () => setEditingVisit(null) }}
+            primary={{ icon: venue.category.icon, label: "Registrar visita", onClick: () => setEditingVisit(null) }}
             secondary={{ label: "Editar lugar", onClick: () => setEditingPlace(true) }}
           />
         }
@@ -166,7 +166,7 @@ export function PlaceDetailPage() {
       <section className="reviews-section place-venue-reviews">
         <div className="section-title">
           <div><p className="eyebrow">EL LUGAR</p><h2>Espacio y atención</h2></div>
-          <Button icon={venueOwnReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button>
+          <Button icon={venueOwnReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button>
         </div>
         {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
       </section>
@@ -190,13 +190,10 @@ export function PlaceDetailPage() {
                 {visitList.map((entry) => <option key={entry.id} value={entry.id}>{dateLabel(entry.visitedOn)} · registrada por {entry.createdBy}</option>)}
               </select>
             </label>
-            {selectedVisitId && <>
-              <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button>
-              <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
-            </>}
+            {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           {visit.isLoading && <p className="muted" aria-busy="true">Cargando visita…</p>}
-          {current && <VisitExperience visit={current} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
+          {current && <VisitExperience visit={current} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
@@ -212,11 +209,15 @@ export function PlaceDetailPage() {
 
 function VisitExperience({
   visit,
+  ownReview,
+  onReview,
   onUpload,
   onDeletePhoto,
   onSetCover,
 }: {
   visit: PlaceVisit;
+  ownReview: boolean;
+  onReview: () => void;
   onUpload: (files: File[]) => Promise<unknown>;
   onDeletePhoto: (photo: ExperiencePhoto) => void;
   onSetCover: (photo: ExperiencePhoto) => void;
@@ -245,7 +246,7 @@ function VisitExperience({
                 {visitMetrics.map(([key, label]) => (
                   <span key={key}>
                     <b>{label}</b>
-                    <strong>{review[key] ?? "-"}</strong>
+                    <strong>{scoreLabel(review[key])}</strong>
                   </span>
                 ))}
               </div>
@@ -254,6 +255,11 @@ function VisitExperience({
           ))}
         </div>
       ) : <p className="empty-state">Todavía no hay reseñas para esta visita.</p>}
+      <div className="experience-review-action">
+        <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>
+          {ownReview ? "Editar reseña" : "Agregar reseña"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -262,5 +268,9 @@ function VenueReview({ review }: { review: PlaceReview }) {
   const metrics = [
     ["location", "Ubicación"], ["heating", "Calefacción"], ["bathrooms", "Baños"], ["exterior", "Exterior"], ["seating", "Asientos"], ["service", "Atención"], ["ambiance", "Ambiente"],
   ] as const;
-  return <article className="place-review"><div className="place-review__heading"><h3>Opinión de {review.author}</h3></div>{review.comment && <p>{review.comment}</p>}<div className="place-review__metrics">{metrics.map(([key, label]) => <span key={key}><b>{label}</b><strong>{review[key] ?? "-"}</strong></span>)}</div></article>;
+  return <article className="place-review"><div className="place-review__heading"><h3>Opinión de {review.author}</h3></div>{review.comment && <p>{review.comment}</p>}<div className="place-review__metrics">{metrics.map(([key, label]) => <span key={key}><b>{label}</b><strong>{scoreLabel(review[key])}</strong></span>)}</div></article>;
+}
+
+function scoreLabel(value?: number) {
+  return value === undefined || value === null ? "—" : `${value}/5`;
 }

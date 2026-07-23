@@ -105,7 +105,7 @@ export function FilmDetailPage() {
               label: remove.isPending ? "Borrando película…" : "Borrar película",
               onClick: () => setConfirmingDelete(true),
             }}
-            primary={{ label: viewAction, onClick: () => setAddingView(true) }}
+            primary={{ icon: "🎬", label: viewAction, onClick: () => setAddingView(true) }}
             secondary={{ label: "Editar película", onClick: () => setEditing(true) }}
           />
         }
@@ -268,11 +268,7 @@ export function FilmDetailPage() {
                 ))}
               </select>
             </label>
-            {selectedView && <>
-                <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button>
-                <Button icon="×" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button>
-                <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
-              </>}
+            {selectedView && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button><Button icon="🗑️" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button></div>}
           </div>
         )}
         {selectedView && (
@@ -297,6 +293,11 @@ export function FilmDetailPage() {
                   visitNumber={visitNumber}
                 />
               ))}
+            </div>
+            <div className="experience-review-action">
+              <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>
+                {ownReview ? "Editar reseña" : "Agregar reseña"}
+              </Button>
             </div>
           </>
         )}
@@ -390,10 +391,13 @@ function ReviewCard({
         <span className="review-avatar">{initial}</span>
         <h3>{own ? "Tu reseña" : `Reseña de ${authorLabel}`}</h3>
       </div>
-      <StarRating
-        label={`Puntuación de ${authorLabel}`}
-        value={review.rating}
-      />
+      <div className="review-score">
+        <StarRating
+          label={`Puntuación de ${authorLabel}`}
+          value={review.rating}
+        />
+        <span>{scoreLabel(review.rating)}</span>
+      </div>
       <div className="film-review-metrics">
         {filmReviewMetrics.map((metric) => {
           const value = review.metrics?.[metric.key];
@@ -405,7 +409,7 @@ function ReviewCard({
                 levels={metric.levels}
                 value={value}
               />
-              <small>{metricLevel(metric.levels, value)}</small>
+              <small>{metricLevel(metric.levels, value)} · {scoreLabel(value)}</small>
             </div>
           );
         })}
@@ -417,4 +421,8 @@ function ReviewCard({
       <small>Vista #{visitNumber}</small>
     </article>
   );
+}
+
+function scoreLabel(value?: number) {
+  return value === undefined || value === null ? "—" : `${value}/5`;
 }

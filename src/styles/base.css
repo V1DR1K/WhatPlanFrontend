@@ -4,12 +4,15 @@
   --line: #312e31;
   --cream: #fffaf0;
   --muted: #aaa3a3;
-  --coral: #f3af5f;
+  --wp-brand-red: #ff6049;
+  --wp-brand-contrast: #281211;
+  --wp-brand-shadow: #8e3026;
+  --coral: var(--wp-brand-red);
   --lime: #d4ef55;
   --violet: #a978ff;
   --section-accent: var(--coral);
-  --section-contrast: #2a1a0b;
-  --section-shadow: #9c6630;
+  --section-contrast: var(--wp-brand-contrast);
+  --section-shadow: var(--wp-brand-shadow);
   font-family: "DM Sans", sans-serif;
   color: var(--cream);
   background: var(--bg);
@@ -32,7 +35,7 @@ a { color: inherit; }
 .food-orbit span { display: inline-block; transform: translateY(-18px); }
 .eyebrow { margin: 0 0 10px; color: var(--lime); font: 500 11px "DM Mono", ui-monospace, monospace; letter-spacing: 1.5px; }
 .login-card h1 { margin: 0; font: 700 clamp(48px, 9vw, 70px)/.9 "Fraunces", Georgia, serif; letter-spacing: -3px; }
-.login-card h1 span { color: var(--coral); }
+.login-card h1 span { color: var(--wp-brand-red); }
 .intro { margin: 22px auto; color: #c6bfc0; font-size: 17px; line-height: 1.5; }
 .login-card label { display: grid; gap: 6px; margin: 10px 0; color: #d5ced0; font-size: 12px; text-align: left; }
 .login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 9px; outline-color: var(--violet); background: #151415; color: var(--cream); }

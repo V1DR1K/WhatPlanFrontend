@@ -198,6 +198,49 @@
 .entity-detail-header .detail-actions .button {
   width: 100%;
   white-space: nowrap;
+  gap: 12px;
+}
+
+.entity-detail-header .detail-actions .button--primary {
+  padding-block: 8px;
+}
+
+.entity-detail-header .detail-actions .button--primary .button__icon {
+  width: 32px;
+  height: 32px;
+  flex-basis: 32px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--section-contrast) 14%, transparent);
+  font-size: 22px;
+}
+
+.item-date-pager__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-discard__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.experience-review-action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.review-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.review-score > span {
+  color: var(--section-accent);
+  font: 700 12px "DM Mono", ui-monospace, monospace;
 }
 
 .login-card .button,
@@ -252,5 +295,64 @@
   .film-grid,
   .fun-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-date-pager,
+  .item-date-pager__actions,
+  .confirm-dialog__actions,
+  .modal-discard__actions,
+  .experience-gallery__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .item-date-pager label,
+  .modal form > .button,
+  .item-date-pager__actions .button,
+  .experience-review-action .button,
+  .section-title > .button,
+  .confirm-dialog__actions .button,
+  .modal-discard__actions .button,
+  .experience-gallery__actions .button,
+  .experience-gallery__upload,
+  .archived-place .button,
+  .settings-page .settings-add-button {
+    width: 100%;
+  }
+
+  .archived-place {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .archived-place .button {
+    grid-column: 1 / -1;
+  }
+
+  .platform-list article {
+    grid-template-columns: 43px minmax(0, 1fr);
+  }
+
+  .platform-list article .button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .settings-page .category-list {
+    display: grid;
+  }
+
+  .settings-page .category-list > span {
+    display: grid;
+    gap: 8px;
+  }
+
+  .settings-page .category-list .button {
+    width: 100%;
+  }
+
+  .experience-review-action {
+    display: block;
   }
 }

@@ -4,12 +4,15 @@
   --line: #312e31;
   --cream: #fffaf0;
   --muted: #aaa3a3;
-  --coral: #f3af5f;
+  --wp-brand-red: #ff6049;
+  --wp-brand-contrast: #281211;
+  --wp-brand-shadow: #8e3026;
+  --coral: var(--wp-brand-red);
   --lime: #d4ef55;
   --violet: #a978ff;
   --section-accent: var(--coral);
-  --section-contrast: #2a1a0b;
-  --section-shadow: #9c6630;
+  --section-contrast: var(--wp-brand-contrast);
+  --section-shadow: var(--wp-brand-shadow);
   font-family: "DM Sans", sans-serif;
   color: var(--cream);
   background: var(--bg);
@@ -105,7 +108,7 @@ a {
 }
 .login-card h1 span,
 .brand span {
-  color: var(--coral);
+  color: var(--wp-brand-red);
 }
 .intro {
   font-size: 17px;
@@ -242,8 +245,8 @@ a {
   position: relative;
   justify-content: space-between;
   background:
-    radial-gradient(circle at 85% 50%, #f3af5f33, transparent 25%),
-    linear-gradient(115deg, #2a1a0b, #211d2b);
+    radial-gradient(circle at 85% 50%, color-mix(in srgb, var(--section-accent) 25%, transparent), transparent 25%),
+    linear-gradient(115deg, var(--wf-surface, #332000), #211d2b);
 }
 .hero h1 em {
   color: var(--section-accent);
@@ -363,7 +366,7 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #273520;
+  background: var(--wf-surface, #332000);
 }
 .food-poster > span {
   font-size: 73px;
@@ -387,7 +390,7 @@ a {
 }
 .card-top p {
   font-size: 11px;
-  color: var(--lime);
+  color: var(--section-accent);
   margin: 0 0 4px;
 }
 .card-top h3 {
@@ -395,8 +398,8 @@ a {
   font-size: 17px;
 }
 .card-top > b {
-  background: #312a20;
-  color: #ffd77c;
+  background: color-mix(in srgb, var(--section-accent) 14%, var(--panel));
+  color: var(--section-accent);
   height: min-content;
   border-radius: 7px;
   padding: 5px;
@@ -545,7 +548,7 @@ a {
   color: var(--muted);
   line-height: 1.45;
 }
-.modal-discard .danger-button {
+.modal-discard .button--destructive {
   margin-top: 8px;
 }
 .flash-notice {
@@ -704,7 +707,7 @@ a {
   .detail-heading > span {
     font-size: 55px;
   }
-  .detail-heading .main-button {
+  .detail-heading .button {
     width: 100%;
   }
   .item-card img {
@@ -921,20 +924,6 @@ a {
   aspect-ratio: auto;
   object-fit: contain !important;
 }
-.danger-button {
-  width: 100%;
-  margin-top: 12px;
-  padding: 12px 16px;
-  border: 1px solid #ff7b6b;
-  border-radius: 13px;
-  background: #472522;
-  color: #ff9e90;
-  font-weight: 700;
-}
-.danger-button:hover:not(:disabled) {
-  background: #5b2a26;
-}
-
 /* Place highlights are compact enough for cards and comfortably tappable in the form. */
 .place-tags {
   display: flex;
@@ -1019,7 +1008,7 @@ a {
 .tag-create-row input {
   min-width: 0;
 }
-.tag-create-row .secondary-button {
+.tag-create-row .button--secondary {
   padding: 8px 11px;
 }
 .place-score-input {
@@ -1029,7 +1018,7 @@ a {
   justify-content: flex-end;
   gap: 5px;
 }
-.place-score-input .text-button {
+.place-score-input .button--tertiary {
   padding: 0 4px;
   font-size: 11px;
 }
@@ -1109,7 +1098,7 @@ a {
   .ingredient-row--units label:last-of-type {
     grid-column: 1 / -1;
   }
-  .ingredient-row--units .text-button {
+  .ingredient-row--units .button--tertiary {
     grid-column: 1 / -1;
     justify-self: start;
   }
@@ -1192,7 +1181,7 @@ a {
   .tag-settings-form {
     grid-template-columns: 58px minmax(0, 1fr);
   }
-  .tag-settings-form .main-button {
+  .tag-settings-form .button--primary {
     grid-column: 1 / -1;
   }
 }
@@ -1208,7 +1197,7 @@ a {
   .tag-create-row {
     grid-template-columns: 46px minmax(0, 1fr);
   }
-  .tag-create-row .secondary-button {
+  .tag-create-row .button--secondary {
     grid-column: 1 / -1;
   }
 }
@@ -1304,14 +1293,14 @@ a {
 }
 .module-card--food {
   background:
-    radial-gradient(circle at 90% 12%, #6b3b28 0 4%, transparent 27%),
-    linear-gradient(135deg, #322617, #1f1d1d 68%);
-  box-shadow: 7px 7px 0 #9c6630;
+    radial-gradient(circle at 90% 12%, #ff8a00 0 4%, transparent 27%),
+    linear-gradient(135deg, #332000, #1f1d1d 68%);
+  box-shadow: 7px 7px 0 #6b3600;
 }
 .module-card--food:hover,
 .module-card--food:focus-visible {
-  border-color: var(--coral);
-  box-shadow: 10px 12px 0 #9c6630;
+  border-color: #ff8a00;
+  box-shadow: 10px 12px 0 #6b3600;
 }
 .module-card--films {
   background:
@@ -1338,6 +1327,9 @@ a {
 }
 .module-card h2 span {
   color: var(--coral);
+}
+.module-card--food h2 span {
+  color: #ff8a00;
 }
 .module-card--films h2 span {
   color: #c1b7ff;
@@ -2084,13 +2076,13 @@ a {
   .platform-settings-form {
     grid-template-columns: 52px minmax(0, 1fr);
   }
-  .platform-settings-form .main-button {
+  .platform-settings-form .button--primary {
     grid-column: 1/-1;
   }
   .platform-list article {
     grid-template-columns: 39px minmax(0, 1fr) auto;
   }
-  .platform-list article .text-button:last-child {
+  .platform-list article .button--secondary:last-child {
     grid-column: 2/4;
     justify-self: start;
   }
@@ -2195,10 +2187,10 @@ a {
   overflow: visible;
 }
 .food-filter .chips button {
-  background: #d4ef5514;
+  background: color-mix(in srgb, var(--section-accent) 8%, transparent);
 }
 .food-filter .chips button.selected {
-  background: #d4ef5520;
+  background: color-mix(in srgb, var(--section-accent) 14%, var(--panel));
 }
 .food-filter-more {
   letter-spacing: 1px;
@@ -2218,7 +2210,7 @@ a {
   color: var(--muted);
   line-height: 1.5;
 }
-.review-prompt .secondary-button {
+.review-prompt .button--secondary {
   justify-self: center;
 }
 .film-form {
@@ -2318,7 +2310,7 @@ a {
   .genre-settings-form {
     grid-template-columns: 52px minmax(0, 1fr);
   }
-  .genre-settings-form .main-button {
+  .genre-settings-form .button--primary {
     grid-column: 1/-1;
   }
 }
@@ -2731,7 +2723,7 @@ a {
 .fun-photo-gallery article > button:first-child:focus-visible img {
   transform: scale(1.04);
 }
-.fun-photo-gallery .text-button {
+.fun-photo-gallery .button--tertiary {
   margin-top: 6px;
 }
 .fun-cover-label {
@@ -2882,7 +2874,7 @@ a {
   color: #ffe9f5 !important;
   font-weight: 700;
 }
-.fun-catalog-root .text-button {
+.fun-catalog-root .button--tertiary {
   color: #ff9cd4;
 }
 .fun-active-toggle {
@@ -2970,13 +2962,13 @@ a {
   .fun-catalog-form select {
     grid-column: 1/-1;
   }
-  .fun-catalog-form .main-button {
+  .fun-catalog-form .button--primary {
     grid-column: 1/-1;
   }
   .fun-catalog-list header {
     grid-template-columns: 39px minmax(0, 1fr) auto;
   }
-  .fun-catalog-list header .text-button:last-child {
+  .fun-catalog-list header .button--tertiary:last-child {
     grid-column: 2/4;
     justify-self: start;
   }

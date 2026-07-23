@@ -1,5 +1,6 @@
 import { useState, type CSSProperties, type MouseEventHandler } from "react";
 import { mediaUrl } from "../../lib/api";
+import { Button } from "./Button";
 
 export type PhotoOrientation = "landscape" | "portrait" | "square";
 
@@ -111,14 +112,15 @@ export function AdaptivePhoto({
           onClick={() => setExpanded(false)}
           role="dialog"
         >
-          <button
+          <Button
             className="photo-lightbox-close"
+            icon="✕"
             type="button"
+            variant="icon"
             aria-label="Cerrar foto ampliada"
+            title="Cerrar foto ampliada"
             onClick={() => setExpanded(false)}
-          >
-            ×
-          </button>
+          />
           <ResponsiveImage
             alt={`Foto ampliada: ${alt}`}
             fullSrc={resolvedFullSrc}

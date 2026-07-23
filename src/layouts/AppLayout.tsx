@@ -24,11 +24,11 @@ export function AppLayout() {
       <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
       <div className="header-actions">
         {(inFood || inFilms || inCook || inFun) && <>
-          <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">⌂</Link>
-          <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={mobileBackTarget} aria-label="Volver" title="Volver">←</Link>
+          <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
+          <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={mobileBackTarget} aria-label="Volver" title="Volver">↩️</Link>
         </>}
-        {canManage && (inFood || inFilms || inFun) && <Link className={buttonClassName('icon', 'round')} to={settingsLink} aria-label="Configuración" title="Configuración">⚙</Link>}
-        <Button className="avatar" icon={user?.username[0].toUpperCase()} variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
+        {canManage && (inFood || inFilms || inFun) && <Link className={buttonClassName('icon', 'round')} to={settingsLink} aria-label="Configuración" title="Configuración">⚙️</Link>}
+        <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
       </div>
     </header>
     <Outlet />

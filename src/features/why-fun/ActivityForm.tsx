@@ -199,16 +199,16 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
                   }
                 />
               </label>
-              <Button variant="tertiary" icon="×" type="button" onClick={() => setSchedules((current) => current.filter((_, position) => position !== index))}>
+              <Button variant="tertiary" icon="✕" type="button" onClick={() => setSchedules((current) => current.filter((_, position) => position !== index))}>
                 Quitar
               </Button>
             </div>
           ))}
-          <Button variant="secondary" icon="＋" type="button" onClick={() => setSchedules((current) => [...current, emptySchedule()])}>
+          <Button variant="secondary" icon="➕" type="button" onClick={() => setSchedules((current) => [...current, emptySchedule()])}>
             Agregar horario
           </Button>
         </fieldset>
-        <Button icon={activity ? "✓" : "＋"} disabled={mutation.isPending}>
+        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending}>
           {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
         </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}

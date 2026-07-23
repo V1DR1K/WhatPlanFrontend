@@ -4,16 +4,19 @@ import { Button } from "./Button";
 type EntityDetailActionsProps = {
   destructive: {
     disabled?: boolean;
+    icon?: ReactNode;
     label: string;
     onClick: () => void;
   };
   primary: {
     disabled?: boolean;
+    icon?: ReactNode;
     label: string;
     onClick: () => void;
   };
   secondary: {
     disabled?: boolean;
+    icon?: ReactNode;
     label: string;
     onClick: () => void;
   };
@@ -28,7 +31,7 @@ export function EntityDetailActions({
     <div className="detail-actions">
       <Button
         disabled={primary.disabled}
-        icon="＋"
+        icon={primary.icon ?? "➕"}
         onClick={primary.onClick}
         type="button"
         variant="primary"
@@ -37,7 +40,7 @@ export function EntityDetailActions({
       </Button>
       <Button
         disabled={secondary.disabled}
-        icon="✎"
+        icon={secondary.icon ?? "✏️"}
         onClick={secondary.onClick}
         type="button"
         variant="secondary"
@@ -46,7 +49,7 @@ export function EntityDetailActions({
       </Button>
       <Button
         disabled={destructive.disabled}
-        icon="×"
+        icon={destructive.icon ?? "🗑️"}
         onClick={destructive.onClick}
         type="button"
         variant="destructive"

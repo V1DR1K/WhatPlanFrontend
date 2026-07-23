@@ -120,7 +120,7 @@
   margin-top: 12px;
 }
 .pending-card .food-poster {
-  background: linear-gradient(135deg, #39432c, #222d1a);
+  background: linear-gradient(135deg, var(--wf-surface, #332000), var(--wf-surface-soft, #241600));
 }
 .pending-badge {
   position: absolute;
@@ -128,14 +128,14 @@
   top: 10px;
   padding: 5px 7px;
   border-radius: 7px;
-  background: var(--lime);
-  color: #222719;
+  background: var(--section-accent);
+  color: var(--section-contrast);
   font: 500 9px "DM Mono";
   letter-spacing: 0.7px;
 }
 .pending-score {
-  color: var(--lime) !important;
-  background: #263023 !important;
+  color: var(--section-accent) !important;
+  background: color-mix(in srgb, var(--section-accent) 14%, var(--panel)) !important;
 }
 .empty-state {
   border: 1px dashed var(--line);
@@ -523,7 +523,7 @@
   gap: 7px;
   padding: 11px 13px;
 }
-.home-recipe-detail__actions .main-button {
+.home-recipe-detail__actions .button--primary {
   min-height: 48px;
 }
 .home-recipe-detail__content {
@@ -607,14 +607,14 @@
 .ingredient-row label {
   margin: 0 !important;
 }
-.ingredient-row .text-button {
+.ingredient-row .button--tertiary {
   min-height: 42px;
   padding: 0 5px;
 }
-.ingredient-fields > .secondary-button {
+.ingredient-fields > .button--secondary {
   justify-self: start;
 }
-.home-recipe-form .main-button {
+.home-recipe-form .button--primary {
   width: 100%;
   margin-top: 8px;
 }
@@ -714,7 +714,7 @@
     line-height: 1.15;
     white-space: nowrap;
   }
-  .home-recipe-detail__actions .main-button {
+  .home-recipe-detail__actions .button--primary {
     min-height: 48px;
   }
   .home-recipe-detail__content {
@@ -723,7 +723,7 @@
   .ingredient-row {
      grid-template-columns: 78px minmax(0, 1fr);
   }
-  .ingredient-row .text-button {
+  .ingredient-row .button--tertiary {
     grid-column: 1/-1;
     justify-self: start;
   }
@@ -749,7 +749,7 @@
   gap: 10px;
   margin-top: 4px;
 }
-.confirm-dialog__actions .danger-button {
+.confirm-dialog__actions .button--destructive {
   margin: 0;
 }
 .recipe-card-actions {
@@ -806,7 +806,7 @@
   color: var(--muted);
   font-size: 11px;
 }
-.home-recipe-review .secondary-button {
+.home-recipe-review .button--secondary {
   margin-top: 18px;
 }
 .quick-nav-action {
@@ -817,7 +817,7 @@
   margin-bottom: 16px;
 }
 .item-card-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: space-around; }
-.item-card-actions .secondary-button { padding: 7px 9px; font-size: 12px; }
+.item-card-actions .button--secondary { padding: 7px 9px; font-size: 12px; }
 .item-delete-button { color: #ff9e90; border-color: #ff7b6b; }
 .item-review-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .item-review { padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: #181618; }

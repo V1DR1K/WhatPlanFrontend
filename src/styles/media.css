@@ -3,7 +3,17 @@
   --media-surface: #090909;
 }
 
-.food-shell { --section-accent: #f3af5f; --section-contrast: #2a1a0b; --section-shadow: #9c6630; }
+.food-shell {
+  --wf-accent: #ff8a00;
+  --wf-contrast: #2a1600;
+  --wf-shadow: #6b3600;
+  --wf-surface: #332000;
+  --wf-surface-soft: #241600;
+  --wf-muted: #ffd6a1;
+  --section-accent: var(--wf-accent);
+  --section-contrast: var(--wf-contrast);
+  --section-shadow: var(--wf-shadow);
+}
 .film-shell { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
 .cook-shell { --section-accent: var(--lime); --section-contrast: #26351d; --section-shadow: #394321; }
 .fun-shell { --section-accent: #ff8bca; --section-contrast: #351528; --section-shadow: #7c376b; }
@@ -138,10 +148,10 @@
 
 /* WhereFood keeps review density warm and structured without borrowing another section's accent. */
 .food-shell .place-review {
-  --food-review-surface: #322617;
-  --food-review-line: #6a4722;
-  --food-review-soft: #2a1a0b;
-  --food-review-muted: #e8c28b;
+  --food-review-surface: var(--wf-surface);
+  --food-review-line: color-mix(in srgb, var(--wf-accent) 48%, var(--line));
+  --food-review-soft: var(--wf-surface-soft);
+  --food-review-muted: var(--wf-muted);
   border-color: var(--food-review-line);
   background: linear-gradient(145deg, var(--food-review-surface), var(--food-review-soft));
   padding: 14px;
@@ -157,15 +167,6 @@
   font-size: 15px;
 }
 
-.food-shell .place-review__heading .secondary-button {
-  min-height: 36px;
-  padding: 7px 9px;
-  border-color: #f3af5f;
-  color: #f7d39e;
-  background: #2a1a0b;
-  font-size: 12px;
-}
-
 .food-shell .place-review__rating {
   display: flex;
   align-items: center;
@@ -174,7 +175,7 @@
 }
 
 .food-shell .place-review__rating > span {
-  color: #f7d39e;
+  color: var(--wf-muted);
   font: 600 11px "DM Mono", ui-monospace, monospace;
 }
 
@@ -186,17 +187,17 @@
   min-width: 20px;
   min-height: 28px;
   padding: 0 !important;
-  color: #745852;
+  color: color-mix(in srgb, var(--wf-accent) 24%, var(--line));
   font-size: 18px !important;
 }
 
 .food-shell .place-review .star-control .filled {
-  color: #f3af5f;
+  color: var(--wf-accent);
 }
 
 .food-shell .place-review > p {
   margin: 0 0 10px;
-  color: #fff0d8;
+  color: var(--wf-muted);
   font-size: 13px;
   line-height: 1.42;
 }
@@ -216,9 +217,9 @@
   gap: 6px;
   min-width: 0;
   padding: 6px 7px;
-  border: 1px solid color-mix(in srgb, #f3af5f 42%, #322617);
+  border: 1px solid color-mix(in srgb, var(--wf-accent) 42%, var(--wf-surface));
   border-radius: 8px;
-  background: #2a1a0b;
+  background: var(--wf-surface-soft);
   color: var(--food-review-muted);
   font-size: 10px;
 }
@@ -231,14 +232,14 @@
 }
 
 .food-shell .place-review__metrics strong {
-  color: #f3af5f;
+  color: var(--wf-accent);
   font: 700 12px "DM Mono", ui-monospace, monospace;
 }
 
 .food-shell .place-review > small {
   display: block;
   margin-top: 10px;
-  color: #d99d8e;
+  color: var(--wf-muted);
   font-size: 10px;
 }
 
@@ -269,7 +270,7 @@
 }
 
 /* Creation and editing modals keep alternate actions comfortably tappable. */
-.modal form .secondary-button {
+.modal form > .button--secondary {
   display: inline-flex;
   width: 100%;
   min-height: 44px;
