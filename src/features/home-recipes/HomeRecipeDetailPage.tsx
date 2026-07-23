@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { StarRating } from "../../components/ui/StarRating";
-import { mediaUrl } from "../../lib/api";
+import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { Cooking, CookingReview } from "../../types/domain";
 import { CookingForm } from "./CookingForm";
@@ -54,15 +54,15 @@ export function HomeRecipeDetailPage() {
   }, [list, selectedCookingId]);
 
   if (!validId || recipe.isError || (!recipe.isLoading && !recipe.data)) {
-    return <section className="home-recipe-detail"><Link to="/how-cook">← Volver a WhoCook</Link><p className="form-error">No pudimos abrir esta receta.</p></section>;
+    return <section className="home-recipe-detail"><p className="form-error">No pudimos abrir esta receta.</p></section>;
   }
   if (recipe.isLoading) return <p className="muted" aria-busy="true">Cargando receta…</p>;
 
   const value = recipe.data!;
   const profilePhoto = value.photoUrl ?? value.thumbnailUrl;
+  const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="home-recipe-detail">
-      <Link to="/how-cook">← Volver a WhoCook</Link>
       <div className="home-recipe-detail__head">
         <div className="home-recipe-detail__photo">
           {profilePhoto ? <img className="home-recipe-detail__image" src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
@@ -95,10 +95,10 @@ export function HomeRecipeDetailPage() {
             </label>
             {current && <>
               <button className="secondary-button" type="button" onClick={() => setEditingCooking(current)}>✎ Editar cocinada</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(null)}>＋ Agregar reseña</button>
+              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
             </>}
           </div>
-          {current && <CookingExperience cooking={current} onEditReview={setReviewing} />}
+          {current && <CookingExperience cooking={current} />}
         </> : <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
       </section>
       {editingRecipe && <RecipeForm recipe={value} onClose={() => setEditingRecipe(false)} />}
@@ -109,19 +109,13 @@ export function HomeRecipeDetailPage() {
   );
 }
 
-function CookingExperience({
-  cooking,
-  onEditReview,
-}: {
-  cooking: Cooking;
-  onEditReview: (review: CookingReview | null) => void;
-}) {
+function CookingExperience({ cooking }: { cooking: Cooking }) {
   return (
     <div className="experience-detail">
       <p className="muted">{dateLabel(cooking.cookedOn)} · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠 Casa de Tomás" : "🏡 Casa de Avril"} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
       <section className="reviews-section">
         <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS</p><h2>Cómo salió</h2></div><strong>{cooking.reviews.length}</strong></div>
-        {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3><button className="secondary-button" type="button" onClick={() => onEditReview(review)}>✎ Editar</button></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}
+        {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}
       </section>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import { StarRating } from "../../components/ui/StarRating";
@@ -22,7 +22,6 @@ export function FilmDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  const location = useLocation();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [addingView, setAddingView] = useState(false);
@@ -70,14 +69,7 @@ export function FilmDetailPage() {
     filmQuery.isError ||
     (!filmQuery.isLoading && !filmQuery.data)
   )
-    return (
-      <section className="film-detail">
-        <Link to={`/films${location.search}`}>← Volver a WhichMovie</Link>
-        <p className="form-error">
-          No pudimos abrir esta película. Probá nuevamente desde la sala.
-        </p>
-      </section>
-    );
+    return <section className="film-detail"><p className="form-error">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
   if (filmQuery.isLoading) return <p>Cargando película…</p>;
 
   const film = filmQuery.data!;
@@ -103,7 +95,6 @@ export function FilmDetailPage() {
 
   return (
     <section className="film-detail">
-      <Link to={`/films${location.search}`}>← Volver a WhichMovie</Link>
       <div className="film-detail__head">
         <div className="film-detail__poster">
           {posterUrl ? (
@@ -275,6 +266,13 @@ export function FilmDetailPage() {
                 >
                   × Borrar vista
                 </button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setReviewing({ view: selectedView, review: ownReview })}
+                >
+                  {ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}
+                </button>
               </>}
           </div>
         )}
@@ -298,24 +296,9 @@ export function FilmDetailPage() {
                   key={review.id}
                   review={review}
                   visitNumber={visitNumber}
-                  onEdit={() => setReviewing({ view: selectedView, review })}
                 />
               ))}
             </div>
-            {!ownReview && (
-              <div className="film-review-add">
-                <p>
-                  Esta vista ya está registrada. Podés sumar tu reseña sin crear
-                  otra función.
-                </p>
-                <button
-                  className="secondary-button"
-                  onClick={() => setReviewing({ view: selectedView })}
-                >
-                  ＋ Agregar mi reseña
-                </button>
-              </div>
-            )}
           </>
         )}
         {!views.length && (
@@ -389,11 +372,9 @@ export function FilmDetailPage() {
 function ReviewCard({
   review,
   visitNumber,
-  onEdit,
 }: {
   review: FilmReview;
   visitNumber: number;
-  onEdit: () => void;
 }) {
   const own = review.author === session.get()?.username;
    const author = review.author;
@@ -409,7 +390,6 @@ function ReviewCard({
       <div>
         <span className="review-avatar">{initial}</span>
         <h3>{own ? "Tu reseña" : `Reseña de ${authorLabel}`}</h3>
-        <button className="secondary-button" type="button" aria-label="Editar reseña" onClick={onEdit}>✎ Editar</button>
       </div>
       <StarRating
         label={`Puntuación de ${authorLabel}`}

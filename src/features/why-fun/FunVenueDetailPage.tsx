@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
-import { mediaUrl } from "../../lib/api";
+import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types/domain";
 import { ActivityForm } from "./ActivityForm";
@@ -84,15 +84,15 @@ export function FunVenueDetailPage() {
   }, [list, selectedVisitId]);
 
   if (!validId || activity.isError || (!activity.isLoading && !activity.data)) {
-    return <section className="fun-detail"><Link to="/why-fun">← Volver a WhyFun</Link><p className="form-error">No pudimos abrir esta actividad.</p></section>;
+    return <section className="fun-detail"><p className="form-error">No pudimos abrir esta actividad.</p></section>;
   }
   if (activity.isLoading) return <p className="muted" aria-busy="true">Cargando actividad…</p>;
 
   const value = activity.data!;
   const profilePhoto = value.profilePhoto?.url ?? value.profilePhoto?.thumbnailUrl;
+  const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="fun-detail">
-      <Link to="/why-fun">← Volver a WhyFun</Link>
       <div className="fun-detail__head">
         <div className="fun-detail__cover">
           {profilePhoto ? <img src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <span>{value.subcategory.icon}</span>}
@@ -129,10 +129,10 @@ export function FunVenueDetailPage() {
             </label>
             {current && <>
               <button className="secondary-button" type="button" onClick={() => setEditingVisit(current)}>✎ Editar salida</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(null)}>＋ Agregar reseña</button>
+              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
             </>}
           </div>
-          {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList reviews={current.reviews} onEdit={setReviewing} /></div>}
+          {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList reviews={current.reviews} /></div>}
         </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
       {editing && <ActivityForm activity={value} onClose={() => setEditing(false)} />}
@@ -144,11 +144,11 @@ export function FunVenueDetailPage() {
   );
 }
 
-function ReviewList({ reviews, onEdit }: { reviews: ActivityReview[]; onEdit: (review: ActivityReview | null) => void }) {
+function ReviewList({ reviews }: { reviews: ActivityReview[] }) {
   return (
     <section className="reviews-section">
       <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS DE ESTA SALIDA</p><h2>Cómo la pasaron</h2></div><strong>{reviews.length}</strong></div>
-      {reviews.length ? <div className="fun-review-columns">{reviews.map((review) => <article className="fun-review-card" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3><button className="secondary-button" type="button" onClick={() => onEdit(review)}>✎ Editar</button></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas.</p>}
+      {reviews.length ? <div className="fun-review-columns">{reviews.map((review) => <article className="fun-review-card" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas.</p>}
     </section>
   );
 }

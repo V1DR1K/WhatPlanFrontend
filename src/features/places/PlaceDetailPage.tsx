@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
@@ -100,7 +100,7 @@ export function PlaceDetailPage() {
   }, [selectedVisitId, visits.data]);
 
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
-    return <section className="detail"><Link to="/food">← Volver a WhereFood</Link><p className="form-error">No pudimos cargar este lugar.</p></section>;
+    return <section className="detail"><p className="form-error">No pudimos cargar este lugar.</p></section>;
   }
   if (place.isLoading) return <p className="muted" aria-busy="true">Cargando lugar…</p>;
 
@@ -110,10 +110,11 @@ export function PlaceDetailPage() {
   const mapsUrl = venue.mapsUrl || mapsSearch(venue.address);
   const photoWidth = venue.photoWidth ?? undefined;
   const photoHeight = venue.photoHeight ?? undefined;
+  const venueOwnReview = venue.reviews.find((review) => review.author === session.get()?.username);
+  const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
 
   return (
     <section className="detail">
-      <Link to="/food">← Volver a WhereFood</Link>
       <div className="detail-heading">
         <div className="place-cover">
           {venue.photoUrl || venue.thumbnailUrl ? (
@@ -162,7 +163,7 @@ export function PlaceDetailPage() {
       <section className="reviews-section place-venue-reviews">
         <div className="section-title">
           <div><p className="eyebrow">EL LUGAR</p><h2>Espacio y atención</h2></div>
-          <button className="secondary-button" type="button" onClick={() => setReviewingPlace(true)}>✎ Opinar del lugar</button>
+          <button className="secondary-button" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
         </div>
         {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
       </section>
@@ -188,11 +189,11 @@ export function PlaceDetailPage() {
             </label>
             {selectedVisitId && <>
               <button className="secondary-button" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>✎ Editar fecha</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(null)}>＋ Agregar reseña</button>
+              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
             </>}
           </div>
           {visit.isLoading && <p className="muted" aria-busy="true">Cargando visita…</p>}
-          {current && <VisitExperience visit={current} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} onEditReview={setReviewing} />}
+          {current && <VisitExperience visit={current} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
@@ -211,13 +212,11 @@ function VisitExperience({
   onUpload,
   onDeletePhoto,
   onSetCover,
-  onEditReview,
 }: {
   visit: PlaceVisit;
   onUpload: (files: File[]) => Promise<unknown>;
   onDeletePhoto: (photo: ExperiencePhoto) => void;
   onSetCover: (photo: ExperiencePhoto) => void;
-  onEditReview: (review: PlaceVisitReview | null) => void;
 }) {
   return (
     <div className="experience-detail">
@@ -233,7 +232,6 @@ function VisitExperience({
             <article className="place-review" key={review.id}>
               <div className="place-review__heading">
                 <h3>Reseña de {review.author}</h3>
-                <button className="secondary-button" type="button" onClick={() => onEditReview(review)}>✎ Editar</button>
               </div>
               <div className="place-review__rating">
                 <StarRating label={`Puntuación de ${review.author}`} value={review.overall} />

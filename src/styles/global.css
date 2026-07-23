@@ -255,6 +255,9 @@ a {
     border-color 0.18s ease,
     background 0.18s ease;
 }
+.round--back {
+  display: none;
+}
 .round:hover,
 .round:focus-visible,
 .avatar:hover,
@@ -382,6 +385,7 @@ a {
   display: flex;
   align-items: end;
   justify-content: space-between;
+  gap: 12px;
   padding: 34px 0 20px;
 }
 .section-title h2,
@@ -394,6 +398,12 @@ a {
 .section-title strong {
   font: 500 12px "DM Mono";
   color: var(--muted);
+}
+@media (max-width: 540px) {
+  .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 .place-grid {
   display: grid;
