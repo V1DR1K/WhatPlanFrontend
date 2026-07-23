@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
 import { showNotice } from "../../lib/flash";
 import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { Place } from "../../types/domain";
@@ -158,9 +159,9 @@ export function PlaceForm({
             ))}
           </div>
         </fieldset>
-        <button className="main-button" disabled={pending}>
-          {pending ? "Guardando…" : place ? "✓ Guardar lugar" : "＋ Agregar lugar"}
-        </button>
+        <Button icon={place ? "✓" : "＋"} disabled={pending}>
+          {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
+        </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}
       </form>
     </Modal>

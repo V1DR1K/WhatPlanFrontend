@@ -1,22 +1,15 @@
-.text-button {
-  border: 0;
-  background: transparent;
-  color: var(--section-accent, var(--lime));
-  font-size: 11px;
-  padding: 0 0 0 7px;
-}
 :root {
   --bg: #121112;
   --panel: #1c1a1c;
   --line: #312e31;
   --cream: #fffaf0;
   --muted: #aaa3a3;
-  --coral: #ff6049;
+  --coral: #f3af5f;
   --lime: #d4ef55;
   --violet: #a978ff;
   --section-accent: var(--coral);
-  --section-contrast: #281211;
-  --section-shadow: #8e3026;
+  --section-contrast: #2a1a0b;
+  --section-shadow: #9c6630;
   font-family: "DM Sans", sans-serif;
   color: var(--cream);
   background: var(--bg);
@@ -142,43 +135,6 @@ a {
   color: var(--cream);
   outline-color: var(--violet);
 }
-.main-button {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 0;
-  background: var(--section-accent);
-  color: var(--section-contrast);
-  border-radius: 13px;
-  padding: 14px 20px;
-  font-weight: 800;
-  box-shadow: 4px 4px 0 var(--section-shadow);
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    opacity 0.18s ease;
-}
-.main-button:hover:not(:disabled),
-.main-button:focus-visible {
-  transform: translate(1px, 1px);
-  box-shadow: 2px 2px 0 var(--section-shadow);
-}
-.main-button:focus-visible {
-  outline: 2px solid var(--lime);
-  outline-offset: 3px;
-}
-.main-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-  box-shadow: none;
-}
-.login-card .main-button,
-.modal .main-button {
-  width: 100%;
-  margin-top: 10px;
-}
 .tiny,
 .byline {
   font-size: 12px;
@@ -286,8 +242,8 @@ a {
   position: relative;
   justify-content: space-between;
   background:
-    radial-gradient(circle at 85% 50%, #ff604933, transparent 25%),
-    linear-gradient(115deg, #281a1e, #211d2b);
+    radial-gradient(circle at 85% 50%, #f3af5f33, transparent 25%),
+    linear-gradient(115deg, #2a1a0b, #211d2b);
 }
 .hero h1 em {
   color: var(--section-accent);
@@ -323,9 +279,7 @@ a {
   padding: 22px 0;
   overflow: auto;
 }
-.quick-nav button,
-.chips button,
-.secondary-button {
+.chips button {
   --button-accent: var(--section-accent);
   white-space: nowrap;
   border: 1px solid color-mix(in srgb, var(--button-accent) 45%, var(--line));
@@ -334,26 +288,7 @@ a {
   background: transparent;
   color: var(--button-accent);
 }
-.food-shell .secondary-button,
-.secondary-button--food {
-  --button-accent: #ff6049;
-}
-.film-shell .secondary-button,
-.secondary-button--film {
-  --button-accent: #b8adff;
-}
-.cook-shell .secondary-button,
-.secondary-button--cook {
-  --button-accent: #d4ef55;
-}
-.fun-shell .secondary-button,
-.secondary-button--fun {
-  --button-accent: #ff8bca;
-}
-.quick-nav button,
-.chips button,
-.secondary-button,
-.text-button {
+.chips button {
   min-height: 44px;
 }
 .quick-nav .active {
@@ -816,12 +751,6 @@ a {
   border-radius: 17px;
   background: #273520;
 }
-.detail-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
 .place-cover {
   grid-column: 1 / -1;
   position: relative;
@@ -917,12 +846,6 @@ a {
   }
   .detail-heading {
     grid-template-columns: 1fr;
-  }
-  .detail-actions {
-    justify-content: stretch;
-  }
-  .detail-actions button {
-    width: 100%;
   }
   .place-cover {
     height: 250px;
@@ -1382,13 +1305,13 @@ a {
 .module-card--food {
   background:
     radial-gradient(circle at 90% 12%, #6b3b28 0 4%, transparent 27%),
-    linear-gradient(135deg, #352723, #1f1d1d 68%);
-  box-shadow: 7px 7px 0 #91513b;
+    linear-gradient(135deg, #322617, #1f1d1d 68%);
+  box-shadow: 7px 7px 0 #9c6630;
 }
 .module-card--food:hover,
 .module-card--food:focus-visible {
   border-color: var(--coral);
-  box-shadow: 10px 12px 0 #91513b;
+  box-shadow: 10px 12px 0 #9c6630;
 }
 .module-card--films {
   background:
@@ -1568,47 +1491,6 @@ a {
   bottom: -10px;
   font-size: 0.3em;
   transform: rotate(20deg);
-}
-.add-film-button {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 13px 10px 10px;
-  border: 1px solid #b7abff;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #b8adff, #8975d9);
-  color: #201b32;
-  text-align: left;
-  font-weight: 800;
-  box-shadow: 4px 4px 0 #4f427e;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.add-film-button:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #4f427e;
-}
-.add-film-button small {
-  display: block;
-  font: 500 9px "DM Mono";
-  letter-spacing: 1px;
-  opacity: 0.76;
-}
-.add-film-button > b {
-  margin-left: 4px;
-  font-size: 22px;
-}
-.add-film-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #b8adff;
-  color: #312653;
-  font-size: 23px;
-  line-height: 1;
 }
 .film-controls {
   display: flex;
@@ -2078,12 +1960,6 @@ a {
   .film-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .film-detail__head {
-    grid-template-columns: 180px minmax(0, 1fr);
-  }
-  .film-detail__head .detail-actions {
-    grid-column: 1/-1;
-  }
   .picks-orbit {
     right: 0;
   }
@@ -2187,26 +2063,12 @@ a {
   .form-columns {
     grid-template-columns: 1fr;
   }
-  .film-detail__head {
-    grid-template-columns: 105px minmax(0, 1fr);
-    gap: 15px;
-  }
   .film-detail__poster {
     min-height: 158px;
     border-radius: 13px;
   }
   .film-detail h1 {
     font-size: 35px;
-  }
-  .film-detail__head .detail-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .film-detail__head .detail-actions button {
-    width: 100%;
-    padding: 10px 7px;
-    font-size: 12px;
   }
   .watch-counter {
     align-items: stretch;
@@ -2571,47 +2433,6 @@ a {
   font-size: 0.3em;
   transform: rotate(20deg);
 }
-.add-fun-button {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 13px 10px 10px;
-  border: 1px solid #ff9ed3;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ff8bca, #e46cab);
-  color: #351528;
-  text-align: left;
-  font-weight: 800;
-  box-shadow: 4px 4px 0 #7c376b;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.add-fun-button:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #7c376b;
-}
-.add-fun-button > span:first-child {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #ff6fbe;
-  color: #fff;
-  font-size: 23px;
-  line-height: 1;
-}
-.add-fun-button small {
-  display: block;
-  font: 500 9px "DM Mono";
-  letter-spacing: 1px;
-  opacity: 0.76;
-}
-.add-fun-button > b {
-  margin-left: 4px;
-  font-size: 22px;
-}
 .fun-controls {
   display: grid;
   gap: 14px;
@@ -2802,15 +2623,6 @@ a {
 .fun-detail__meta .address-link,
 .fun-detail__meta .fun-detail-rating {
   margin: 0;
-}
-.fun-detail__head .detail-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-  width: 100%;
-}
-.fun-detail__head .detail-actions button {
-  width: 100%;
 }
 .fun-detail-rating {
   color: var(--muted);
@@ -3132,13 +2944,6 @@ a {
   }
   .fun-detail__head {
     gap: 17px;
-  }
-  .fun-detail__head .detail-actions {
-    gap: 8px;
-  }
-  .fun-detail__head .detail-actions button {
-    padding: 10px 7px;
-    font-size: 12px;
   }
   .fun-detail-grid,
   .fun-review-columns {

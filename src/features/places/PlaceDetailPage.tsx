@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { session } from "../../lib/api";
@@ -115,8 +117,18 @@ export function PlaceDetailPage() {
 
   return (
     <section className="detail">
-      <div className="detail-heading">
-        <div className="place-cover">
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{ label: "Borrar lugar", onClick: () => setConfirmingDelete(true) }}
+            primary={{ label: "Registrar visita", onClick: () => setEditingVisit(null) }}
+            secondary={{ label: "Editar lugar", onClick: () => setEditingPlace(true) }}
+          />
+        }
+        className="place-detail__head"
+        eyebrow={`LUGAR COMPARTIDO · ${venue.category.name}`}
+        media={
+          <div className="place-cover">
           {venue.photoUrl || venue.thumbnailUrl ? (
             <AdaptivePhoto
               alt={`Foto de ${venue.name}`}
@@ -129,10 +141,10 @@ export function PlaceDetailPage() {
           ) : (
             <div className="place-cover-empty" aria-label="Lugar sin foto">{venue.category.icon}</div>
           )}
-        </div>
-        <div>
-          <p className="eyebrow">LUGAR COMPARTIDO · {venue.category.name}</p>
-          <h1>{venue.name}</h1>
+          </div>
+        }
+        metadata={
+          <>
           <p>
             {mapsUrl ? (
               <a className="address-link" href={mapsUrl} target="_blank" rel="noreferrer">
@@ -142,19 +154,10 @@ export function PlaceDetailPage() {
           </p>
           {venue.sourceUrl && <a className="source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
           <p className="byline">Agregado por {venue.author}</p>
-        </div>
-        <div className="detail-actions detail-actions--food">
-          <button className="main-button detail-actions__primary" type="button" onClick={() => setEditingVisit(null)}>
-            ＋ Registrar visita
-          </button>
-          <button className="secondary-button" type="button" onClick={() => setEditingPlace(true)}>
-            ✎ Editar lugar
-          </button>
-          <button className="danger-button" type="button" onClick={() => setConfirmingDelete(true)}>
-            × Borrar lugar
-          </button>
-        </div>
-      </div>
+          </>
+        }
+        title={venue.name}
+      />
       <section className="rating-breakdown" aria-label="Promedios del lugar">
         <div><span>Experiencia</span><strong>{venue.rating ? venue.rating.toFixed(1) : "-"}</strong></div>
         <div><span>Sabor</span><strong>{venue.tasteAverage ? venue.tasteAverage.toFixed(1) : "-"}</strong></div>
@@ -163,7 +166,7 @@ export function PlaceDetailPage() {
       <section className="reviews-section place-venue-reviews">
         <div className="section-title">
           <div><p className="eyebrow">EL LUGAR</p><h2>Espacio y atención</h2></div>
-          <button className="secondary-button" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
+          <Button icon={venueOwnReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button>
         </div>
         {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
       </section>
@@ -188,8 +191,8 @@ export function PlaceDetailPage() {
               </select>
             </label>
             {selectedVisitId && <>
-              <button className="secondary-button" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>✎ Editar fecha</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
+              <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button>
+              <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
             </>}
           </div>
           {visit.isLoading && <p className="muted" aria-busy="true">Cargando visita…</p>}

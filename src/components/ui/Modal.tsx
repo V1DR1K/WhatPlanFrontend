@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { Button } from './Button';
 
 type ModalProps = {
   onClose: () => void;
@@ -55,7 +56,7 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
       <button className="close" type="button" onClick={requestClose} disabled={pending} aria-label="Cerrar">×</button>
       {children}
       {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">
-        <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><button className="secondary-button" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</button><button className="danger-button" type="button" onClick={onClose}>Descartar</button></div>
+        <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><Button variant="secondary" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="×" type="button" onClick={onClose}>Descartar</Button></div>
       </div>}
     </section>
   </div>;

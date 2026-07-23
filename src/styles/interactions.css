@@ -82,11 +82,6 @@
   font-size: 11px;
   color: var(--muted);
 }
-.food-counter-add {
-  border-color: #ff826f;
-  background: linear-gradient(135deg, var(--coral), #ff835e);
-  color: #281211;
-}
 .author-item-groups {
   display: grid;
   gap: 25px;
@@ -103,47 +98,6 @@
 }
 .quick-nav-action {
   padding: 18px 0;
-}
-.add-place-button {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 13px 10px 10px;
-  border: 1px solid #ff826f;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #ff835e, var(--coral));
-  color: #281211;
-  text-align: left;
-  font-weight: 800;
-  box-shadow: 4px 4px 0 #8e3026;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.add-place-button:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #8e3026;
-}
-.add-place-button small {
-  display: block;
-  font: 500 9px "DM Mono";
-  letter-spacing: 1px;
-  opacity: 0.76;
-}
-.add-place-button > b {
-  font-size: 22px;
-  margin-left: 4px;
-}
-.add-place-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: #ff835e;
-  color: #281211;
-  font-size: 23px;
-  line-height: 1;
 }
 .item-card-heading {
   display: flex;
@@ -190,11 +144,6 @@
   color: var(--muted);
   font-size: 14px;
 }
-.detail-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
 .source-link,
 .address-link {
   display: inline-block;
@@ -230,29 +179,6 @@
   .inline-form input {
     font-size: 16px;
   }
-  .detail-heading {
-    display: grid;
-    grid-template-columns: 55px minmax(0, 1fr);
-    align-items: start;
-    gap: 12px;
-  }
-  .detail-heading > span {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-  }
-  .detail-heading > div:not(.detail-actions) {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .detail-actions {
-    grid-column: 2;
-    grid-row: 2;
-    width: 100%;
-    flex-wrap: wrap;
-  }
-  .detail-actions button {
-    flex: 1;
-  }
   .rating-breakdown,
   .score-grid,
   .venue-score-grid,
@@ -267,31 +193,6 @@
   .detail-heading > .place-hero-photo {
     grid-column: 1;
     grid-row: 1 / span 2;
-  }
-}
-
-@media (max-width: 540px) {
-  .detail-heading {
-    grid-template-columns: minmax(0, 1fr) !important;
-    align-items: start;
-    gap: 16px;
-  }
-  .detail-heading > div.place-cover,
-  .detail-heading > div.place-cover + div,
-  .detail-heading > div.detail-actions {
-    grid-column: 1 !important;
-    grid-row: auto !important;
-    width: 100%;
-  }
-  .detail-heading > .place-cover {
-    margin-bottom: 0;
-  }
-  .detail-heading > .place-cover .adaptive-photo--landscape {
-    max-width: none;
-  }
-  .add-place-button > b {
-    font-size: 26px;
-    line-height: 1;
   }
 }
 
@@ -830,13 +731,6 @@
     grid-template-columns: 1fr;
   }
 }
-.film-shell .quick-nav-action {
-  display: block;
-}
-.film-shell .add-film-button {
-  width: 100%;
-  justify-content: space-between;
-}
 .confirm-dialog {
   display: grid;
   gap: 14px;
@@ -918,55 +812,6 @@
 .quick-nav-action {
   display: block;
   overflow: visible;
-}
-.quick-nav-action .add-place-button,
-.quick-nav-action .add-fun-button,
-.quick-nav-action .add-film-button {
-  width: 100%;
-  justify-content: space-between;
-}
-.add-cook-button {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 11px;
-  padding: 10px 13px 10px 10px;
-  border: 1px solid #d4ef55a8;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #111211, #2b3120);
-  color: var(--cream);
-  text-align: left;
-  font-weight: 800;
-  box-shadow: 4px 4px 0 #394321;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-.add-cook-button:hover {
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #394321;
-}
-.add-cook-button small {
-  display: block;
-  font: 500 9px "DM Mono";
-  letter-spacing: 1px;
-  opacity: 0.76;
-}
-.add-cook-button > b {
-  margin-left: 4px;
-  font-size: 22px;
-}
-.add-cook-icon {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: var(--lime);
-  color: #26351d;
-  font-size: 23px;
-  line-height: 1;
 }
 .home-recipe-add {
   margin-bottom: 16px;

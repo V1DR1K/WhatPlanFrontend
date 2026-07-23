@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { mediaUrl, session } from "../../lib/api";
@@ -93,22 +95,29 @@ export function FunVenueDetailPage() {
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="fun-detail">
-      <div className="fun-detail__head">
-        <div className="fun-detail__cover">
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{ label: "Borrar actividad", onClick: () => setConfirmingDelete(true) }}
+            primary={{ label: "Registrar salida", onClick: () => setEditingVisit(null) }}
+            secondary={{ label: "Editar actividad", onClick: () => setEditing(true) }}
+          />
+        }
+        className="fun-detail__head"
+        eyebrow={`ACTIVIDAD COMPARTIDA · ${value.category.icon} ${value.category.name}`}
+        media={
+          <div className="fun-detail__cover">
           {profilePhoto ? <img src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <span>{value.subcategory.icon}</span>}
-        </div>
-        <div className="fun-detail__summary">
-          <p className="eyebrow">ACTIVIDAD COMPARTIDA · {value.category.icon} {value.category.name}</p>
-          <h1>{value.name}</h1>
+          </div>
+        }
+        metadata={
+          <>
           <p className="fun-plan-date">📍 {value.address}</p>
           <p className="byline">Creada por {value.createdBy} · editada por {value.updatedBy}</p>
-        </div>
-        <div className="detail-actions detail-actions--triplet">
-          <button className="main-button" type="button" onClick={() => setEditingVisit(null)}>＋ Registrar salida</button>
-          <button className="secondary-button" type="button" onClick={() => setEditing(true)}>✎ Editar actividad</button>
-          <button className="danger-button" type="button" onClick={() => setConfirmingDelete(true)}>× Borrar actividad</button>
-        </div>
-      </div>
+          </>
+        }
+        title={value.name}
+      />
       <section className="fun-detail-grid">
         <div className="fun-detail-panel">
           <p className="eyebrow">HORARIOS</p>
@@ -128,8 +137,8 @@ export function FunVenueDetailPage() {
               </select>
             </label>
             {current && <>
-              <button className="secondary-button" type="button" onClick={() => setEditingVisit(current)}>✎ Editar salida</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
+              <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button>
+              <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
             </>}
           </div>
           {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList reviews={current.reviews} /></div>}

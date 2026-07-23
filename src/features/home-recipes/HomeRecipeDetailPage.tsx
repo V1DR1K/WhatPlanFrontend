@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
@@ -63,22 +65,29 @@ export function HomeRecipeDetailPage() {
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="home-recipe-detail">
-      <div className="home-recipe-detail__head">
-        <div className="home-recipe-detail__photo">
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{ label: "Borrar receta", onClick: () => setConfirmingDelete(true) }}
+            primary={{ label: "Registrar cocinada", onClick: () => setEditingCooking(null) }}
+            secondary={{ label: "Editar receta", onClick: () => setEditingRecipe(true) }}
+          />
+        }
+        className="home-recipe-detail__head"
+        eyebrow="WHOCOOK · RECETA COMPARTIDA"
+        media={
+          <div className="home-recipe-detail__photo">
           {profilePhoto ? <img className="home-recipe-detail__image" src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
-        </div>
-        <div className="home-recipe-detail__summary">
-          <p className="eyebrow">WHOCOOK · RECETA COMPARTIDA</p>
-          <h1>{value.name}</h1>
+          </div>
+        }
+        metadata={
+          <>
           <p className="byline">Creada por {value.createdBy} · editada por {value.updatedBy}</p>
           {value.sourceUrl && <a className="source-link" href={value.sourceUrl} target="_blank" rel="noreferrer">↗ Ver fuente original</a>}
-        </div>
-        <div className="detail-actions home-recipe-detail__actions">
-          <button className="main-button" type="button" onClick={() => setEditingCooking(null)}>＋ Registrar cocinada</button>
-          <button className="secondary-button" type="button" onClick={() => setEditingRecipe(true)}>✎ Editar receta</button>
-          <button className="danger-button home-recipe-delete" type="button" onClick={() => setConfirmingDelete(true)}>× Borrar receta</button>
-        </div>
-      </div>
+          </>
+        }
+        title={value.name}
+      />
       <section className="home-recipe-detail__content">
         <div className="home-recipe-detail__panel"><p className="eyebrow">INGREDIENTES</p><h2>Lo que hace falta</h2><ul>{value.ingredients.map((ingredient, index) => <li key={`${ingredient.name}-${index}`}><strong>{ingredient.quantity} {ingredient.unit}</strong> {ingredient.name}</li>)}</ul></div>
         <div className="home-recipe-detail__panel"><p className="eyebrow">RECETA</p><h2>Cómo se hace</h2><ol className="recipe-steps">{value.steps.map((step, index) => <li key={`${step.instruction}-${index}`}>{step.instruction}</li>)}</ol></div>
@@ -94,8 +103,8 @@ export function HomeRecipeDetailPage() {
               </select>
             </label>
             {current && <>
-              <button className="secondary-button" type="button" onClick={() => setEditingCooking(current)}>✎ Editar cocinada</button>
-              <button className="secondary-button" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}</button>
+              <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button>
+              <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing(ownReview ?? null)}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
             </>}
           </div>
           {current && <CookingExperience cooking={current} />}

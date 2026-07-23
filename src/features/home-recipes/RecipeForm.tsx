@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
 import { showNotice } from "../../lib/flash";
 import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { Recipe, RecipeIngredient, RecipeStep } from "../../types/domain";
@@ -159,14 +160,14 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
                   }
                 />
               </label>
-              <button className="text-button" type="button" onClick={() => setIngredients((current) => current.filter((_, position) => position !== index))}>
-                × Quitar
-              </button>
+              <Button variant="tertiary" icon="×" type="button" onClick={() => setIngredients((current) => current.filter((_, position) => position !== index))}>
+                Quitar
+              </Button>
             </div>
           ))}
-          <button className="secondary-button" type="button" onClick={() => setIngredients((current) => [...current, emptyIngredient()])}>
-            ＋ Agregar ingrediente
-          </button>
+          <Button variant="secondary" icon="＋" type="button" onClick={() => setIngredients((current) => [...current, emptyIngredient()])}>
+            Agregar ingrediente
+          </Button>
         </fieldset>
         <fieldset className="ingredient-fields">
           <legend>Pasos</legend>
@@ -186,18 +187,18 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
                   }
                 />
               </label>
-              <button className="text-button" type="button" onClick={() => setSteps((current) => current.filter((_, position) => position !== index))}>
-                × Quitar
-              </button>
+              <Button variant="tertiary" icon="×" type="button" onClick={() => setSteps((current) => current.filter((_, position) => position !== index))}>
+                Quitar
+              </Button>
             </div>
           ))}
-          <button className="secondary-button" type="button" onClick={() => setSteps((current) => [...current, emptyStep()])}>
-            ＋ Agregar paso
-          </button>
+          <Button variant="secondary" icon="＋" type="button" onClick={() => setSteps((current) => [...current, emptyStep()])}>
+            Agregar paso
+          </Button>
         </fieldset>
-        <button className="main-button" disabled={mutation.isPending}>
-          {mutation.isPending ? "Guardando…" : recipe ? "✓ Guardar receta" : "＋ Agregar receta"}
-        </button>
+        <Button icon={recipe ? "✓" : "＋"} disabled={mutation.isPending}>
+          {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
+        </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}
       </form>
     </Modal>

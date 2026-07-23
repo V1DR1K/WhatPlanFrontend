@@ -10,6 +10,8 @@ import { FilmForm } from "./FilmForm";
 import { FilmReviewForm } from "./FilmReviewForm";
 import { FilmViewForm } from "./FilmViewForm";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
 import { deleteFilm, deleteFilmView, getFilm } from "./films";
 import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
 
@@ -90,27 +92,43 @@ export function FilmDetailPage() {
   const synopsis = tmdb?.synopsis ?? film.synopsis;
   const releaseDate = tmdb?.releaseDate ?? film.releaseDate;
   const viewAction = film.watchedCount
-    ? "Registrar otra vista 🍿"
-    : "Registrar primera vista 🍿";
+    ? "Registrar otra vista"
+    : "Registrar primera vista";
 
   return (
     <section className="film-detail">
-      <div className="film-detail__head">
-        <div className="film-detail__poster">
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{
+              disabled: remove.isPending,
+              label: remove.isPending ? "Borrando película…" : "Borrar película",
+              onClick: () => setConfirmingDelete(true),
+            }}
+            primary={{ label: viewAction, onClick: () => setAddingView(true) }}
+            secondary={{ label: "Editar película", onClick: () => setEditing(true) }}
+          />
+        }
+        className="film-detail__head"
+        eyebrow={
+          <>
+            {viewedLabel(film.lastWatchedOn)} ·{" "}
+            {film.platform
+              ? `${film.platform.icon} ${film.platform.name}`
+              : "PLATAFORMA PENDIENTE"}
+          </>
+        }
+        media={
+          <div className="film-detail__poster">
           {posterUrl ? (
             <img src={mediaUrl(posterUrl)} alt={`Póster de ${title}`} />
           ) : (
             <span>🍿</span>
           )}
-        </div>
-        <div>
-          <p className="eyebrow">
-            {viewedLabel(film.lastWatchedOn)} ·{" "}
-            {film.platform
-              ? `${film.platform.icon} ${film.platform.name}`
-              : "PLATAFORMA PENDIENTE"}
-          </p>
-          <h1>{title}</h1>
+          </div>
+        }
+        metadata={
+          <>
           {tmdb?.originalTitle && tmdb.originalTitle !== title && (
             <p className="tmdb-original-title">{tmdb.originalTitle}</p>
           )}
@@ -119,16 +137,15 @@ export function FilmDetailPage() {
               <span key={genre}>{genre}</span>
             ))}
           </div>
+          </>
+        }
+        summary={
           <p className="film-synopsis">
             {synopsis || "Todavía no hay una sinopsis disponible."}
           </p>
-        </div>
-        <div className="detail-actions detail-actions--triplet">
-          <button className="main-button" onClick={() => setAddingView(true)}>＋ {viewAction}</button>
-          <button className="secondary-button" onClick={() => setEditing(true)}>✎ {film.tmdbId ? "Editar disponibilidad" : "Editar película"}</button>
-          <button className="danger-button" disabled={remove.isPending} onClick={() => setConfirmingDelete(true)}>{remove.isPending ? "Borrando…" : "× Borrar película"}</button>
-        </div>
-      </div>
+        }
+        title={title}
+      />
       {tmdb && (
         <section className="tmdb-film-info">
           <div className="tmdb-film-stats">
@@ -252,27 +269,9 @@ export function FilmDetailPage() {
               </select>
             </label>
             {selectedView && <>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setEditingView(selectedView)}
-                >
-                  ✎ Editar vista
-                </button>
-                <button
-                  className="danger-button"
-                  type="button"
-                  onClick={() => setConfirmingDeleteView(selectedView)}
-                >
-                  × Borrar vista
-                </button>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setReviewing({ view: selectedView, review: ownReview })}
-                >
-                  {ownReview ? "✎ Editar reseña" : "＋ Agregar reseña"}
-                </button>
+                <Button icon="✎" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button>
+                <Button icon="×" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button>
+                <Button icon={ownReview ? "✎" : "＋"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button>
               </>}
           </div>
         )}

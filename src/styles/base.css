@@ -4,12 +4,12 @@
   --line: #312e31;
   --cream: #fffaf0;
   --muted: #aaa3a3;
-  --coral: #ff6049;
+  --coral: #f3af5f;
   --lime: #d4ef55;
   --violet: #a978ff;
   --section-accent: var(--coral);
-  --section-contrast: #281211;
-  --section-shadow: #8e3026;
+  --section-contrast: #2a1a0b;
+  --section-shadow: #9c6630;
   font-family: "DM Sans", sans-serif;
   color: var(--cream);
   background: var(--bg);
@@ -36,11 +36,6 @@ a { color: inherit; }
 .intro { margin: 22px auto; color: #c6bfc0; font-size: 17px; line-height: 1.5; }
 .login-card label { display: grid; gap: 6px; margin: 10px 0; color: #d5ced0; font-size: 12px; text-align: left; }
 .login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 9px; outline-color: var(--violet); background: #151415; color: var(--cream); }
-.main-button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 13px; padding: 14px 20px; background: var(--section-accent); color: var(--section-contrast); font-weight: 800; box-shadow: 4px 4px 0 var(--section-shadow); transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
-.main-button:hover:not(:disabled), .main-button:focus-visible { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--section-shadow); }
-.main-button:focus-visible { outline: 2px solid var(--lime); outline-offset: 3px; }
-.main-button:disabled { cursor: not-allowed; opacity: .45; box-shadow: none; }
-.login-card .main-button { width: 100%; margin-top: 10px; }
 .tiny { color: var(--muted); font-size: 12px; }
 .form-error { color: #ff9e90; font-size: 13px; }
 

@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Film, TmdbMovie } from '../../types/domain';
 import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 import { getFilmGenres, getPlatforms, saveFilm, searchTmdbMovies, type FilmInput, uploadFilmPhoto } from './films';
 import { ReviewPrompt } from '../../components/ui/ReviewPrompt';
 import { mediaUrl } from '../../lib/api';
@@ -74,9 +75,9 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
       {catalogQuery.isError && <p className="form-error">{catalogQuery.error.message}</p>}
       {!!catalogQuery.data?.length && <div className="tmdb-search-results">{catalogQuery.data.map(movie => <button type="button" className="tmdb-search-result" key={movie.tmdbId} onClick={() => setSelected(movie)}>{movie.posterUrl ? <img src={mediaUrl(movie.posterUrl)} alt="" /> : <span aria-hidden="true">🎬</span>}<span><strong>{movie.title}</strong>{releaseYear(movie.releaseDate) && <small>{releaseYear(movie.releaseDate)}</small>}{movie.originalTitle && movie.originalTitle !== movie.title && <em>{movie.originalTitle}</em>}<i>{movie.synopsis || 'Sin sinopsis disponible.'}</i></span></button>)}</div>}
       {catalogQuery.isSuccess && deferredSearch.length >= 2 && !catalogQuery.data?.length && <p className="empty-state">No encontramos una película con ese nombre.</p>}
-      <button type="button" className="text-button tmdb-manual-toggle" onClick={() => setManualMode(true)}>No aparece, cargar manualmente</button>
+      <Button variant="tertiary" type="button" className="tmdb-manual-toggle" onClick={() => setManualMode(true)}>No aparece, cargar manualmente</Button>
     </section>}
-    {selected && <section className="tmdb-selection"><div>{selected.posterUrl ? <img src={mediaUrl(selected.posterUrl)} alt={`Póster de ${selected.title}`} /> : <span aria-hidden="true">🎬</span>}<div><p className="eyebrow">SELECCIONADA EN TMDB</p><h3>{selected.title}</h3>{releaseYear(selected.releaseDate) && <small>{releaseYear(selected.releaseDate)}</small>}<p>{selected.synopsis || 'La ficha se completará desde TMDB.'}</p></div></div><button type="button" className="text-button" onClick={() => setSelected(undefined)}>Cambiar película</button></section>}
+    {selected && <section className="tmdb-selection"><div>{selected.posterUrl ? <img src={mediaUrl(selected.posterUrl)} alt={`Póster de ${selected.title}`} /> : <span aria-hidden="true">🎬</span>}<div><p className="eyebrow">SELECCIONADA EN TMDB</p><h3>{selected.title}</h3>{releaseYear(selected.releaseDate) && <small>{releaseYear(selected.releaseDate)}</small>}<p>{selected.synopsis || 'La ficha se completará desde TMDB.'}</p></div></div><Button variant="tertiary" type="button" onClick={() => setSelected(undefined)}>Cambiar película</Button></section>}
     {film?.tmdbId && <section className="tmdb-selection tmdb-selection--saved"><div>{film.tmdb?.posterUrl ? <img src={mediaUrl(film.tmdb.posterUrl)} alt={`Póster de ${film.tmdb.title ?? film.title}`} /> : <span aria-hidden="true">🎬</span>}<div><p className="eyebrow">FICHA SINCRONIZADA CON TMDB</p><h3>{film.tmdb?.title ?? film.title}</h3><p>La información de la película se consulta desde TMDB y no se duplica en WhatPlan.</p></div></div></section>}
     {isTmdbFilm && <TmdbAttribution />}
     {!isTmdbFilm && (manualMode || film) && <>
@@ -86,6 +87,6 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
       <small className="tiny">{file ? `Se cargará ${file.name}.` : film?.posterUrl ? 'La imagen actual se conservará si no elegís otra.' : 'Podés subir una imagen; se adapta automáticamente a los mosaicos.'}</small>
       <fieldset className="tag-picker film-genre-picker"><legend>Géneros</legend><p>Elegí todos los que correspondan. El catálogo se administra desde Configuración.</p><div className="tag-options">{visibleOptions.map(option => <label className="tag-option" key={option.id}><input type="checkbox" checked={genres.includes(option.name)} onChange={() => toggleGenre(option.name)} /><span>{option.emoji} {option.name}</span></label>)}</div></fieldset>
     </>}
-    {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><button className="main-button" disabled={save.isPending || Boolean(photoError)}>{save.isPending ? 'Guardando…' : film ? '✓ Guardar película' : '＋ Agregar película'}</button>{save.error && <p className="form-error">{save.error.message}</p>}</> : null}
+    {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><Button icon={film ? '✓' : '＋'} disabled={save.isPending || Boolean(photoError)}>{save.isPending ? 'Guardando…' : film ? 'Guardar película' : 'Agregar película'}</Button>{save.error && <p className="form-error">{save.error.message}</p>}</> : null}
   </form></Modal>;
 }

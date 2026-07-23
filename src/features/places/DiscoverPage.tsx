@@ -1,6 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
+import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { Button } from "../../components/ui/Button";
 import { LoadMore } from "../../components/ui/Pagination";
 import type { PlaceStatus } from "../../types/domain";
 import { getCategories } from "../categories/categories";
@@ -37,17 +39,21 @@ function FoodFilterChips({
     >
       <span>{label}</span>
       <div className="chips">
-        <button
-          className={selected() ? "selected" : ""}
-          onClick={() => choose()}
+          <button
+            aria-pressed={selected()}
+            className={selected() ? "selected" : ""}
+            onClick={() => choose()}
+            type="button"
         >
           {allLabel}
         </button>
         {options.slice(0, 5).map((option) => (
           <button
+            aria-pressed={selected(option)}
             key={option.id}
             className={selected(option) ? "selected" : ""}
             onClick={() => choose(option)}
+            type="button"
           >
             {option.label}
           </button>
@@ -57,6 +63,7 @@ function FoodFilterChips({
             className="food-filter-more"
             onClick={() => setShowMore(true)}
             aria-label={`Ver más ${label.toLowerCase()}`}
+            type="button"
           >
             •••
           </button>
@@ -68,16 +75,20 @@ function FoodFilterChips({
           <h2>Elegí una opción</h2>
           <div className="chips food-filter-dialog">
             <button
+              aria-pressed={selected()}
               className={selected() ? "selected" : ""}
               onClick={() => choose()}
+              type="button"
             >
               {allLabel}
             </button>
             {options.map((option) => (
               <button
+                aria-pressed={selected(option)}
                 key={option.id}
                 className={selected(option) ? "selected" : ""}
                 onClick={() => choose(option)}
+                type="button"
               >
                 {option.label}
               </button>
@@ -175,13 +186,12 @@ export function DiscoverPage() {
         </div>
       </section>
       <nav className="quick-nav quick-nav-action">
-        <button className="add-place-button" onClick={() => setShowForm(true)}>
-          <span className="add-place-icon">＋</span>
-          <span>
-            <small>NUEVO PENDIENTE</small>Agendar lugar
-          </span>
-          <b>📌</b>
-        </button>
+        <EntityCreateButton
+          eyebrow="Nuevo lugar"
+          icon="🍽️"
+          label="Agregar lugar"
+          onClick={() => setShowForm(true)}
+        />
       </nav>
       <section className="food-controls">
         <FoodFilterChips
@@ -223,7 +233,7 @@ export function DiscoverPage() {
         empty="Cuando registren la primera visita, aparecerá acá."
         hasFilter={hasFilter}
       />
-      <section className="archived-places"><button className="text-button" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><button className="secondary-button" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar</button></article>)}</>}</section>
+      <section className="archived-places"><Button variant="tertiary" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
     </>
   );

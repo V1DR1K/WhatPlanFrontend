@@ -5,6 +5,7 @@ import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
 import { Modal } from "../../components/ui/Modal";
+import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import type { Film } from "../../types/domain";
 
 type FilterOption = { id: string | number; label: string };
@@ -37,17 +38,21 @@ function FilterChips({
     >
       <span>{label}</span>
       <div className="chips">
-        <button
-          className={selected() ? "selected" : ""}
-          onClick={() => choose()}
+          <button
+            aria-pressed={selected()}
+            className={selected() ? "selected" : ""}
+            onClick={() => choose()}
+            type="button"
         >
           {allLabel}
         </button>
         {options.slice(0, 5).map((option) => (
           <button
+            aria-pressed={selected(option)}
             key={option.id}
             className={selected(option) ? "selected" : ""}
             onClick={() => choose(option)}
+            type="button"
           >
             {option.label}
           </button>
@@ -57,6 +62,7 @@ function FilterChips({
             className="film-filter-more"
             onClick={() => setShowMore(true)}
             aria-label={`Ver más ${label.toLowerCase()}`}
+            type="button"
           >
             •••
           </button>
@@ -68,16 +74,20 @@ function FilterChips({
           <h2>Elegí una opción</h2>
           <div className="chips film-filter-dialog">
             <button
+              aria-pressed={selected()}
               className={selected() ? "selected" : ""}
               onClick={() => choose()}
+              type="button"
             >
               {allLabel}
             </button>
             {options.map((option) => (
               <button
+                aria-pressed={selected(option)}
                 key={option.id}
                 className={selected(option) ? "selected" : ""}
                 onClick={() => choose(option)}
+                type="button"
               >
                 {option.label}
               </button>
@@ -187,13 +197,12 @@ export function WhichFilmPage() {
         </div>
       </section>
       <nav className="quick-nav quick-nav-action">
-        <button className="add-film-button" onClick={() => setShowForm(true)}>
-          <span className="add-film-icon">＋</span>
-          <span>
-            <small>WHICHMOVIE · NUEVA PELÍCULA</small>Agregar película
-          </span>
-          <b>🎞️</b>
-        </button>
+        <EntityCreateButton
+          eyebrow="Nueva película"
+          icon="🎬"
+          label="Agregar película"
+          onClick={() => setShowForm(true)}
+        />
       </nav>
       <section className="film-controls">
         <FilterChips

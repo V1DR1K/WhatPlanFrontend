@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
 import { showNotice } from "../../lib/flash";
 import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { Activity, ActivitySchedule } from "../../types/domain";
@@ -198,18 +199,18 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
                   }
                 />
               </label>
-              <button className="text-button" type="button" onClick={() => setSchedules((current) => current.filter((_, position) => position !== index))}>
-                × Quitar
-              </button>
+              <Button variant="tertiary" icon="×" type="button" onClick={() => setSchedules((current) => current.filter((_, position) => position !== index))}>
+                Quitar
+              </Button>
             </div>
           ))}
-          <button className="secondary-button" type="button" onClick={() => setSchedules((current) => [...current, emptySchedule()])}>
-            ＋ Agregar horario
-          </button>
+          <Button variant="secondary" icon="＋" type="button" onClick={() => setSchedules((current) => [...current, emptySchedule()])}>
+            Agregar horario
+          </Button>
         </fieldset>
-        <button className="main-button" disabled={mutation.isPending}>
-          {mutation.isPending ? "Guardando…" : activity ? "✓ Guardar actividad" : "＋ Agregar actividad"}
-        </button>
+        <Button icon={activity ? "✓" : "＋"} disabled={mutation.isPending}>
+          {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
+        </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}
       </form>
     </Modal>

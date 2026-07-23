@@ -4,6 +4,7 @@ import { useDeferredValue, useState } from "react";
 import { mediaUrl } from "../../lib/api";
 import type { Home } from "../../types/domain";
 import { RecipeForm } from "./RecipeForm";
+import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { getCookings, getRecipes } from "./homeRecipes";
 
 export function HomeRecipesPage() {
@@ -35,11 +36,12 @@ export function HomeRecipesPage() {
         <span aria-hidden="true">🍳</span>
       </section>
       <nav className="quick-nav quick-nav-action">
-        <button className="add-cook-button" type="button" onClick={() => setCreating(true)}>
-          <span className="add-cook-icon">＋</span>
-          <span><small>NUEVA RECETA</small>Agregar receta</span>
-          <b>🥘</b>
-        </button>
+        <EntityCreateButton
+          eyebrow="Nueva receta"
+          icon="🍳"
+          label="Agregar receta"
+          onClick={() => setCreating(true)}
+        />
       </nav>
       <label className="home-recipe-search">
         Buscar receta
@@ -51,9 +53,9 @@ export function HomeRecipesPage() {
           <strong>{visibleRecipes.length} recetas</strong>
         </div>
         <div className="home-recipe-home-filters" aria-label="Filtrar recetas por casa">
-          <button className={home === "ALL" ? "selected" : ""} type="button" onClick={() => setHome("ALL")}>Todas</button>
-          <button className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>🏠 Tomás</button>
-          <button className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
+          <button aria-pressed={home === "ALL"} className={home === "ALL" ? "selected" : ""} type="button" onClick={() => setHome("ALL")}>Todas</button>
+          <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>🏠 Tomás</button>
+          <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
         </div>
         {recipes.isError ? <p className="form-error">{recipes.error.message}</p> : recipes.isLoading || cookings.isLoading ? <p className="muted" aria-busy="true">Cargando recetas…</p> : visibleRecipes.length ? (
           <div className="home-recipe-grid">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 import type { Film, FilmView } from '../../types/domain';
 import { addFilmView, updateFilmView } from './films';
 import { showNotice } from '../../lib/flash';
@@ -20,5 +21,5 @@ export function FilmViewForm({ film, view, onClose, onSaved }: { film: Film; vie
     },
   });
 
-  return <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(); }}><p className="eyebrow">{view ? 'EDITAR VISTA' : film.watchedCount ? 'NUEVA VISTA' : 'PRIMERA VISTA'}</p><h2>{title}</h2><p className="muted">Registren la fecha. Las reseñas quedan asociadas a esta vista.</p><label>¿Cuándo la vieron?<input type="date" required max={today()} value={watchedOn} onChange={event => setWatchedOn(event.target.value)} /></label><button className="main-button" disabled={mutation.isPending}>{mutation.isPending ? 'Guardando…' : view ? 'Guardar vista' : film.watchedCount ? 'Registrar nueva vista' : 'Registrar primera vista'} ✦</button>{mutation.error && <p className="form-error">{mutation.error.message}</p>}</form></Modal>;
+  return <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(); }}><p className="eyebrow">{view ? 'EDITAR VISTA' : film.watchedCount ? 'NUEVA VISTA' : 'PRIMERA VISTA'}</p><h2>{title}</h2><p className="muted">Registren la fecha. Las reseñas quedan asociadas a esta vista.</p><label>¿Cuándo la vieron?<input type="date" required max={today()} value={watchedOn} onChange={event => setWatchedOn(event.target.value)} /></label><Button icon={view ? '✓' : '＋'} disabled={mutation.isPending}>{mutation.isPending ? 'Guardando…' : view ? 'Guardar vista' : film.watchedCount ? 'Registrar nueva vista' : 'Registrar primera vista'}</Button>{mutation.error && <p className="form-error">{mutation.error.message}</p>}</form></Modal>;
 }
