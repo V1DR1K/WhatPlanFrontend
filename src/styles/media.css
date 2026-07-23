@@ -86,10 +86,6 @@
   margin-top: auto;
 }
 
-.detail > .detail-heading > .detail-actions .main-button {
-  display: none;
-}
-
 .detail > .detail-heading > .detail-actions .secondary-button,
 .detail .item-date-pager ~ .detail-heading .detail-actions .secondary-button {
   min-height: 44px;
@@ -342,4 +338,167 @@
   .place-card .rating-preview {
     margin: 10px 0;
   }
+}
+
+.star-control { display:flex; }
+
+/* WhereFood keeps review density warm and structured without borrowing another section's accent. */
+.food-shell .place-review {
+  --food-review-surface: #352723;
+  --food-review-line: #91513b;
+  --food-review-soft: #281a1e;
+  --food-review-muted: #e6b4a7;
+  border-color: var(--food-review-line);
+  background: linear-gradient(145deg, var(--food-review-surface), var(--food-review-soft));
+  padding: 14px;
+}
+
+.food-shell .place-review__heading {
+  align-items: center;
+  gap: 8px;
+}
+
+.food-shell .place-review__heading h3 {
+  color: #fffaf0;
+  font-size: 15px;
+}
+
+.food-shell .place-review__heading .secondary-button {
+  min-height: 36px;
+  padding: 7px 9px;
+  border-color: #ff835e;
+  color: #ffb2a1;
+  background: #281a1e;
+  font-size: 12px;
+}
+
+.food-shell .place-review__rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.food-shell .place-review__rating > span {
+  color: #ffb2a1;
+  font: 600 11px "DM Mono", ui-monospace, monospace;
+}
+
+.food-shell .place-review .star-control {
+  gap: 1px;
+}
+
+.food-shell .place-review .star-control button {
+  min-width: 20px;
+  min-height: 28px;
+  padding: 0 !important;
+  color: #745852;
+  font-size: 18px !important;
+}
+
+.food-shell .place-review .star-control .filled {
+  color: #ff835e;
+}
+
+.food-shell .place-review > p {
+  margin: 0 0 10px;
+  color: #ffe1d8;
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+.food-shell .place-review__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--food-review-line) 58%, transparent);
+}
+
+.food-shell .place-review__metrics > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 1px solid color-mix(in srgb, #ff835e 42%, #352723);
+  border-radius: 8px;
+  background: #281a1e;
+  color: var(--food-review-muted);
+  font-size: 10px;
+}
+
+.food-shell .place-review__metrics b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.food-shell .place-review__metrics strong {
+  color: #ff835e;
+  font: 700 12px "DM Mono", ui-monospace, monospace;
+}
+
+.food-shell .place-review > small {
+  display: block;
+  margin-top: 10px;
+  color: #d99d8e;
+  font-size: 10px;
+}
+
+.food-shell .detail-actions--food {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr);
+  gap: 10px;
+  min-width: 180px;
+}
+
+.food-shell .detail-actions--food button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.food-shell .detail-actions--food .secondary-button {
+  border-color: #ff835e;
+  color: #ffb2a1;
+  background: #352723;
+  box-shadow: 3px 3px 0 #8e3026;
+  font-weight: 800;
+}
+
+.food-shell .detail-actions--food .secondary-button:hover,
+.food-shell .detail-actions--food .secondary-button:focus-visible {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 #8e3026;
+}
+
+.food-shell .detail-actions--food .danger-button {
+  box-shadow: 3px 3px 0 #742f2a;
+}
+
+@media (max-width: 540px) {
+  .food-shell .detail-actions--food {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .food-shell .detail-actions--food .detail-actions__primary { order: -1; }
+
+  .food-shell .place-review { padding: 12px; }
+
+  .food-shell .place-review__heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .food-shell .place-review__heading .secondary-button { width: 100%; }
+
+  .food-shell .place-review__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

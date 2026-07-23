@@ -22,4 +22,8 @@ describe("getPhotoOrientation", () => {
     expect(photoSource("thumbnail", "/photo", "/thumbnail")).toBe("/thumbnail");
     expect(photoSource("full", "/photo", "/thumbnail")).toBe("/photo");
   });
+
+  it("falls back safely when an API omits a local film photo", () => {
+    expect(photoSource("thumbnail", null, null)).toBeUndefined();
+  });
 });

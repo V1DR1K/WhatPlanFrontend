@@ -5,8 +5,10 @@ import type { Place } from "../../types/domain";
 
 export function PlaceCard({ place }: { place: Place }) {
   const pending = place.status === "PENDING";
-  const orientation = getPhotoOrientation(place.photoWidth, place.photoHeight);
-  const photoStyle = photoAspectRatioStyle(place.photoWidth, place.photoHeight);
+  const photoWidth = place.photoWidth ?? undefined;
+  const photoHeight = place.photoHeight ?? undefined;
+  const orientation = getPhotoOrientation(photoWidth, photoHeight);
+  const photoStyle = photoAspectRatioStyle(photoWidth, photoHeight);
   return (
     <Link
       className={`place-card-link media-card media-card--${orientation}`}
@@ -19,10 +21,10 @@ export function PlaceCard({ place }: { place: Place }) {
             <ResponsiveImage
               alt={`Foto de ${place.name}`}
               className="food-poster__image"
-              fullSrc={place.photoUrl}
-              height={place.photoHeight}
-              thumbnailSrc={place.thumbnailUrl}
-              width={place.photoWidth}
+              fullSrc={place.photoUrl ?? undefined}
+              height={photoHeight}
+              thumbnailSrc={place.thumbnailUrl ?? undefined}
+              width={photoWidth}
             />
           ) : (
             <span>{place.category.icon}</span>

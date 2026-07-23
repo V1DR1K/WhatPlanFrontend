@@ -17,6 +17,7 @@ export const getActivities = (filters: { categoryId?: number; subcategoryId?: nu
 export const getActivity = (id: number) => api<Activity>(`/why-fun/activities/${id}`);
 export const saveActivity = (input: ActivityInput, id?: number) => api<Activity>(`/why-fun/activities${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const deleteActivity = (id: number) => api<void>(`/why-fun/activities/${id}`, { method: 'DELETE' });
+export const uploadActivityProfilePhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Activity>(`/why-fun/activities/${id}/photo`, { method: 'POST', body: data }); };
 export const getActivityVisits = (activityId: number) => api<ActivityVisit[]>(`/why-fun/activities/${activityId}/visits`);
 export const createActivityVisit = (activityId: number, input: ActivityVisitInput) => api<ActivityVisit>(`/why-fun/activities/${activityId}/visits`, { method: 'POST', body: JSON.stringify(input) });
 export const updateActivityVisit = (visitId: number, input: ActivityVisitInput) => api<ActivityVisit>(`/why-fun/activity-visits/${visitId}`, { method: 'PUT', body: JSON.stringify(input) });

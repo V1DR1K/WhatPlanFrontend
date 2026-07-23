@@ -30,22 +30,25 @@ export function FilmCard({ film }: { film: Film }) {
   const reviews = sharedReviews(film);
   const rating = average(reviews.map((review) => review.rating));
   const title = film.tmdb?.title ?? film.title;
+  const posterWidth = film.posterWidth ?? undefined;
+  const posterHeight = film.posterHeight ?? undefined;
   const thumbnailSrc =
     film.thumbnailUrl ??
     film.tmdb?.posterThumbnailUrl ??
     film.tmdb?.posterUrl ??
-    film.posterUrl;
+    film.posterUrl ??
+    undefined;
   const fullSrc =
-    film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl;
+    film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl ?? undefined;
   const genres = film.tmdb?.genres.length ? film.tmdb.genres : film.genres;
   const orientation = getPhotoOrientation(
-    film.posterWidth,
-    film.posterHeight,
+    posterWidth,
+    posterHeight,
     "portrait",
   );
   const posterStyle = photoAspectRatioStyle(
-    film.posterWidth,
-    film.posterHeight,
+    posterWidth,
+    posterHeight,
     "--film-poster-ratio",
   );
 
@@ -62,9 +65,9 @@ export function FilmCard({ film }: { film: Film }) {
               alt={`Póster de ${title}`}
               className="film-poster__image"
               fullSrc={fullSrc}
-              height={film.posterHeight}
+              height={posterHeight}
               thumbnailSrc={thumbnailSrc}
-              width={film.posterWidth}
+              width={posterWidth}
             />
           ) : (
             <span>🍿</span>

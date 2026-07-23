@@ -34,21 +34,21 @@ export function photoAspectRatioStyle(
 
 export function photoSource(
   mode: "full" | "thumbnail",
-  fullSrc?: string,
-  thumbnailSrc?: string,
+  fullSrc?: string | null,
+  thumbnailSrc?: string | null,
 ) {
-  return mode === "full" ? fullSrc ?? thumbnailSrc : thumbnailSrc ?? fullSrc;
+  return (mode === "full" ? fullSrc ?? thumbnailSrc : thumbnailSrc ?? fullSrc) ?? undefined;
 }
 
 type ResponsiveImageProps = {
   alt: string;
   className?: string;
-  fullSrc?: string;
+  fullSrc?: string | null;
   height?: number;
   loading?: "eager" | "lazy";
   mode?: "full" | "thumbnail";
   onClick?: MouseEventHandler<HTMLImageElement>;
-  thumbnailSrc?: string;
+  thumbnailSrc?: string | null;
   width?: number;
 };
 
@@ -71,10 +71,10 @@ export function ResponsiveImage({
 type AdaptivePhotoProps = {
   alt: string;
   context: "place" | "item";
-  fullSrc?: string;
+  fullSrc?: string | null;
   height?: number;
   src?: string;
-  thumbnailSrc?: string;
+  thumbnailSrc?: string | null;
   width?: number;
 };
 
