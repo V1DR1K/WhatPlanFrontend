@@ -83,6 +83,13 @@
   font-size: 16px;
 }
 
+.special-date-recurrence {
+  color: var(--muted);
+  font: 500 10px "DM Mono", ui-monospace, monospace;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
 .special-dates-settings__actions {
   display: flex;
   flex: 0 0 auto;

@@ -4,11 +4,12 @@ import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
 import { showNotice } from '../../lib/flash';
-import type { SpecialDate } from '../../types/domain';
+import type { SpecialDate, SpecialDateRecurrence } from '../../types/domain';
 import { getGlobalSettings, saveGlobalSettings } from '../../lib/settings';
+import { specialDateRecurrenceLabel } from './SpecialDateLabels';
 import { deleteSpecialDate, getSpecialDates, saveSpecialDate, type SpecialDateInput } from './specialDates';
 
-const emptyDraft: SpecialDateInput = { date: '', label: '' };
+const emptyDraft: SpecialDateInput = { date: '', label: '', recurrence: 'ONCE' };
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
@@ -59,7 +60,7 @@ export function SettingsPage() {
   };
   const startEdit = (specialDate: SpecialDate) => {
     save.reset();
-    setDraft({ date: specialDate.date, label: specialDate.label });
+    setDraft({ date: specialDate.date, label: specialDate.label, recurrence: specialDate.recurrence });
     setEditing(specialDate);
   };
 
@@ -92,6 +93,7 @@ export function SettingsPage() {
           <div>
             <time dateTime={specialDate.date}>{specialDate.date}</time>
             <strong>{specialDate.label}</strong>
+            <small className="special-date-recurrence">{specialDateRecurrenceLabel[specialDate.recurrence]}</small>
           </div>
           <div className="special-dates-settings__actions">
             <Button variant="tertiary" icon="✏️" type="button" onClick={() => startEdit(specialDate)}>Editar</Button>
@@ -104,9 +106,10 @@ export function SettingsPage() {
       <form onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
         <p className="eyebrow">{editing ? 'EDITAR FECHA ESPECIAL' : 'NUEVA FECHA ESPECIAL'}</p>
         <h2>{editing ? editing.label : 'Agregar fecha especial'}</h2>
-        <p className="special-dates-settings__modal-copy">La fecha se guarda exactamente como un día ISO, sin hora ni zona horaria.</p>
+        <p className="special-dates-settings__modal-copy">Elegí si la etiqueta ocurre una sola vez, cada año o todos los meses el mismo día.</p>
         <label>Etiqueta<input value={draft.label} maxLength={160} required autoFocus onChange={(event) => setDraft({ ...draft, label: event.target.value })} /></label>
         <label>Fecha<input type="date" value={draft.date} required onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></label>
+        <label>Repetición<select value={draft.recurrence} onChange={(event) => setDraft({ ...draft, recurrence: event.target.value as SpecialDateRecurrence })}><option value="ONCE">Única, solo esta fecha</option><option value="ANNUAL">Anual, mismo día y mes</option><option value="MONTHLY">Mensual, mismo día</option></select></label>
         <Button icon="💾" disabled={save.isPending}>{save.isPending ? 'Guardando…' : 'Guardar fecha especial'}</Button>
         {save.error && <p className="form-error" role="alert">{save.error.message}</p>}
       </form>

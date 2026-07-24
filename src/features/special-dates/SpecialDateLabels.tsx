@@ -1,7 +1,19 @@
-import type { SpecialDate } from '../../types/domain';
+import type { SpecialDate, SpecialDateRecurrence } from '../../types/domain';
+
+export const specialDateRecurrenceLabel: Record<SpecialDateRecurrence, string> = {
+  ONCE: 'Única',
+  ANNUAL: 'Anual',
+  MONTHLY: 'Mensual',
+};
+
+const matchesDate = (date: string, specialDate: SpecialDate) => {
+  if (specialDate.recurrence === 'ANNUAL') return specialDate.date.slice(5) === date.slice(5);
+  if (specialDate.recurrence === 'MONTHLY') return specialDate.date.slice(-2) === date.slice(-2);
+  return specialDate.date === date;
+};
 
 export function matchingSpecialDates(date: string | undefined, specialDates: SpecialDate[]) {
-  return date ? specialDates.filter((specialDate) => specialDate.date === date) : [];
+  return date ? specialDates.filter((specialDate) => matchesDate(date, specialDate)) : [];
 }
 
 export function specialDateOptionSuffix(date: string | undefined, specialDates: SpecialDate[]) {
