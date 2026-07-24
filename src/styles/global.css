@@ -494,21 +494,27 @@ a {
   -webkit-overflow-scrolling: touch;
 }
 .modal {
+  --modal-content-max-height: min(calc(90vh - 60px), calc(100svh - 100px));
   width: min(560px, 100%);
   max-width: 100%;
   min-width: 0;
-  max-height: 90vh;
-  max-height: calc(100svh - 40px);
-  overflow-x: clip;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
   background: #211f21;
   border: 1px solid #5a4a52;
   border-radius: 20px;
   padding: 30px;
   position: relative;
   box-shadow: 0 25px 60px #000;
+}
+.modal__content {
+  min-width: 0;
+  max-height: var(--modal-content-max-height);
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .modal :is(form, fieldset, label, .form-columns, .score-grid, .venue-score-grid) {
   min-width: 0;
@@ -562,9 +568,6 @@ a {
 .modal-discard p {
   color: var(--muted);
   line-height: 1.45;
-}
-.modal-discard .button--destructive {
-  margin-top: 8px;
 }
 .flash-notice {
   position: fixed;

@@ -226,6 +226,11 @@
   margin-top: 14px;
 }
 
+.modal-discard__actions .button {
+  flex: 1;
+  min-height: 48px;
+}
+
 .experience-review-action {
   display: flex;
   justify-content: flex-end;

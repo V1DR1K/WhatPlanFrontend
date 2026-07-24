@@ -184,11 +184,13 @@
   }
 
   .modal {
+    --modal-content-max-height: calc(100svh - 76px);
     width: 100%;
-    max-height: none;
     margin: 0 auto;
-    overflow-x: clip;
-    overflow-y: visible;
+  }
+
+  .modal__content {
+    max-height: var(--modal-content-max-height);
   }
 
   .modal .chips {
@@ -198,22 +200,22 @@
 }
 
 /* Scrollable controls keep a restrained, section-contained black scrollbar. */
-:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results) {
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal__content, .quick-nav, .chips, .tag-options, .tmdb-search-results) {
   scrollbar-color: var(--section-accent) #050505;
   scrollbar-width: thin;
 }
 
-:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar {
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal__content, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-thumb {
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal__content, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: var(--section-accent);
 }
 
-:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-track {
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal__content, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-track {
   background: #050505;
 }
 

@@ -65,7 +65,7 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
   return <div className="modal-backdrop" role="presentation" onMouseDown={requestClose}>
     <section className="modal" ref={dialog} role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       <Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" />
-      {children}
+      <div className="modal__content">{children}</div>
       {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">
         <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><div className="modal-discard__actions"><Button variant="secondary" icon="✏️" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="🗑️" type="button" onClick={onClose}>Descartar</Button></div></div>
       </div>}
