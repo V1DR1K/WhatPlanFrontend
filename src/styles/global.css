@@ -488,7 +488,8 @@ a {
   place-items: center;
   padding: 20px;
   z-index: 5;
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -498,7 +499,8 @@ a {
   min-width: 0;
   max-height: 90vh;
   max-height: calc(100svh - 40px);
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   background: #211f21;
