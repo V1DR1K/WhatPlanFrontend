@@ -662,7 +662,7 @@ a {
   gap: 10px;
   flex-wrap: wrap;
 }
-.category-list span {
+.category-list > span {
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 9px;
