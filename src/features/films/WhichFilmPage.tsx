@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogMoreButton, useIncrementalLimit } from "../../components/ui/IncrementalCatalog";
+import { useCatalogPageSize } from "../../lib/settings";
 import type { Film } from "../../types/domain";
 import {
   catalogSortFromQuery,
@@ -165,18 +167,19 @@ function FilmSection({
   films,
   empty,
   filtered,
-  focused = false,
-  morePath,
+  pageSize,
+  resetKey,
 }: {
   title: string;
   eyebrow: string;
   films: Film[];
   empty: string;
   filtered: boolean;
-  focused?: boolean;
-  morePath?: string;
+  pageSize: number;
+  resetKey: string;
 }) {
-  const displayed = focused ? films : films.slice(0, 10);
+  const [limit, showMore] = useIncrementalLimit(pageSize, `${resetKey}:${films.length}`);
+  const displayed = films.slice(0, limit);
   return (
     <section className="film-section">
       <div className="section-title">
@@ -195,14 +198,12 @@ function FilmSection({
       ) : (
         <p className="empty-state">{filtered ? "No encontramos películas con estos filtros." : empty}</p>
       )}
-      {!focused && films.length > 10 && morePath && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
+      {displayed.length < films.length && <CatalogMoreButton onClick={showMore} />}
     </section>
   );
 }
 
 export function WhichFilmPage() {
-  const { catalogStatus } = useParams();
-  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");
@@ -214,6 +215,7 @@ export function WhichFilmPage() {
     catalogSortFromQuery(searchParams.get("sort")),
   );
   const [showForm, setShowForm] = useState(false);
+  const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
   const deferredSearch = useDeferredValue(searchTerm);
   const filmsQuery = useQuery({
@@ -257,17 +259,10 @@ export function WhichFilmPage() {
   const pending = visible.filter((film) => film.watchedCount === 0);
   const watched = visible.filter((film) => film.watchedCount > 0);
   const filtered = Boolean(genre || platformId || searchTerm || sort);
-  const focusPath = (status: "pending" | "done") => {
-    const query = new URLSearchParams();
-    if (genre) query.set("genre", genre);
-    if (platformId) query.set("platform", String(platformId));
-    if (searchTerm) query.set("search", searchTerm);
-    if (sort) query.set("sort", sort);
-    return `/films/list/${status}${query.size ? `?${query}` : ""}`;
-  };
+  const resetKey = [genre, platformId, searchTerm, sort].join(":");
   return (
     <>
-      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHICHMOVIE · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Películas pendientes" : "Películas vistas"}</h1><p>Explorá solo esta parte de la sala, con todos los filtros disponibles.</p></section> : <section className="film-hero">
+      <section className="film-hero">
         <div>
           <p className="eyebrow">NUESTRA SALA PERSONAL</p>
           <h1>
@@ -283,7 +278,7 @@ export function WhichFilmPage() {
           🎬<span>✨</span>
           <b>🍿</b>
         </div>
-      </section>}
+      </section>
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva película"
@@ -335,24 +330,24 @@ export function WhichFilmPage() {
         <p aria-busy="true" className="muted">Cargando la sala…</p>
       ) : (
         <>
-          {(!focusedStatus || focusedStatus === "pending") && <FilmSection
+          <FilmSection
             films={pending}
             eyebrow="EN LA LISTA"
             title="Para ver"
             empty="Todavía no hay películas en la lista. ¡Busquen la primera!"
             filtered={filtered}
-            focused={focusedStatus === "pending"}
-            morePath={focusPath("pending")}
-          />}
-          {(!focusedStatus || focusedStatus === "done") && <FilmSection
+            pageSize={pageSize}
+            resetKey={resetKey}
+          />
+          <FilmSection
             films={watched}
             eyebrow="YA PASARON POR LA SALA"
             title="Vistas registradas"
             empty="Cuando sumen la primera vista, aparecerá acá."
             filtered={filtered}
-            focused={focusedStatus === "done"}
-            morePath={focusPath("done")}
-          />}
+            pageSize={pageSize}
+            resetKey={resetKey}
+          />
         </>
       )}
       {showForm && <FilmForm onClose={() => setShowForm(false)} />}

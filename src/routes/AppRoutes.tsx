@@ -59,19 +59,15 @@ export function AppRoutes() {
     <Route element={<Protected />}>
       <Route index element={<Suspense fallback={<LoadingPage />}><DashboardPage /></Suspense>} />
       <Route path="food" element={<Suspense fallback={<LoadingPage />}><DiscoverPage /></Suspense>} />
-      <Route path="food/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><DiscoverPage /></Suspense>} />
       <Route path="food/home" element={<Navigate to="/how-cook" replace />} />
       <Route path="food/places/:id" element={<Suspense fallback={<LoadingPage />}><PlaceDetailPage /></Suspense>} />
       <Route path="food/categories" element={<Admin />} />
       <Route path="films" element={<Suspense fallback={<LoadingPage />}><WhichFilmPage /></Suspense>} />
-      <Route path="films/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><WhichFilmPage /></Suspense>} />
       <Route path="films/:id" element={<Suspense fallback={<LoadingPage />}><FilmDetailPage /></Suspense>} />
       <Route path="films/platforms" element={<PlatformAdmin />} />
       <Route path="how-cook" element={<Suspense fallback={<LoadingPage />}><HomeRecipesPage /></Suspense>} />
-      <Route path="how-cook/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><HomeRecipesPage /></Suspense>} />
       <Route path="how-cook/:id" element={<Suspense fallback={<LoadingPage />}><HomeRecipeDetailPage /></Suspense>} />
       <Route path="why-fun" element={<Suspense fallback={<LoadingPage />}><WhyFunPage /></Suspense>} />
-      <Route path="why-fun/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><WhyFunPage /></Suspense>} />
       <Route path="why-fun/:id" element={<Suspense fallback={<LoadingPage />}><FunVenueDetailPage /></Suspense>} />
       <Route path="why-fun/categories" element={<FunAdmin />} />
       <Route path="settings" element={<SettingsAdmin />} />

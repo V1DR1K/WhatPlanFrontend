@@ -67,28 +67,23 @@
   text-decoration: none;
 }
 
+button.catalog-section-more {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.catalog-section-more:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .catalog-section-more:hover,
 .catalog-section-more:focus-visible {
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.catalog-focus-heading {
-  display: grid;
-  gap: 8px;
-  margin: 18px 0 28px;
-}
-
-.catalog-focus-heading h1 {
-  margin: 0;
-  font: 700 clamp(38px, 7vw, 62px)/0.92 "Fraunces", Georgia, serif;
-  letter-spacing: -1.7px;
-}
-
-.catalog-focus-heading p {
-  max-width: 580px;
-  margin: 0;
-  color: var(--muted);
 }
 
 .rating-stars {

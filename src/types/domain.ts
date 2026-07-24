@@ -12,6 +12,7 @@ export type ItemReview={author:string;comment?:string;taste:number;price:number;
 export type Item={id:number;name:string;createdBy:string;photoUrl?:string|null;thumbnailUrl?:string|null;photoWidth?:number|null;photoHeight?:number|null;reviews:ItemReview[];createdAt:string};
 export type Slice<T>={content:T[];nextCursor:number|null};
 export type Session={token:string;username:string;role:'USER'|'ADMIN'};
+export type GlobalSettings={catalogPageSize:number};
 export type SpecialDate={id:number;date:string;label:string;createdAt:string;updatedAt:string};
 export type WatchPlatform={id:number;name:string;icon:string;active:boolean};
 export type FilmGenreOption={id:number;name:string;emoji:string};

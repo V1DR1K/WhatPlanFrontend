@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import type { Activity, FunCategory } from "../../types/domain";
 import { FunVenueCard } from "./FunVenueCard";
 import { ActivityForm } from "./ActivityForm";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogMoreButton, useIncrementalLimit } from "../../components/ui/IncrementalCatalog";
+import { useCatalogPageSize } from "../../lib/settings";
 import { getActivities, getFunCategories } from "./whyFun";
 import {
   catalogSortFromQuery,
@@ -48,28 +50,27 @@ function ActivitySection({
   title,
   empty,
   filtered,
-  focused,
-  morePath,
+  pageSize,
+  resetKey,
 }: {
   activities: Activity[];
   eyebrow: string;
   title: string;
   empty: string;
   filtered: boolean;
-  focused: boolean;
-  morePath: string;
+  pageSize: number;
+  resetKey: string;
 }) {
-  const displayed = focused ? activities : activities.slice(0, 10);
+  const [limit, showMore] = useIncrementalLimit(pageSize, `${resetKey}:${activities.length}`);
+  const displayed = activities.slice(0, limit);
   return <section className="fun-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>{displayed.length} actividades</strong></div>
     {displayed.length ? <div className="fun-grid">{displayed.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
-    {!focused && activities.length > 10 && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
+    {displayed.length < activities.length && <CatalogMoreButton onClick={showMore} />}
   </section>;
 }
 
 export function WhyFunPage() {
-  const { catalogStatus } = useParams();
-  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [categoryId, setCategoryId] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),
@@ -82,6 +83,7 @@ export function WhyFunPage() {
     catalogSortFromQuery(searchParams.get("sort")),
   );
   const [creating, setCreating] = useState(false);
+  const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
   const deferredSearch = useDeferredValue(searchTerm);
   const categories = useQuery({ queryKey: ["fun-categories"], queryFn: getFunCategories });
@@ -116,25 +118,18 @@ export function WhyFunPage() {
     setSearchParams(next, { replace: true });
   }, [categoryId, searchTerm, setSearchParams, sort, subcategoryId]);
 
-  const focusPath = (status: "pending" | "done") => {
-    const query = new URLSearchParams();
-    if (categoryId) query.set("category", String(categoryId));
-    if (subcategoryId) query.set("subcategory", String(subcategoryId));
-    if (searchTerm) query.set("search", searchTerm);
-    if (sort) query.set("sort", sort);
-    return `/why-fun/list/${status}${query.size ? `?${query}` : ""}`;
-  };
+  const resetKey = [categoryId, subcategoryId, searchTerm, sort].join(":");
 
   return (
     <>
-      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHYFUN · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Actividades pendientes" : "Salidas registradas"}</h1><p>Explorá solo este grupo de actividades, con todos los filtros disponibles.</p></section> : <section className="fun-hero">
+      <section className="fun-hero">
         <div>
           <p className="eyebrow">WHYFUN · SALIDAS PARA REPETIR</p>
           <h1>¿Qué salida<br />repetimos <em>hoy?</em></h1>
           <p>Guarden actividades y registren cada salida con una fecha, fotos y opiniones compartidas.</p>
         </div>
         <div className="fun-hero-art" aria-hidden="true">🎲<span>✦</span><b>🕹️</b></div>
-      </section>}
+      </section>
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton eyebrow="Nueva actividad" icon="🎯" label="Agregar actividad" onClick={() => setCreating(true)} />
       </nav>
@@ -159,8 +154,8 @@ export function WhyFunPage() {
       </section>
       {categories.isError && <p className="form-error">No pudimos cargar las categorías.</p>}
       {activities.isError ? <p className="form-error">{activities.error.message}</p> : activities.isLoading ? <p className="muted" aria-busy="true">Cargando actividades…</p> : <>
-        {(!focusedStatus || focusedStatus === "pending") && <ActivitySection activities={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} focused={focusedStatus === "pending"} morePath={focusPath("pending")} />}
-        {(!focusedStatus || focusedStatus === "done") && <ActivitySection activities={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} focused={focusedStatus === "done"} morePath={focusPath("done")} />}
+        <ActivitySection activities={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} pageSize={pageSize} resetKey={resetKey} />
+        <ActivitySection activities={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} pageSize={pageSize} resetKey={resetKey} />
       </>}
       {creating && <ActivityForm onClose={() => setCreating(false)} />}
     </>

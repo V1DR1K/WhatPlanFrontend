@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
 import { showNotice } from '../../lib/flash';
 import type { SpecialDate } from '../../types/domain';
+import { getGlobalSettings, saveGlobalSettings } from '../../lib/settings';
 import { deleteSpecialDate, getSpecialDates, saveSpecialDate, type SpecialDateInput } from './specialDates';
 
 const emptyDraft: SpecialDateInput = { date: '', label: '' };
@@ -12,10 +13,13 @@ const emptyDraft: SpecialDateInput = { date: '', label: '' };
 export function SettingsPage() {
   const queryClient = useQueryClient();
   const specialDates = useQuery({ queryKey: ['special-dates'], queryFn: getSpecialDates });
+  const settings = useQuery({ queryKey: ['settings'], queryFn: getGlobalSettings });
   const [draft, setDraft] = useState<SpecialDateInput>(emptyDraft);
+  const [catalogPageSize, setCatalogPageSize] = useState(5);
   const [editing, setEditing] = useState<SpecialDate | null>();
   const [deleting, setDeleting] = useState<SpecialDate>();
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['special-dates'] });
+  const refreshSettings = () => queryClient.invalidateQueries({ queryKey: ['settings'] });
   const closeForm = () => {
     setEditing(undefined);
     setDraft(emptyDraft);
@@ -36,6 +40,17 @@ export function SettingsPage() {
       setDeleting(undefined);
     },
   });
+  const saveCatalogPageSize = useMutation({
+    mutationFn: () => saveGlobalSettings({ catalogPageSize }),
+    onSuccess: async () => {
+      await refreshSettings();
+      showNotice('Actualizamos el límite de Ver más.');
+    },
+  });
+
+  useEffect(() => {
+    if (settings.data) setCatalogPageSize(settings.data.catalogPageSize);
+  }, [settings.data]);
 
   const startCreate = () => {
     save.reset();
@@ -48,9 +63,23 @@ export function SettingsPage() {
     setEditing(specialDate);
   };
 
-  return <section className="settings-page special-dates-settings" aria-labelledby="special-dates-title">
+  return <section className="settings-page special-dates-settings" aria-labelledby="settings-title">
     <p className="eyebrow">CONFIGURACIÓN GLOBAL</p>
-    <h1 id="special-dates-title">Fechas especiales</h1>
+    <h1 id="settings-title">Configuración global</h1>
+    <section className="settings-page__panel" aria-labelledby="catalog-limit-title">
+      <p className="eyebrow">CATÁLOGOS</p>
+      <h2 id="catalog-limit-title">Límite de Ver más</h2>
+      <p className="intro">Define cuántas entidades muestra inicialmente cada bloque y cuántas suma cada vez que eligen Ver más.</p>
+      {settings.isError && <p className="form-error" role="alert">{settings.error.message}</p>}
+      <form className="settings-page__limit-form" onSubmit={(event) => { event.preventDefault(); saveCatalogPageSize.mutate(); }}>
+        <label>Cantidad por bloque<input type="number" min="1" max="50" required value={catalogPageSize} onChange={(event) => setCatalogPageSize(Number(event.target.value))} /></label>
+        <Button icon="💾" disabled={saveCatalogPageSize.isPending}>{saveCatalogPageSize.isPending ? 'Guardando…' : 'Guardar límite'}</Button>
+        {saveCatalogPageSize.error && <p className="form-error" role="alert">{saveCatalogPageSize.error.message}</p>}
+      </form>
+    </section>
+    <section className="settings-page__panel" aria-labelledby="special-dates-title">
+    <p className="eyebrow">CALENDARIO COMPARTIDO</p>
+    <h2 id="special-dates-title">Fechas especiales</h2>
     <p className="intro">Marcá fechas que quieran reconocer en las visitas, vistas, cocinadas y salidas. Podés guardar más de una etiqueta para el mismo día.</p>
     <div className="special-dates-settings__toolbar">
       <Button icon="➕" type="button" onClick={startCreate}>Agregar fecha especial</Button>
@@ -90,5 +119,6 @@ export function SettingsPage() {
       onClose={() => { remove.reset(); setDeleting(undefined); }}
       onConfirm={() => remove.mutate(deleting.id)}
     />}
+    </section>
   </section>;
 }

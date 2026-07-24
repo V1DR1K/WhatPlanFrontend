@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDeferredValue, useEffect, useState } from "react";
 import { mediaUrl } from "../../lib/api";
 import type { Home, Recipe } from "../../types/domain";
 import { RecipeForm } from "./RecipeForm";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogMoreButton, useIncrementalLimit } from "../../components/ui/IncrementalCatalog";
+import { useCatalogPageSize } from "../../lib/settings";
 import { getCookings, getRecipes } from "./homeRecipes";
 import {
   catalogSortFromQuery,
@@ -63,8 +65,8 @@ function RecipeSection({
   title,
   empty,
   filtered,
-  focused,
-  morePath,
+  pageSize,
+  resetKey,
 }: {
   recipes: Recipe[];
   homesByRecipe: Map<number, Home[]>;
@@ -72,20 +74,19 @@ function RecipeSection({
   title: string;
   empty: string;
   filtered: boolean;
-  focused: boolean;
-  morePath: string;
+  pageSize: number;
+  resetKey: string;
 }) {
-  const displayed = focused ? recipes : recipes.slice(0, 10);
+  const [limit, showMore] = useIncrementalLimit(pageSize, `${resetKey}:${recipes.length}`);
+  const displayed = recipes.slice(0, limit);
   return <section className="home-recipe-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>{displayed.length} recetas</strong></div>
     {displayed.length ? <div className="home-recipe-grid">{displayed.map((recipe) => <RecipeCard homes={homesByRecipe.get(recipe.id) ?? []} key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
-    {!focused && recipes.length > 10 && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
+    {displayed.length < recipes.length && <CatalogMoreButton onClick={showMore} />}
   </section>;
 }
 
 export function HomeRecipesPage() {
-  const { catalogStatus } = useParams();
-  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [creating, setCreating] = useState(false);
@@ -95,6 +96,7 @@ export function HomeRecipesPage() {
   const [sort, setSort] = useState<CatalogSortValue>(() =>
     catalogSortFromQuery(searchParams.get("sort")),
   );
+  const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
   const deferredSearch = useDeferredValue(searchTerm);
   const recipes = useQuery({
@@ -132,24 +134,18 @@ export function HomeRecipesPage() {
     setSearchParams(next, { replace: true });
   }, [home, searchTerm, setSearchParams, sort]);
 
-  const focusPath = (status: "pending" | "done") => {
-    const query = new URLSearchParams();
-    if (searchTerm) query.set("search", searchTerm);
-    if (home !== "ALL") query.set("home", home);
-    if (sort) query.set("sort", sort);
-    return `/how-cook/list/${status}${query.size ? `?${query}` : ""}`;
-  };
+  const resetKey = [searchTerm, home, sort].join(":");
 
   return (
     <section className="home-recipes">
-      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHOCOOK · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Recetas pendientes" : "Recetas que ya cocinaron"}</h1><p>Explorá solo las recetas de este grupo, con todos los filtros disponibles.</p></section> : <section className="home-recipes__hero">
+      <section className="home-recipes__hero">
         <div>
           <p className="eyebrow">WHOCOOK · RECETAS PARA REPETIR</p>
           <h1>¿Qué <em>cocinamos</em> hoy?</h1>
           <p>Guarden una receta una vez y registren cada cocinada con sus propios recuerdos.</p>
         </div>
         <span aria-hidden="true">🍳</span>
-      </section>}
+      </section>
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva receta"
@@ -181,8 +177,8 @@ export function HomeRecipesPage() {
         </div>
       </section>
       {recipes.isError ? <p className="form-error">{recipes.error.message}</p> : recipes.isLoading || cookings.isLoading ? <p className="muted" aria-busy="true">Cargando recetas…</p> : <>
-        {(!focusedStatus || focusedStatus === "pending") && <RecipeSection recipes={pendingRecipes} homesByRecipe={cookingsByRecipe} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} focused={focusedStatus === "pending"} morePath={focusPath("pending")} />}
-        {(!focusedStatus || focusedStatus === "done") && <RecipeSection recipes={doneRecipes} homesByRecipe={cookingsByRecipe} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} focused={focusedStatus === "done"} morePath={focusPath("done")} />}
+        <RecipeSection recipes={pendingRecipes} homesByRecipe={cookingsByRecipe} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} pageSize={pageSize} resetKey={resetKey} />
+        <RecipeSection recipes={doneRecipes} homesByRecipe={cookingsByRecipe} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} pageSize={pageSize} resetKey={resetKey} />
       </>}
       {creating && <RecipeForm onClose={() => setCreating(false)} />}
     </section>

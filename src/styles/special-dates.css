@@ -8,6 +8,40 @@
   letter-spacing: -1.5px;
 }
 
+.settings-page__panel {
+  margin-top: 28px;
+}
+
+.settings-page__panel > h2 {
+  margin: 0;
+  font: 600 clamp(27px, 4vw, 34px)/0.95 "Fraunces", Georgia, serif;
+}
+
+.settings-page__limit-form {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.settings-page__limit-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settings-page__limit-form input {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 48%, var(--line));
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--section-accent) 7%, #151415);
+  color: var(--cream);
+}
+
 .special-dates-settings__toolbar {
   display: flex;
   margin: 24px 0 16px;
@@ -95,6 +129,14 @@
 @media (max-width: 540px) {
   .special-dates-settings__toolbar,
   .special-dates-settings__toolbar .button {
+    width: 100%;
+  }
+
+  .settings-page__limit-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-page__limit-form .button {
     width: 100%;
   }
 

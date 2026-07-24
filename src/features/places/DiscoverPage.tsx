@@ -1,10 +1,9 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { Button } from "../../components/ui/Button";
-import { LoadMore } from "../../components/ui/Pagination";
 import type { PlaceStatus } from "../../types/domain";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags } from "./highlightTags";
@@ -13,6 +12,8 @@ import { PlaceForm } from "./PlaceForm";
 import { getArchivedPlaces, getPlaces, restorePlace } from "./places";
 import { showNotice } from "../../lib/flash";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { useCatalogPageSize } from "../../lib/settings";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -121,8 +122,7 @@ function PlaceSection({
   eyebrow,
   empty,
   hasFilter,
-  focused = false,
-  morePath,
+  pageSize,
 }: {
   status: PlaceStatus;
   category?: number;
@@ -133,12 +133,11 @@ function PlaceSection({
   eyebrow: string;
   empty: string;
   hasFilter: boolean;
-  focused?: boolean;
-  morePath?: string;
+  pageSize: number;
 }) {
   const query = useInfiniteQuery({
     // A changed search or sort starts a distinct infinite query at cursor zero.
-    queryKey: ["places", status, category, highlightTagId, search, sort],
+    queryKey: ["places", status, category, highlightTagId, search, sort, pageSize],
     queryFn: ({ pageParam }) =>
       getPlaces(
         category,
@@ -147,14 +146,13 @@ function PlaceSection({
         highlightTagId,
         search || undefined,
         sort || undefined,
-        focused ? 12 : 11,
+        pageSize,
       ),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
   const list = query.data?.pages.flatMap((p) => p.content) ?? [];
-  const displayed = focused ? list : list.slice(0, 10);
-  const hasMore = query.hasNextPage || (!focused && list.length > 10);
+  const hasMore = query.hasNextPage;
   return (
     <section className="place-section">
       <div className="section-title">
@@ -162,27 +160,24 @@ function PlaceSection({
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
         </div>
-        <strong>Mostrando {displayed.length} lugar{displayed.length === 1 ? "" : "es"}</strong>
+        <strong>Mostrando {list.length} lugar{list.length === 1 ? "" : "es"}</strong>
       </div>
       {query.isError ? (
         <p className="form-error">{query.error.message}</p>
-      ) : displayed.length ? (
+      ) : list.length ? (
         <div className="place-grid">
-          {displayed.map((p) => (
+          {list.map((p) => (
             <PlaceCard place={p} key={p.id} />
           ))}
         </div>
       ) : (
         !query.isLoading && <p className="empty-state">{hasFilter ? "No hay lugares que coincidan con estos filtros." : empty}</p>
       )}
-      {!focused && hasMore && morePath && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
-      {focused && <LoadMore enabled={query.hasNextPage} onClick={() => query.fetchNextPage()} loading={query.isFetchingNextPage} />}
+      {hasMore && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
     </section>
   );
 }
 export function DiscoverPage() {
-  const { catalogStatus } = useParams();
-  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [category, setCategory] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),
@@ -196,6 +191,7 @@ export function DiscoverPage() {
   );
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
   const deferredSearch = useDeferredValue(searchTerm);
   const qc = useQueryClient();
@@ -223,17 +219,9 @@ export function DiscoverPage() {
     setSearchParams(next, { replace: true });
   }, [category, highlightTagId, searchTerm, setSearchParams, sort]);
   const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
-  const focusPath = (status: "pending" | "done") => {
-    const query = new URLSearchParams();
-    if (category) query.set("category", String(category));
-    if (highlightTagId) query.set("highlightTag", String(highlightTagId));
-    if (searchTerm) query.set("search", searchTerm);
-    if (sort) query.set("sort", sort);
-    return `/food/list/${status}${query.size ? `?${query}` : ""}`;
-  };
   return (
     <>
-      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHEREFOOD · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Lugares pendientes" : "Lugares que ya visitaron"}</h1><p>Explorá solo esta parte del historial, con todos los filtros disponibles.</p></section> : <section className="hero">
+      <section className="hero">
         <div>
           <p className="eyebrow">TU MAPA DEL HAMBRE</p>
           <h1>
@@ -246,7 +234,7 @@ export function DiscoverPage() {
           🍜<span>✦</span>
           <b>🍗</b>
         </div>
-      </section>}
+      </section>
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nuevo lugar"
@@ -292,7 +280,7 @@ export function DiscoverPage() {
           onChange={setHighlightTagId}
         />
       </section>
-      {(!focusedStatus || focusedStatus === "pending") && <PlaceSection
+      <PlaceSection
         status="PENDING"
         category={category}
         highlightTagId={highlightTagId}
@@ -302,10 +290,9 @@ export function DiscoverPage() {
         title="Pendientes para ir"
         empty="Todavía no agendaste ningún lugar."
         hasFilter={hasFilter}
-        focused={focusedStatus === "pending"}
-        morePath={focusPath("pending")}
-      />}
-      {(!focusedStatus || focusedStatus === "done") && <PlaceSection
+        pageSize={pageSize}
+      />
+      <PlaceSection
         status="REVIEWED"
         category={category}
         highlightTagId={highlightTagId}
@@ -315,10 +302,9 @@ export function DiscoverPage() {
         title="Visitas registradas"
         empty="Cuando registren la primera visita, aparecerá acá."
         hasFilter={hasFilter}
-        focused={focusedStatus === "done"}
-        morePath={focusPath("done")}
-      />}
-      {!focusedStatus && <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>}
+        pageSize={pageSize}
+      />
+      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
     </>
   );
