@@ -10,6 +10,10 @@
 
 .settings-page__panel {
   margin-top: 28px;
+  padding: 24px;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 34%, var(--line));
+  border-radius: 17px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--section-accent) 8%, var(--panel)), var(--panel));
 }
 
 .settings-page__panel > h2 {
@@ -134,6 +138,10 @@
 }
 
 @media (max-width: 540px) {
+  .settings-page__panel {
+    padding: 16px;
+  }
+
   .special-dates-settings__toolbar,
   .special-dates-settings__toolbar .button {
     width: 100%;

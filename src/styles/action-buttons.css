@@ -344,6 +344,11 @@
     width: 100%;
   }
 
+  .platform-list article .button--secondary:last-child {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+
   .settings-page .category-list {
     display: grid;
   }
@@ -351,10 +356,18 @@
   .settings-page .category-list > span {
     display: grid;
     gap: 8px;
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
   }
 
   .settings-page .category-list .button {
     width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .settings-page .category-list > span > .button:first-of-type {
+    margin-left: 0;
   }
 
   .experience-review-action {
