@@ -16,13 +16,6 @@ import {
 } from "../../lib/catalogSort";
 
 type FilterOption = { id: string | number; label: string };
-const filmCatalogSortOptions = catalogSortOptions.map((option) => {
-  if (option.value === "") return { ...option, label: "Última vista primero" };
-  if (option.value === "date-desc") return { ...option, label: "Vista más reciente" };
-  if (option.value === "date-asc") return { ...option, label: "Vista más antigua" };
-  return option;
-});
-
 function FilterChips({
   label,
   allLabel,
@@ -280,7 +273,7 @@ export function WhichFilmPage() {
           <label className="catalog-search-sort__field">
             <span>Ordenar catálogo</span>
             <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSortValue)}>
-              {filmCatalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
+              {catalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
             </select>
           </label>
         </div>
