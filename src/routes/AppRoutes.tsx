@@ -16,6 +16,7 @@ const HomeRecipeDetailPage = lazy(() => import('../features/home-recipes/HomeRec
 const WhyFunPage = lazy(() => import('../features/why-fun/WhyFunPage').then(({ WhyFunPage }) => ({ default: WhyFunPage })));
 const FunVenueDetailPage = lazy(() => import('../features/why-fun/FunVenueDetailPage').then(({ FunVenueDetailPage }) => ({ default: FunVenueDetailPage })));
 const FunCatalogManager = lazy(() => import('../features/why-fun/FunCatalogManager').then(({ FunCatalogManager }) => ({ default: FunCatalogManager })));
+const SettingsPage = lazy(() => import('../features/special-dates/SettingsPage').then(({ SettingsPage }) => ({ default: SettingsPage })));
 
 function LoadingPage() {
   return <main className="login-shell" aria-busy="true"><p>Cargando…</p></main>;
@@ -46,23 +47,34 @@ function FunAdmin() {
     : <Navigate to="/" replace />;
 }
 
+function SettingsAdmin() {
+  return session.get()?.role === 'ADMIN'
+    ? <Suspense fallback={<LoadingPage />}><SettingsPage /></Suspense>
+    : <Navigate to="/" replace />;
+}
+
 export function AppRoutes() {
   return <BrowserRouter><Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route element={<Protected />}>
       <Route index element={<Suspense fallback={<LoadingPage />}><DashboardPage /></Suspense>} />
       <Route path="food" element={<Suspense fallback={<LoadingPage />}><DiscoverPage /></Suspense>} />
+      <Route path="food/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><DiscoverPage /></Suspense>} />
       <Route path="food/home" element={<Navigate to="/how-cook" replace />} />
       <Route path="food/places/:id" element={<Suspense fallback={<LoadingPage />}><PlaceDetailPage /></Suspense>} />
       <Route path="food/categories" element={<Admin />} />
       <Route path="films" element={<Suspense fallback={<LoadingPage />}><WhichFilmPage /></Suspense>} />
+      <Route path="films/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><WhichFilmPage /></Suspense>} />
       <Route path="films/:id" element={<Suspense fallback={<LoadingPage />}><FilmDetailPage /></Suspense>} />
       <Route path="films/platforms" element={<PlatformAdmin />} />
       <Route path="how-cook" element={<Suspense fallback={<LoadingPage />}><HomeRecipesPage /></Suspense>} />
+      <Route path="how-cook/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><HomeRecipesPage /></Suspense>} />
       <Route path="how-cook/:id" element={<Suspense fallback={<LoadingPage />}><HomeRecipeDetailPage /></Suspense>} />
       <Route path="why-fun" element={<Suspense fallback={<LoadingPage />}><WhyFunPage /></Suspense>} />
+      <Route path="why-fun/list/:catalogStatus" element={<Suspense fallback={<LoadingPage />}><WhyFunPage /></Suspense>} />
       <Route path="why-fun/:id" element={<Suspense fallback={<LoadingPage />}><FunVenueDetailPage /></Suspense>} />
       <Route path="why-fun/categories" element={<FunAdmin />} />
+      <Route path="settings" element={<SettingsAdmin />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></BrowserRouter>;

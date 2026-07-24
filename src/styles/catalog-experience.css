@@ -1,0 +1,156 @@
+.catalog-entity-search {
+  position: relative;
+}
+
+.catalog-entity-search > label {
+  color: var(--muted);
+  font: 500 11px "DM Mono";
+  letter-spacing: 0.8px;
+}
+
+.catalog-entity-search__results {
+  position: absolute;
+  z-index: 12;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  overflow: hidden auto;
+  max-height: min(330px, 48vh);
+  border: 1px solid color-mix(in srgb, var(--section-accent) 55%, var(--line));
+  border-radius: 12px;
+  background: #181618;
+  box-shadow: 0 12px 28px #0009;
+}
+
+.catalog-entity-search__results button {
+  display: grid;
+  width: 100%;
+  min-height: 54px;
+  gap: 3px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 9px 12px;
+  background: transparent;
+  color: var(--cream);
+  text-align: left;
+}
+
+.catalog-entity-search__results button:last-child {
+  border-bottom: 0;
+}
+
+.catalog-entity-search__results button:hover,
+.catalog-entity-search__results button:focus-visible {
+  background: color-mix(in srgb, var(--section-accent) 13%, var(--panel));
+  outline: 0;
+}
+
+.catalog-entity-search__results strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.catalog-entity-search__results small {
+  color: var(--muted);
+  font: 500 10px "DM Mono", ui-monospace, monospace;
+}
+
+.catalog-section-more {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: 14px;
+  color: var(--section-accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.catalog-section-more:hover,
+.catalog-section-more:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.catalog-focus-heading {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 28px;
+}
+
+.catalog-focus-heading h1 {
+  margin: 0;
+  font: 700 clamp(38px, 7vw, 62px)/0.92 "Fraunces", Georgia, serif;
+  letter-spacing: -1.7px;
+}
+
+.catalog-focus-heading p {
+  max-width: 580px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.rating-stars {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  color: color-mix(in srgb, var(--section-accent) 24%, var(--line));
+  font-size: 22px;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.rating-stars__star {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--section-accent) var(--rating-fill), color-mix(in srgb, var(--section-accent) 20%, var(--line)) var(--rating-fill));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.rating-stars--empty {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: normal;
+}
+
+.rating-breakdown .rating-stars {
+  margin-top: 2px;
+}
+
+/* Narrow cards can contain a complete five-star row regardless of photo orientation. */
+.place-card .card-top > div,
+.place-card .rating-preview,
+.place-card .rating-preview > span {
+  min-width: 0;
+}
+
+.place-card .rating-preview .star-control {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.place-card .rating-preview .star-control button {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: clamp(11px, 3.8vw, 15px);
+}
+
+@media (max-width: 540px) {
+  .catalog-section-more {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rating-breakdown--food > .rating-breakdown__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .rating-stars {
+    font-size: 20px;
+  }
+}

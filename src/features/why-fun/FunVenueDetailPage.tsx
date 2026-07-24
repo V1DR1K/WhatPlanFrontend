@@ -13,6 +13,8 @@ import { ActivityForm } from "./ActivityForm";
 import { ActivityReviewForm } from "./ActivityReviewForm";
 import { ActivityVisitForm } from "./ActivityVisitForm";
 import { deleteActivity, deleteActivityPhoto, getActivity, getActivityVisits, setActivityCover, uploadActivityPhoto } from "./whyFun";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
 
 const dateLabel = (value?: string) =>
   value
@@ -38,7 +40,9 @@ export function FunVenueDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const activity = useQuery({ queryKey: ["activity", id], queryFn: () => getActivity(id), enabled: validId });
   const visits = useQuery({ queryKey: ["activity-visits", id], queryFn: () => getActivityVisits(id), enabled: validId });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const list = visits.data ?? [];
+  const specialDateList = specialDates.data ?? [];
   const current = list.find((visit) => visit.id === selectedVisitId);
   const invalidate = () => Promise.all([
     qc.invalidateQueries({ queryKey: ["activities"] }),
@@ -133,12 +137,12 @@ export function FunVenueDetailPage() {
             <label>
               Elegir salida
               <select value={selectedVisitId ?? ""} onChange={(event) => setSelectedVisitId(Number(event.target.value))}>
-                {list.map((visit) => <option key={visit.id} value={visit.id}>{dateLabel(visit.scheduledAt)} · {visit.createdBy}</option>)}
+                {list.map((visit) => <option key={visit.id} value={visit.id}>{dateLabel(visit.scheduledAt)}{specialDateOptionSuffix(visit.scheduledAt, specialDateList)} · {visit.createdBy}</option>)}
               </select>
             </label>
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}
           </div>
-          {current && <div className="experience-detail"><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
+          {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
         </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
       {editing && <ActivityForm activity={value} onClose={() => setEditing(false)} />}

@@ -7,15 +7,18 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
 import { session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
-import type { ExperiencePhoto, PlaceReview, PlaceVisit, PlaceVisitReview, PlaceVisitSummary } from "../../types/domain";
+import type { ExperiencePhoto, PlaceReview, PlaceVisit, PlaceVisitReview, PlaceVisitSummary, SpecialDate } from "../../types/domain";
 import { deleteVisitPhoto, getVisit, getVisits, setVisitCover, uploadVisitPhoto } from "../items/items";
 import { VisitForm } from "../items/VisitForm";
 import { VisitReviewForm } from "../items/VisitReviewForm";
 import { PlaceForm } from "./PlaceForm";
 import { PlaceReviewForm } from "./PlaceReviewForm";
 import { deletePlace, getPlace } from "./places";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", {
@@ -46,6 +49,7 @@ export function PlaceDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const place = useQuery({ queryKey: ["place", id], queryFn: () => getPlace(id), enabled: validId });
   const visits = useQuery({ queryKey: ["visits", id], queryFn: () => getVisits(id), enabled: validId });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const visit = useQuery({
     queryKey: ["visit", selectedVisitId],
     queryFn: () => getVisit(selectedVisitId!),
@@ -108,6 +112,7 @@ export function PlaceDetailPage() {
 
   const venue = place.data!;
   const visitList = visits.data ?? [];
+  const specialDateList = specialDates.data ?? [];
   const current = visit.data;
   const mapsUrl = venue.mapsUrl || mapsSearch(venue.address);
   const photoWidth = venue.photoWidth ?? undefined;
@@ -160,11 +165,11 @@ export function PlaceDetailPage() {
         title={venue.name}
       />
       <section className="rating-breakdown rating-breakdown--food" aria-label="Promedios del lugar">
-        <div className="rating-breakdown__experience"><span>✨ Experiencia total</span><strong>{venue.rating ? `${venue.rating.toFixed(1)}/5` : "Sin reseñas"}</strong><small>Promedio de sabor, precio y espacio/atención.</small></div>
+        <div className="rating-breakdown__experience"><span>✨ Experiencia total</span><RatingStars label="Experiencia total" value={venue.rating} /><small>Promedio de sabor, precio y espacio/atención.</small></div>
         <div className="rating-breakdown__metrics">
-          <div><span>😋 Sabor</span><strong>{venue.tasteAverage ? `${venue.tasteAverage.toFixed(1)}/5` : "-"}</strong></div>
-          <div><span>💳 Precio</span><strong>{venue.priceAverage ? `${venue.priceAverage.toFixed(1)}/5` : "-"}</strong></div>
-          <div><span>🏠 Espacio y atención</span><strong>{venue.venueAverage ? `${venue.venueAverage.toFixed(1)}/5` : "-"}</strong></div>
+          <div><span>😋 Sabor</span><RatingStars label="Sabor" value={venue.tasteAverage} /></div>
+          <div><span>💳 Precio</span><RatingStars label="Precio" value={venue.priceAverage} /></div>
+          <div><span>🏠 Espacio y atención</span><RatingStars label="Espacio y atención" value={venue.venueAverage} /></div>
         </div>
       </section>
       <section className="reviews-section place-venue-reviews">
@@ -191,13 +196,13 @@ export function PlaceDetailPage() {
             <label>
               Elegir visita
               <select value={selectedVisitId ?? ""} onChange={(event) => setSelectedVisitId(Number(event.target.value))}>
-                {visitList.map((entry) => <option key={entry.id} value={entry.id}>{dateLabel(entry.visitedOn)} · registrada por {entry.createdBy}</option>)}
+                {visitList.map((entry) => <option key={entry.id} value={entry.id}>{dateLabel(entry.visitedOn)}{specialDateOptionSuffix(entry.visitedOn, specialDateList)} · registrada por {entry.createdBy}</option>)}
               </select>
             </label>
             {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           {visit.isLoading && <p className="muted" aria-busy="true">Cargando visita…</p>}
-          {current && <VisitExperience visit={current} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
+          {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
@@ -213,6 +218,7 @@ export function PlaceDetailPage() {
 
 function VisitExperience({
   visit,
+  specialDates,
   ownReview,
   onReview,
   onUpload,
@@ -220,6 +226,7 @@ function VisitExperience({
   onSetCover,
 }: {
   visit: PlaceVisit;
+  specialDates: SpecialDate[];
   ownReview: boolean;
   onReview: () => void;
   onUpload: (files: File[]) => Promise<unknown>;
@@ -228,7 +235,7 @@ function VisitExperience({
 }) {
   return (
     <div className="experience-detail">
-      <p className="muted">Visita del {dateLabel(visit.visitedOn)}. Registrada por {visit.createdBy}; última edición de {visit.updatedBy}.</p>
+      <p className="muted">Visita del {dateLabel(visit.visitedOn)}<SpecialDateLabels date={visit.visitedOn} specialDates={specialDates} />. Registrada por {visit.createdBy}; última edición de {visit.updatedBy}.</p>
       <ExperienceGallery accentLabel="VISITA" emptyIcon="🍽️" name={`la visita del ${dateLabel(visit.visitedOn)}`} photos={visit.photos} coverPhotoId={visit.coverPhoto?.id} onUpload={async (files) => { await onUpload(files); }} onDelete={onDeletePhoto} onSetCover={onSetCover} />
       <div className="section-title section-title--compact">
         <div><p className="eyebrow">RESEÑAS</p><h2>Cómo estuvo</h2></div>

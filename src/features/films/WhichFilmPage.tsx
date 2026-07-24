@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import type { Film } from "../../types/domain";
 import {
   catalogSortFromQuery,
@@ -14,6 +15,12 @@ import {
 } from "../../lib/catalogSort";
 
 type FilterOption = { id: string | number; label: string };
+const filmCatalogSortOptions = catalogSortOptions.map((option) => {
+  if (option.value === "") return { ...option, label: "Última vista primero" };
+  if (option.value === "date-desc") return { ...option, label: "Vista más reciente" };
+  if (option.value === "date-asc") return { ...option, label: "Vista más antigua" };
+  return option;
+});
 
 function currentRating(film: Film) {
   const currentReviews = new Map<string, Film["reviews"][number]>();
@@ -34,7 +41,9 @@ function sortFilms(films: Film[], sort: CatalogSortValue) {
   return [...films].sort((left, right) => {
     if (sort === "date-desc" || sort === "date-asc") {
       const direction = sort === "date-desc" ? -1 : 1;
-      return (Date.parse(left.createdAt) - Date.parse(right.createdAt)) * direction;
+      const leftDate = left.lastWatchedOn ?? left.updatedAt;
+      const rightDate = right.lastWatchedOn ?? right.updatedAt;
+      return (Date.parse(leftDate) - Date.parse(rightDate)) * direction;
     }
     const leftRating = currentRating(left);
     const rightRating = currentRating(right);
@@ -156,13 +165,18 @@ function FilmSection({
   films,
   empty,
   filtered,
+  focused = false,
+  morePath,
 }: {
   title: string;
   eyebrow: string;
   films: Film[];
   empty: string;
   filtered: boolean;
+  focused?: boolean;
+  morePath?: string;
 }) {
+  const displayed = focused ? films : films.slice(0, 10);
   return (
     <section className="film-section">
       <div className="section-title">
@@ -170,22 +184,25 @@ function FilmSection({
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
         </div>
-        <strong>{films.length} película{films.length === 1 ? "" : "s"}</strong>
+        <strong>{displayed.length} película{displayed.length === 1 ? "" : "s"}</strong>
       </div>
-      {films.length ? (
+      {displayed.length ? (
         <div className="film-grid">
-          {films.map((film) => (
+          {displayed.map((film) => (
             <FilmCard key={film.id} film={film} />
           ))}
         </div>
       ) : (
         <p className="empty-state">{filtered ? "No encontramos películas con estos filtros." : empty}</p>
       )}
+      {!focused && films.length > 10 && morePath && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
     </section>
   );
 }
 
 export function WhichFilmPage() {
+  const { catalogStatus } = useParams();
+  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");
@@ -240,9 +257,17 @@ export function WhichFilmPage() {
   const pending = visible.filter((film) => film.watchedCount === 0);
   const watched = visible.filter((film) => film.watchedCount > 0);
   const filtered = Boolean(genre || platformId || searchTerm || sort);
+  const focusPath = (status: "pending" | "done") => {
+    const query = new URLSearchParams();
+    if (genre) query.set("genre", genre);
+    if (platformId) query.set("platform", String(platformId));
+    if (searchTerm) query.set("search", searchTerm);
+    if (sort) query.set("sort", sort);
+    return `/films/list/${status}${query.size ? `?${query}` : ""}`;
+  };
   return (
     <>
-      <section className="film-hero">
+      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHICHMOVIE · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Películas pendientes" : "Películas vistas"}</h1><p>Explorá solo esta parte de la sala, con todos los filtros disponibles.</p></section> : <section className="film-hero">
         <div>
           <p className="eyebrow">NUESTRA SALA PERSONAL</p>
           <h1>
@@ -258,7 +283,7 @@ export function WhichFilmPage() {
           🎬<span>✨</span>
           <b>🍿</b>
         </div>
-      </section>
+      </section>}
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva película"
@@ -269,19 +294,17 @@ export function WhichFilmPage() {
       </nav>
       <section className="film-controls">
         <div className="catalog-search-sort">
-          <label className="catalog-search-sort__field">
-            <span>Buscar películas</span>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Título, género o plataforma"
-            />
-          </label>
+          <CatalogEntitySearch
+            candidates={all.map((film) => ({ id: film.id, title: film.tmdb?.title ?? film.title, updatedAt: film.updatedAt }))}
+            label="Buscar películas"
+            onChange={setSearch}
+            placeholder="Título, género o plataforma"
+            value={search}
+          />
           <label className="catalog-search-sort__field">
             <span>Ordenar catálogo</span>
             <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSortValue)}>
-              {catalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
+              {filmCatalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
             </select>
           </label>
         </div>
@@ -312,20 +335,24 @@ export function WhichFilmPage() {
         <p aria-busy="true" className="muted">Cargando la sala…</p>
       ) : (
         <>
-          <FilmSection
+          {(!focusedStatus || focusedStatus === "pending") && <FilmSection
             films={pending}
             eyebrow="EN LA LISTA"
             title="Para ver"
             empty="Todavía no hay películas en la lista. ¡Busquen la primera!"
             filtered={filtered}
-          />
-          <FilmSection
+            focused={focusedStatus === "pending"}
+            morePath={focusPath("pending")}
+          />}
+          {(!focusedStatus || focusedStatus === "done") && <FilmSection
             films={watched}
             eyebrow="YA PASARON POR LA SALA"
             title="Vistas registradas"
             empty="Cuando sumen la primera vista, aparecerá acá."
             filtered={filtered}
-          />
+            focused={focusedStatus === "done"}
+            morePath={focusPath("done")}
+          />}
         </>
       )}
       {showForm && <FilmForm onClose={() => setShowForm(false)} />}

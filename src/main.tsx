@@ -10,5 +10,7 @@ import './styles/media.css';
 import './styles/experiences.css';
 import './styles/action-buttons.css';
 import './styles/catalog-controls.css';
+import './styles/special-dates.css';
+import './styles/catalog-experience.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

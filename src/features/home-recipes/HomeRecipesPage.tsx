@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useDeferredValue, useEffect, useState } from "react";
 import { mediaUrl } from "../../lib/api";
 import type { Home, Recipe } from "../../types/domain";
 import { RecipeForm } from "./RecipeForm";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { getCookings, getRecipes } from "./homeRecipes";
 import {
   catalogSortFromQuery,
@@ -38,7 +39,53 @@ function sortRecipes(
   });
 }
 
+function RecipeCard({ recipe, homes }: { recipe: Recipe; homes: Home[] }) {
+  const photo = recipe.thumbnailUrl ?? recipe.photoUrl;
+  return (
+    <Link className="home-recipe-card-link" to={`/how-cook/${recipe.id}`}>
+      <article className="home-recipe-card">
+        {photo ? <img className="home-recipe-card__image" src={mediaUrl(photo)} alt={`Foto de ${recipe.name}`} loading="lazy" /> : <div className="home-recipe-card__empty">🍲</div>}
+        <div className="home-recipe-card__body">
+          <div className="home-recipe-card__heading">
+            <div><p>{recipe.ingredients.length} ingredientes · {recipe.steps.length} pasos</p><h3>{recipe.name}</h3></div>
+          </div>
+          <footer className="recipe-card-actions"><small>{homes.length ? homes.map((value) => value === "TOMAS" ? "🏠 Tomás" : "🏡 Avril").join(" · ") : "Sin cocinadas"}</small><span>Ver receta →</span></footer>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function RecipeSection({
+  recipes,
+  homesByRecipe,
+  eyebrow,
+  title,
+  empty,
+  filtered,
+  focused,
+  morePath,
+}: {
+  recipes: Recipe[];
+  homesByRecipe: Map<number, Home[]>;
+  eyebrow: string;
+  title: string;
+  empty: string;
+  filtered: boolean;
+  focused: boolean;
+  morePath: string;
+}) {
+  const displayed = focused ? recipes : recipes.slice(0, 10);
+  return <section className="home-recipe-section">
+    <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>{displayed.length} recetas</strong></div>
+    {displayed.length ? <div className="home-recipe-grid">{displayed.map((recipe) => <RecipeCard homes={homesByRecipe.get(recipe.id) ?? []} key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
+    {!focused && recipes.length > 10 && <Link className="catalog-section-more" to={morePath}>✨ Ver más</Link>}
+  </section>;
+}
+
 export function HomeRecipesPage() {
+  const { catalogStatus } = useParams();
+  const focusedStatus = catalogStatus === "pending" || catalogStatus === "done" ? catalogStatus : undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [creating, setCreating] = useState(false);
@@ -73,6 +120,8 @@ export function HomeRecipesPage() {
     ratingsByRecipe,
     sort,
   );
+  const pendingRecipes = visibleRecipes.filter((recipe) => !cookingsByRecipe.has(recipe.id));
+  const doneRecipes = visibleRecipes.filter((recipe) => cookingsByRecipe.has(recipe.id));
   const filtered = Boolean(searchTerm || home !== "ALL" || sort);
 
   useEffect(() => {
@@ -83,16 +132,24 @@ export function HomeRecipesPage() {
     setSearchParams(next, { replace: true });
   }, [home, searchTerm, setSearchParams, sort]);
 
+  const focusPath = (status: "pending" | "done") => {
+    const query = new URLSearchParams();
+    if (searchTerm) query.set("search", searchTerm);
+    if (home !== "ALL") query.set("home", home);
+    if (sort) query.set("sort", sort);
+    return `/how-cook/list/${status}${query.size ? `?${query}` : ""}`;
+  };
+
   return (
     <section className="home-recipes">
-      <section className="home-recipes__hero">
+      {focusedStatus ? <section className="catalog-focus-heading"><p className="eyebrow">WHOCOOK · CATÁLOGO COMPLETO</p><h1>{focusedStatus === "pending" ? "Recetas pendientes" : "Recetas que ya cocinaron"}</h1><p>Explorá solo las recetas de este grupo, con todos los filtros disponibles.</p></section> : <section className="home-recipes__hero">
         <div>
           <p className="eyebrow">WHOCOOK · RECETAS PARA REPETIR</p>
           <h1>¿Qué <em>cocinamos</em> hoy?</h1>
           <p>Guarden una receta una vez y registren cada cocinada con sus propios recuerdos.</p>
         </div>
         <span aria-hidden="true">🍳</span>
-      </section>
+      </section>}
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva receta"
@@ -103,10 +160,13 @@ export function HomeRecipesPage() {
       </nav>
       <section className="home-recipe-controls" aria-label="Buscar, ordenar y filtrar recetas">
         <div className="catalog-search-sort">
-          <label className="catalog-search-sort__field">
-            <span>Buscar recetas</span>
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ej. risotto, pasta, arroz…" />
-          </label>
+          <CatalogEntitySearch
+            candidates={(recipes.data ?? []).map((recipe) => ({ id: recipe.id, title: recipe.name, updatedAt: recipe.updatedAt }))}
+            label="Buscar recetas"
+            onChange={setSearch}
+            placeholder="Ej. risotto, pasta, arroz…"
+            value={search}
+          />
           <label className="catalog-search-sort__field">
             <span>Ordenar catálogo</span>
             <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSortValue)}>
@@ -120,33 +180,10 @@ export function HomeRecipesPage() {
           <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
         </div>
       </section>
-      <section className="home-recipe-section">
-        <div className="section-title">
-          <div><p className="eyebrow">CATÁLOGO COMPARTIDO</p><h2>Recetas guardadas</h2></div>
-          <strong>{visibleRecipes.length} recetas</strong>
-        </div>
-        {recipes.isError ? <p className="form-error">{recipes.error.message}</p> : recipes.isLoading || cookings.isLoading ? <p className="muted" aria-busy="true">Cargando recetas…</p> : visibleRecipes.length ? (
-          <div className="home-recipe-grid">
-            {visibleRecipes.map((recipe) => {
-              const photo = recipe.thumbnailUrl ?? recipe.photoUrl;
-              const homes = cookingsByRecipe.get(recipe.id) ?? [];
-              return (
-                <Link className="home-recipe-card-link" key={recipe.id} to={`/how-cook/${recipe.id}`}>
-                  <article className="home-recipe-card">
-                    {photo ? <img className="home-recipe-card__image" src={mediaUrl(photo)} alt={`Foto de ${recipe.name}`} loading="lazy" /> : <div className="home-recipe-card__empty">🍲</div>}
-                    <div className="home-recipe-card__body">
-                      <div className="home-recipe-card__heading">
-                        <div><p>{recipe.ingredients.length} ingredientes · {recipe.steps.length} pasos</p><h3>{recipe.name}</h3></div>
-                      </div>
-                      <footer className="recipe-card-actions"><small>{homes.length ? homes.map((value) => value === "TOMAS" ? "🏠 Tomás" : "🏡 Avril").join(" · ") : "Sin cocinadas"}</small><span>Ver receta →</span></footer>
-                    </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </div>
-        ) : <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : "Todavía no hay recetas. Agreguen la primera para poder repetirla."}</p>}
-      </section>
+      {recipes.isError ? <p className="form-error">{recipes.error.message}</p> : recipes.isLoading || cookings.isLoading ? <p className="muted" aria-busy="true">Cargando recetas…</p> : <>
+        {(!focusedStatus || focusedStatus === "pending") && <RecipeSection recipes={pendingRecipes} homesByRecipe={cookingsByRecipe} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} focused={focusedStatus === "pending"} morePath={focusPath("pending")} />}
+        {(!focusedStatus || focusedStatus === "done") && <RecipeSection recipes={doneRecipes} homesByRecipe={cookingsByRecipe} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} focused={focusedStatus === "done"} morePath={focusPath("done")} />}
+      </>}
       {creating && <RecipeForm onClose={() => setCreating(false)} />}
     </section>
   );

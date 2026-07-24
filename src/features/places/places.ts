@@ -23,8 +23,9 @@ export const getPlaces = (
   highlightTagId?: number,
   search?: string,
   sort?: CatalogSort,
+  size = 12,
 ) => {
-  const query = new URLSearchParams({ size: "12" });
+  const query = new URLSearchParams({ size: String(size) });
   if (categoryId) query.set("categoryId", String(categoryId));
   if (cursor !== undefined) query.set("cursor", String(cursor));
   if (status) query.set("status", status);

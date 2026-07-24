@@ -7,11 +7,13 @@ import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
-import type { Cooking, CookingReview } from "../../types/domain";
+import type { Cooking, CookingReview, SpecialDate } from "../../types/domain";
 import { CookingForm } from "./CookingForm";
 import { CookingReviewForm } from "./CookingReviewForm";
 import { RecipeForm } from "./RecipeForm";
 import { deleteRecipe, getCookings, getRecipe } from "./homeRecipes";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" })
@@ -33,7 +35,9 @@ export function HomeRecipeDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const recipe = useQuery({ queryKey: ["recipe", id], queryFn: () => getRecipe(id), enabled: validId });
   const cookings = useQuery({ queryKey: ["cookings", id], queryFn: () => getCookings({ recipeId: id }), enabled: validId });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const list = cookings.data ?? [];
+  const specialDateList = specialDates.data ?? [];
   const current = list.find((cooking) => cooking.id === selectedCookingId);
   const invalidate = () => Promise.all([
     qc.invalidateQueries({ queryKey: ["recipes"] }),
@@ -99,12 +103,12 @@ export function HomeRecipeDetailPage() {
             <label>
               Elegir cocinada
               <select value={selectedCookingId ?? ""} onChange={(event) => setSelectedCookingId(Number(event.target.value))}>
-                {list.map((cooking) => <option key={cooking.id} value={cooking.id}>{dateLabel(cooking.cookedOn)} · {mealName(cooking.mealType)} · {cooking.createdBy}</option>)}
+                {list.map((cooking) => <option key={cooking.id} value={cooking.id}>{dateLabel(cooking.cookedOn)}{specialDateOptionSuffix(cooking.cookedOn, specialDateList)} · {mealName(cooking.mealType)} · {cooking.createdBy}</option>)}
               </select>
             </label>
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button></div>}
           </div>
-          {current && <CookingExperience cooking={current} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
+          {current && <CookingExperience cooking={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
         </> : <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
       </section>
       {editingRecipe && <RecipeForm recipe={value} onClose={() => setEditingRecipe(false)} />}
@@ -115,10 +119,10 @@ export function HomeRecipeDetailPage() {
   );
 }
 
-function CookingExperience({ cooking, onReview, ownReview }: { cooking: Cooking; onReview: () => void; ownReview: boolean }) {
+function CookingExperience({ cooking, specialDates, onReview, ownReview }: { cooking: Cooking; specialDates: SpecialDate[]; onReview: () => void; ownReview: boolean }) {
   return (
     <div className="experience-detail">
-      <p className="muted">{dateLabel(cooking.cookedOn)} · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠 Casa de Tomás" : "🏡 Casa de Avril"} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
+      <p className="muted">{dateLabel(cooking.cookedOn)}<SpecialDateLabels date={cooking.cookedOn} specialDates={specialDates} /> · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠 Casa de Tomás" : "🏡 Casa de Avril"} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
       <section className="reviews-section">
         <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS</p><h2>Cómo salió</h2></div><strong>{cooking.reviews.length}</strong></div>
         {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><div className="review-score"><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><span>{scoreLabel(review.rating)}</span></div><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}

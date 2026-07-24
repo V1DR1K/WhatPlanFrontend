@@ -14,6 +14,8 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { Button } from "../../components/ui/Button";
 import { deleteFilm, deleteFilmView, getFilm } from "./films";
 import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
 
 const viewedLabel = (date?: string) =>
   date
@@ -40,6 +42,7 @@ export function FilmDetailPage() {
     queryFn: () => getFilm(id),
     enabled: validId,
   });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const remove = useMutation({
     mutationFn: () => deleteFilm(id),
     onSuccess: async () => {
@@ -61,6 +64,7 @@ export function FilmDetailPage() {
     },
   });
   const views = filmQuery.data?.views ?? [];
+  const specialDateList = specialDates.data ?? [];
   useEffect(() => {
     if (views.length && !views.some((view) => view.id === selectedViewId))
       setSelectedViewId(views[0].id);
@@ -266,7 +270,7 @@ export function FilmDetailPage() {
                 {views.map((view, index) => (
                   <option key={view.id} value={view.id}>
                     Vista #{views.length - index} ·{" "}
-                     {viewedLabel(view.watchedOn)}
+                      {viewedLabel(view.watchedOn)}{specialDateOptionSuffix(view.watchedOn, specialDateList)}
                   </option>
                 ))}
               </select>
@@ -278,7 +282,7 @@ export function FilmDetailPage() {
           <>
             <p className="muted">
               Vista del{" "}
-               {viewedLabel(selectedView.watchedOn)}.
+                {viewedLabel(selectedView.watchedOn)}<SpecialDateLabels date={selectedView.watchedOn} specialDates={specialDateList} />.
               Registrada por {selectedView.createdBy}; última edición de {selectedView.updatedBy}.
             </p>
             <div className="section-title section-title--compact">
