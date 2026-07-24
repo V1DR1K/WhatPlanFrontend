@@ -1,7 +1,9 @@
 import type { CSSProperties } from "react";
 
 const normalizedValue = (value?: number) =>
-  value === undefined || value === null ? undefined : Math.max(0, Math.min(5, value));
+  value === undefined || value === null || !Number.isFinite(value)
+    ? undefined
+    : Math.max(0, Math.min(5, value));
 
 export function RatingStars({ label, value }: { label: string; value?: number }) {
   const rating = normalizedValue(value);
