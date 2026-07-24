@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { Modal } from '../../components/ui/Modal';
 import type { FunCategory } from '../../types/domain';
-import { getAllFunCategories, saveFunCategory, type FunCategoryInput } from './whyFun';
+import { deleteFunCategory, getAllFunCategories, saveFunCategory, type FunCategoryInput } from './whyFun';
 
 const emptyCategory: FunCategoryInput = { name: '', icon: '✨', active: true };
 
@@ -15,14 +16,120 @@ export function FunCatalogManager() {
   const [creating, setCreating] = useState<'category' | 'subcategory'>();
   const [editing, setEditing] = useState<FunCategory>();
   const [editDraft, setEditDraft] = useState<FunCategoryInput>(emptyCategory);
+  const [deleting, setDeleting] = useState<FunCategory>();
   const refresh = () => qc.invalidateQueries({ queryKey: ['fun-categories'] });
-  const createCategory = useMutation({ mutationFn: (input: FunCategoryInput) => saveFunCategory(input), onSuccess: () => { setCategoryDraft(emptyCategory); setCreating(undefined); refresh(); } });
-  const createSubcategory = useMutation({ mutationFn: (input: FunCategoryInput) => saveFunCategory(input), onSuccess: () => { setSubcategoryDraft(emptyCategory); setCreating(undefined); refresh(); } });
-  const updateCategory = useMutation({ mutationFn: ({ id, input }: { id: number; input: FunCategoryInput }) => saveFunCategory(input, id), onSuccess: () => { setEditing(undefined); refresh(); } });
+  const createCategory = useMutation({
+    mutationFn: (input: FunCategoryInput) => saveFunCategory(input),
+    onSuccess: () => {
+      setCategoryDraft(emptyCategory);
+      setCreating(undefined);
+      refresh();
+    },
+  });
+  const createSubcategory = useMutation({
+    mutationFn: (input: FunCategoryInput) => saveFunCategory(input),
+    onSuccess: () => {
+      setSubcategoryDraft(emptyCategory);
+      setCreating(undefined);
+      refresh();
+    },
+  });
+  const updateCategory = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: FunCategoryInput }) => saveFunCategory(input, id),
+    onSuccess: () => {
+      setEditing(undefined);
+      refresh();
+    },
+  });
+  const deleteCategory = useMutation({
+    mutationFn: deleteFunCategory,
+    onSuccess: async () => {
+      await refresh();
+      setDeleting(undefined);
+    },
+  });
   const roots = (categories.data ?? []).filter(category => !category.parentId);
   const childrenOf = (id: number) => (categories.data ?? []).filter(category => category.parentId === id);
-  const edit = (category: FunCategory) => { setEditing(category); setEditDraft({ parentId: category.parentId, name: category.name, icon: category.icon, active: category.active }); };
-  const toggle = (category: FunCategory) => updateCategory.mutate({ id: category.id, input: { parentId: category.parentId, name: category.name, icon: category.icon, active: !category.active } });
+  const edit = (category: FunCategory) => {
+    setEditing(category);
+    setEditDraft({ parentId: category.parentId, name: category.name, icon: category.icon, active: category.active });
+  };
 
-  return <section className="settings-page fun-settings"><p className="eyebrow">CONFIGURACIÓN DE WHYFUN</p><h2>Categorías y subcategorías</h2><p className="intro">Definan los tipos de planes que quieren guardar. Cada subcategoría pertenece a una categoría principal.</p><div className="settings-grid"><section><h3>Categorías</h3><Button className="settings-add-button" icon="➕" type="button" onClick={() => { setCategoryDraft(emptyCategory); setCreating('category'); }}>Agregar categoría</Button></section><section><h3>Subcategorías</h3><Button className="settings-add-button" icon="➕" type="button" onClick={() => { setSubcategoryDraft(emptyCategory); setCreating('subcategory'); }}>Agregar subcategoría</Button></section></div><div className="fun-catalog-list">{roots.map(category => <section className="fun-catalog-group" key={category.id}><div className="category-list"><span className="fun-catalog-root">{category.icon} {category.name}{!category.active && ' (inactiva)'} <Button variant="tertiary" icon="✏️" onClick={() => edit(category)}>Editar</Button><Button variant="secondary" icon="⚡" onClick={() => toggle(category)}>{category.active ? 'Desactivar' : 'Activar'}</Button></span></div><div className="category-list">{childrenOf(category.id).map(child => <span key={child.id}>{child.icon} {child.name}{!child.active && ' (inactiva)'} <Button variant="tertiary" icon="✏️" onClick={() => edit(child)}>Editar</Button><Button variant="secondary" icon="⚡" onClick={() => toggle(child)}>{child.active ? 'Desactivar' : 'Activar'}</Button></span>)}{!childrenOf(category.id).length && <small className="muted">Sin subcategorías.</small>}</div></section>)}</div>{creating === 'category' && <Modal onClose={() => setCreating(undefined)}><form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createCategory.mutate(categoryDraft); }}><p className="eyebrow">NUEVA CATEGORÍA</p><h2>Agregar categoría</h2><label>Nombre<input value={categoryDraft.name} onChange={event => setCategoryDraft({ ...categoryDraft, name: event.target.value })} required autoFocus /></label><label>Ícono<input value={categoryDraft.icon} onChange={event => setCategoryDraft({ ...categoryDraft, icon: event.target.value })} required /></label><Button icon="➕" disabled={createCategory.isPending}>{createCategory.isPending ? 'Guardando…' : 'Agregar categoría'}</Button>{createCategory.error && <p className="form-error">{createCategory.error.message}</p>}</form></Modal>}{creating === 'subcategory' && <Modal onClose={() => setCreating(undefined)}><form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createSubcategory.mutate(subcategoryDraft); }}><p className="eyebrow">NUEVA SUBCATEGORÍA</p><h2>Agregar subcategoría</h2><label>Categoría principal<select value={subcategoryDraft.parentId ?? ''} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, parentId: Number(event.target.value) || undefined })} required><option value="">Elegí una categoría</option>{roots.map(category => <option key={category.id} value={category.id}>{category.icon} {category.name}</option>)}</select></label><label>Nombre<input value={subcategoryDraft.name} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, name: event.target.value })} required autoFocus /></label><label>Ícono<input value={subcategoryDraft.icon} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, icon: event.target.value })} required /></label><Button icon="➕" disabled={createSubcategory.isPending}>{createSubcategory.isPending ? 'Guardando…' : 'Agregar subcategoría'}</Button>{createSubcategory.error && <p className="form-error">{createSubcategory.error.message}</p>}</form></Modal>}{editing && <Modal onClose={() => setEditing(undefined)}><form className="fun-edit-category" onSubmit={event => { event.preventDefault(); updateCategory.mutate({ id: editing.id, input: editDraft }); }}><p className="eyebrow">EDITAR {editing.parentId ? 'SUBCATEGORÍA' : 'CATEGORÍA'}</p><h2>{editing.name}</h2><label>Nombre<input value={editDraft.name} onChange={event => setEditDraft({ ...editDraft, name: event.target.value })} required autoFocus /></label><label>Ícono<input value={editDraft.icon} onChange={event => setEditDraft({ ...editDraft, icon: event.target.value })} required /></label><label className="fun-active-toggle"><input type="checkbox" checked={editDraft.active} onChange={event => setEditDraft({ ...editDraft, active: event.target.checked })} /> Activa</label><Button icon="💾" disabled={updateCategory.isPending}>{updateCategory.isPending ? 'Guardando…' : 'Guardar cambios'}</Button>{updateCategory.error && <p className="form-error">{updateCategory.error.message}</p>}</form></Modal>}</section>;
+  return <section className="settings-page fun-settings">
+    <p className="eyebrow">CONFIGURACIÓN DE WHYFUN</p>
+    <h2>Categorías y subcategorías</h2>
+    <p className="intro">Definan los tipos de planes que quieren guardar. Cada subcategoría pertenece a una categoría principal.</p>
+    <div className="settings-grid">
+      <section>
+        <h3>Categorías</h3>
+        <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setCategoryDraft(emptyCategory); setCreating('category'); }}>Agregar categoría</Button>
+      </section>
+      <section>
+        <h3>Subcategorías</h3>
+        <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setSubcategoryDraft(emptyCategory); setCreating('subcategory'); }}>Agregar subcategoría</Button>
+      </section>
+    </div>
+    <div className="fun-catalog-list">
+      {roots.map(category => <section className="fun-catalog-group" key={category.id}>
+        <div className="category-list">
+          <span className="fun-catalog-root">
+            {category.icon} {category.name}{!category.active && ' (inactiva)'}
+            <Button variant="tertiary" icon="✏️" type="button" onClick={() => edit(category)}>Editar</Button>
+            <Button variant="destructive" icon="🗑️" type="button" onClick={() => { deleteCategory.reset(); setDeleting(category); }}>Borrar</Button>
+          </span>
+        </div>
+        <div className="category-list">
+          {childrenOf(category.id).map(child => <span key={child.id}>
+            {child.icon} {child.name}{!child.active && ' (inactiva)'}
+            <Button variant="tertiary" icon="✏️" type="button" onClick={() => edit(child)}>Editar</Button>
+            <Button variant="destructive" icon="🗑️" type="button" onClick={() => { deleteCategory.reset(); setDeleting(child); }}>Borrar</Button>
+          </span>)}
+          {!childrenOf(category.id).length && <small className="muted">Sin subcategorías.</small>}
+        </div>
+      </section>)}
+    </div>
+    {creating === 'category' && <Modal onClose={() => setCreating(undefined)}>
+      <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createCategory.mutate(categoryDraft); }}>
+        <p className="eyebrow">NUEVA CATEGORÍA</p>
+        <h2>Agregar categoría</h2>
+        <label>Nombre<input value={categoryDraft.name} onChange={event => setCategoryDraft({ ...categoryDraft, name: event.target.value })} required autoFocus /></label>
+        <label>Ícono<input value={categoryDraft.icon} onChange={event => setCategoryDraft({ ...categoryDraft, icon: event.target.value })} required /></label>
+        <Button icon="➕" disabled={createCategory.isPending}>{createCategory.isPending ? 'Guardando…' : 'Agregar categoría'}</Button>
+        {createCategory.error && <p className="form-error">{createCategory.error.message}</p>}
+      </form>
+    </Modal>}
+    {creating === 'subcategory' && <Modal onClose={() => setCreating(undefined)}>
+      <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createSubcategory.mutate(subcategoryDraft); }}>
+        <p className="eyebrow">NUEVA SUBCATEGORÍA</p>
+        <h2>Agregar subcategoría</h2>
+        <label>Categoría principal<select value={subcategoryDraft.parentId ?? ''} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, parentId: Number(event.target.value) || undefined })} required>
+          <option value="">Elegí una categoría</option>
+          {roots.map(category => <option key={category.id} value={category.id}>{category.icon} {category.name}</option>)}
+        </select></label>
+        <label>Nombre<input value={subcategoryDraft.name} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, name: event.target.value })} required autoFocus /></label>
+        <label>Ícono<input value={subcategoryDraft.icon} onChange={event => setSubcategoryDraft({ ...subcategoryDraft, icon: event.target.value })} required /></label>
+        <Button icon="➕" disabled={createSubcategory.isPending}>{createSubcategory.isPending ? 'Guardando…' : 'Agregar subcategoría'}</Button>
+        {createSubcategory.error && <p className="form-error">{createSubcategory.error.message}</p>}
+      </form>
+    </Modal>}
+    {editing && <Modal onClose={() => setEditing(undefined)}>
+      <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); updateCategory.mutate({ id: editing.id, input: editDraft }); }}>
+        <p className="eyebrow">EDITAR {editing.parentId ? 'SUBCATEGORÍA' : 'CATEGORÍA'}</p>
+        <h2>{editing.name}</h2>
+        <label>Nombre<input value={editDraft.name} onChange={event => setEditDraft({ ...editDraft, name: event.target.value })} required autoFocus /></label>
+        <label>Ícono<input value={editDraft.icon} onChange={event => setEditDraft({ ...editDraft, icon: event.target.value })} required /></label>
+        <label className="fun-active-toggle"><input type="checkbox" checked={editDraft.active} onChange={event => setEditDraft({ ...editDraft, active: event.target.checked })} /> Activa</label>
+        <Button icon="💾" disabled={updateCategory.isPending}>{updateCategory.isPending ? 'Guardando…' : 'Guardar cambios'}</Button>
+        {updateCategory.error && <p className="form-error">{updateCategory.error.message}</p>}
+      </form>
+    </Modal>}
+    {deleting && <ConfirmDialog
+      title={`¿Borrar esta ${deleting.parentId ? 'subcategoría' : 'categoría'}?`}
+      message={deleteCategory.error?.message ?? 'No podrá borrarse si tiene subcategorías o planes asociados.'}
+      confirmLabel="Borrar"
+      pending={deleteCategory.isPending}
+      onClose={() => setDeleting(undefined)}
+      onConfirm={() => deleteCategory.mutate(deleting.id)}
+    />}
+  </section>;
 }

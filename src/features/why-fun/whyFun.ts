@@ -8,6 +8,7 @@ export type ActivityVisitInput = { scheduledAt?: string };
 export const getFunCategories = () => api<FunCategory[]>('/why-fun/categories');
 export const getAllFunCategories = () => api<FunCategory[]>('/why-fun/categories/all');
 export const saveFunCategory = (input: FunCategoryInput, id?: number) => api<FunCategory>(`/why-fun/categories${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
+export const deleteFunCategory = (id: number) => api<void>(`/why-fun/categories/${id}`, { method: 'DELETE' });
 export const getActivities = (filters: { categoryId?: number; subcategoryId?: number; search?: string; visited?: boolean; sort?: string; cursor?: number; size?: number } = {}) => {
  const query = new URLSearchParams();
  if (filters.categoryId) query.set('categoryId', String(filters.categoryId));
