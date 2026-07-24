@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
@@ -7,8 +7,59 @@ import { getFilmGenres, getFilms, getPlatforms } from "./films";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import type { Film } from "../../types/domain";
+import {
+  catalogSortFromQuery,
+  catalogSortOptions,
+  type CatalogSortValue,
+} from "../../lib/catalogSort";
 
 type FilterOption = { id: string | number; label: string };
+
+function currentRating(film: Film) {
+  const currentReviews = new Map<string, Film["reviews"][number]>();
+  for (const review of film.reviews) {
+    const author = review.author?.toLowerCase();
+    if ((author === "tomas" || author === "avril") && !currentReviews.has(author)) {
+      currentReviews.set(author, review);
+    }
+  }
+  const ratings = [...currentReviews.values()].map((review) => review.rating);
+  return ratings.length
+    ? ratings.reduce((total, rating) => total + rating, 0) / ratings.length
+    : undefined;
+}
+
+function sortFilms(films: Film[], sort: CatalogSortValue) {
+  if (!sort) return films;
+  return [...films].sort((left, right) => {
+    if (sort === "date-desc" || sort === "date-asc") {
+      const direction = sort === "date-desc" ? -1 : 1;
+      return (Date.parse(left.createdAt) - Date.parse(right.createdAt)) * direction;
+    }
+    const leftRating = currentRating(left);
+    const rightRating = currentRating(right);
+    // Unrated films remain after rated ones instead of triggering per-film requests.
+    if (leftRating === undefined) return rightRating === undefined ? 0 : 1;
+    if (rightRating === undefined) return -1;
+    return (leftRating - rightRating) * (sort === "rating-desc" ? -1 : 1);
+  });
+}
+
+function matchesSearch(film: Film, search: string) {
+  if (!search) return true;
+  const text = [
+    film.title,
+    film.originalTitle,
+    film.tmdb?.title,
+    film.tmdb?.originalTitle,
+    ...film.genres,
+    film.platform?.name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("es");
+  return text.includes(search.toLocaleLowerCase("es"));
+}
 
 function FilterChips({
   label,
@@ -136,22 +187,30 @@ function FilmSection({
 
 export function WhichFilmPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");
   const [platformId, setPlatformId] = useState<number | undefined>(() => {
     const value = Number(searchParams.get("platform"));
     return Number.isInteger(value) && value > 0 ? value : undefined;
   });
+  const [sort, setSort] = useState<CatalogSortValue>(() =>
+    catalogSortFromQuery(searchParams.get("sort")),
+  );
   const [showForm, setShowForm] = useState(false);
+  const searchTerm = search.trim();
+  const deferredSearch = useDeferredValue(searchTerm);
   const filmsQuery = useQuery({
     queryKey: ["films", genre, platformId],
     queryFn: () => getFilms({ genre: genre || undefined, platformId }),
   });
   useEffect(() => {
     const next = new URLSearchParams();
+    if (searchTerm) next.set("search", searchTerm);
     if (genre) next.set("genre", genre);
     if (platformId) next.set("platform", String(platformId));
+    if (sort) next.set("sort", sort);
     setSearchParams(next, { replace: true });
-  }, [genre, platformId, setSearchParams]);
+  }, [genre, platformId, searchTerm, setSearchParams, sort]);
   const platforms = useQuery({
     queryKey: ["watch-platforms"],
     queryFn: getPlatforms,
@@ -174,9 +233,13 @@ export function WhichFilmPage() {
         label: `${option.emoji} ${option.name}`,
       }))
     : genres.map((name) => ({ id: name, label: name }));
-  const pending = all.filter((film) => film.watchedCount === 0);
-  const watched = all.filter((film) => film.watchedCount > 0);
-  const filtered = Boolean(genre || platformId);
+  const visible = sortFilms(
+    all.filter((film) => matchesSearch(film, deferredSearch)),
+    sort,
+  );
+  const pending = visible.filter((film) => film.watchedCount === 0);
+  const watched = visible.filter((film) => film.watchedCount > 0);
+  const filtered = Boolean(genre || platformId || searchTerm || sort);
   return (
     <>
       <section className="film-hero">
@@ -205,6 +268,23 @@ export function WhichFilmPage() {
         />
       </nav>
       <section className="film-controls">
+        <div className="catalog-search-sort">
+          <label className="catalog-search-sort__field">
+            <span>Buscar películas</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Título, género o plataforma"
+            />
+          </label>
+          <label className="catalog-search-sort__field">
+            <span>Ordenar catálogo</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSortValue)}>
+              {catalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+        </div>
         <FilterChips
           label="Géneros"
           allLabel="Todos"

@@ -91,6 +91,9 @@ export function FilmDetailPage() {
   const genres = tmdb?.genres.length ? tmdb.genres : film.genres;
   const synopsis = tmdb?.synopsis ?? film.synopsis;
   const releaseDate = tmdb?.releaseDate ?? film.releaseDate;
+  const cast = tmdb?.cast ?? [];
+  const visibleCast = cast.slice(0, 8);
+  const hiddenCastCount = cast.length - visibleCast.length;
   const viewAction = film.watchedCount
     ? "Registrar otra vista"
     : "Registrar primera vista";
@@ -187,17 +190,16 @@ export function FilmDetailPage() {
               Ver tráiler en YouTube <span aria-hidden="true">↗</span>
             </a>
           )}
-          {!!tmdb.cast.length && (
+          {!!cast.length && (
             <section className="tmdb-cast">
               <div className="section-title">
                 <div>
                   <p className="eyebrow">DESDE TMDB</p>
                   <h2>El reparto</h2>
                 </div>
-                <strong>{tmdb.cast.length} integrantes</strong>
               </div>
               <div className="tmdb-cast-grid">
-                {tmdb.cast.map((member) => (
+                {visibleCast.map((member) => (
                   <article key={`${member.name}-${member.character ?? ""}`}>
                     {member.profileUrl ? (
                       <img
@@ -209,11 +211,12 @@ export function FilmDetailPage() {
                       <span aria-hidden="true">🎭</span>
                     )}
                     <div>
-                      <h3>{member.name}</h3>
-                      <p>{member.character || "Reparto"}</p>
+                      <h3 title={member.name}>{member.name}</h3>
+                      <p title={member.character || "Reparto"}>{member.character || "Reparto"}</p>
                     </div>
                   </article>
                 ))}
+                {hiddenCastCount > 0 && <article className="tmdb-cast-grid__more" aria-label={`${hiddenCastCount} integrantes más`}><strong>+{hiddenCastCount}</strong><small>más</small></article>}
               </div>
             </section>
           )}

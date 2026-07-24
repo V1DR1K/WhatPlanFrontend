@@ -171,6 +171,68 @@
   font: 600 28px/0.9 "Fraunces";
   color: var(--cream);
 }
+.rating-breakdown--food {
+  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.6fr);
+}
+.rating-breakdown--food > .rating-breakdown__experience {
+  border-color: color-mix(in srgb, var(--section-accent) 62%, var(--line));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--section-accent) 22%, var(--panel)), var(--panel));
+  box-shadow: 4px 4px 0 var(--section-shadow);
+}
+.rating-breakdown__experience strong {
+  color: var(--section-accent);
+}
+.rating-breakdown__experience small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+.rating-breakdown--food > .rating-breakdown__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.rating-breakdown__metrics > div {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--panel);
+  color: var(--muted);
+  font-size: 12px;
+}
+.rating-breakdown__metrics strong {
+  font: 600 23px/1 "Fraunces";
+  color: var(--cream);
+}
+.place-reservation-toggle {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+.place-reservation-toggle input {
+  width: auto !important;
+  margin: 0;
+}
+.place-reservation-toggle span {
+  color: var(--cream);
+  font-size: 14px;
+  font-weight: 700;
+}
+.place-reservation-toggle small {
+  grid-column: 2;
+}
+.place-reservation-status {
+  margin: 8px 0 0;
+  color: var(--section-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+.food-experience-kpi {
+  white-space: nowrap;
+}
 @media (max-width: 540px) {
   .login-card input,
   .modal input,
@@ -185,6 +247,12 @@
   .review-columns,
   .place-review > div {
     grid-template-columns: 1fr;
+  }
+  .rating-breakdown--food > .rating-breakdown__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .rating-breakdown--food > .rating-breakdown__metrics > div:last-child {
+    grid-column: 1 / -1;
   }
   .place-hero-photo {
     width: 55px;

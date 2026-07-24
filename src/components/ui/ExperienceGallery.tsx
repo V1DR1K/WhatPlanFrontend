@@ -5,6 +5,10 @@ import type { ExperiencePhoto } from "../../types/domain";
 import { Button, buttonClassName } from "./Button";
 
 const AUTO_ADVANCE_MS = 5_000;
+export const MAX_EXPERIENCE_PHOTOS = 4;
+
+export const experiencePhotoSlots = (photoCount: number) =>
+  Math.max(0, MAX_EXPERIENCE_PHOTOS - photoCount);
 
 export const nextPhotoIndex = (current: number, total: number) =>
   total > 0 ? (current + 1) % total : 0;
@@ -84,9 +88,9 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
 
   const upload = async (files: FileList | null) => {
     if (!onUpload || !files?.length) return;
-    const remaining = 12 - photos.length;
+    const remaining = experiencePhotoSlots(photos.length);
     if (files.length > remaining) {
-      setUploadError(`Esta experiencia admite hasta 12 fotos. Podés subir ${remaining} más.`);
+      setUploadError(`Esta experiencia admite hasta ${MAX_EXPERIENCE_PHOTOS} fotos. Podés subir ${remaining} más.`);
       return;
     }
     try {
@@ -111,11 +115,11 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
     </div>
     {photos.length > 1 && <div className="experience-gallery__dots" role="tablist" aria-label="Elegir foto">{photos.map((value, index) => <button key={value.id} type="button" role="tab" aria-selected={selected === index} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} />)}</div>}
     <div className="experience-gallery__actions">
-      {onUpload && <label className={buttonClassName("secondary", "experience-gallery__upload")}><span className="button__icon" aria-hidden="true">🖼️</span><span className="button__label">{uploading ? "Subiendo fotos…" : "Agregar fotos"}</span><input type="file" accept={photoInputAccept} multiple disabled={uploading || photos.length >= 12} onChange={(event) => { void upload(event.target.files); event.currentTarget.value = ""; }} /></label>}
+      {onUpload && <label className={buttonClassName("secondary", "experience-gallery__upload")}><span className="button__icon" aria-hidden="true">🖼️</span><span className="button__label">{uploading ? "Subiendo fotos…" : "Agregar fotos"}</span><input type="file" accept={photoInputAccept} multiple disabled={uploading || experiencePhotoSlots(photos.length) === 0} onChange={(event) => { void upload(event.target.files); event.currentTarget.value = ""; }} /></label>}
       {photo && onSetCover && photo.id !== coverPhotoId && <Button icon="⭐" variant="secondary" type="button" onClick={() => onSetCover(photo)}>Usar de portada</Button>}
       {photo && onDelete && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}
     </div>
-    <p className="experience-gallery__meta">{accentLabel} · {photos.length}/12 fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
+    <p className="experience-gallery__meta">{accentLabel} · {photos.length}/{MAX_EXPERIENCE_PHOTOS} fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
     {uploadError && <p className="form-error">{uploadError}</p>}
     {lightbox && photo && <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Foto ampliada de ${name}`} onMouseDown={() => setLightbox(false)}><Button className="photo-lightbox-close" icon="✕" type="button" variant="icon" onMouseDown={(event) => event.stopPropagation()} onClick={() => setLightbox(false)} aria-label="Cerrar foto ampliada" title="Cerrar foto ampliada" /><img src={mediaUrl(photo.url)} alt={`Foto ampliada ${selected + 1} de ${name}`} onMouseDown={(event) => event.stopPropagation()} />{photos.length > 1 && <div className="photo-lightbox__controls" onMouseDown={(event) => event.stopPropagation()}><Button icon="◀️" type="button" variant="secondary" onClick={() => move("previous")}>Anterior</Button><Button icon="▶️" type="button" variant="secondary" onClick={() => move("next")}>Siguiente</Button></div>}</div>}
   </section>;

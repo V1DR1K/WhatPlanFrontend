@@ -149,6 +149,52 @@
   padding: 14px;
 }
 
+.food-shell .place-venue-reviews .review-columns {
+  grid-template-columns: 1fr;
+}
+
+/* A venue score needs room for five touch targets and its optional reset action. */
+.modal .venue-score-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.modal .score-field {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal .score-field .place-score-input {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.modal .score-field .star-control--input {
+  flex: 1;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+/* Scrollable controls keep a restrained, section-contained black scrollbar. */
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results) {
+  scrollbar-color: var(--section-accent) #050505;
+  scrollbar-width: thin;
+}
+
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--section-accent);
+}
+
+:is(.food-shell, .film-shell, .cook-shell, .fun-shell) :is(.modal-backdrop, .modal, .quick-nav, .chips, .tag-options, .tmdb-search-results)::-webkit-scrollbar-track {
+  background: #050505;
+}
+
 .food-shell .place-review__heading {
   align-items: center;
   gap: 8px;

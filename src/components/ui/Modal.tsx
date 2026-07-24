@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren, type SyntheticEvent } from 'react';
 import { Button } from './Button';
 
 type ModalProps = {
@@ -16,13 +16,24 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
 
   const requestClose = () => {
     if (pending) return;
-    if (confirmDiscard && dirty) {
+    const shouldConfirmDiscard = confirmDiscard || Boolean(dialog.current?.querySelector('form'));
+    if (shouldConfirmDiscard && dirty) {
       setConfirmingDiscard(true);
       return;
     }
     onClose();
   };
   requestCloseRef.current = requestClose;
+
+  const markDirty = (event: SyntheticEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('form')) return;
+    if (event.type === 'click') {
+      const button = target.closest('button');
+      if (!button || button.type === 'submit') return;
+    }
+    setDirty(true);
+  };
 
   useEffect(() => {
     previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -52,7 +63,7 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
   }, []);
 
   return <div className="modal-backdrop" role="presentation" onMouseDown={requestClose}>
-    <section className="modal" ref={dialog} role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()} onInputCapture={() => setDirty(true)} onChangeCapture={() => setDirty(true)}>
+    <section className="modal" ref={dialog} role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       <Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" />
       {children}
       {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">

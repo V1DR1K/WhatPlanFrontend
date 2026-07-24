@@ -489,19 +489,17 @@ a {
   place-items: center;
   padding: 20px;
   z-index: 5;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 .modal {
-  width: min(560px, calc(100vw - 40px));
+  width: min(560px, 100%);
   max-width: 100%;
   min-width: 0;
   max-height: 90vh;
   max-height: calc(100svh - 40px);
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   background: #211f21;
@@ -510,6 +508,22 @@ a {
   padding: 30px;
   position: relative;
   box-shadow: 0 25px 60px #000;
+}
+.modal :is(form, fieldset, label, .form-columns, .score-grid, .venue-score-grid) {
+  min-width: 0;
+  max-width: 100%;
+}
+.modal :is(input, textarea, select) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.modal :is(h2, p, small, legend) {
+  overflow-wrap: anywhere;
+}
+.modal .review-textarea {
+  min-height: clamp(140px, 24vh, 240px);
+  resize: vertical;
+  line-height: 1.45;
 }
 .close {
   position: absolute;
@@ -535,13 +549,14 @@ a {
 .modal-discard > div {
   width: min(360px, 100%);
   padding: 20px;
-  border: 1px solid #6b5961;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 55%, #6b5961);
   border-radius: 16px;
   background: #211f21;
   box-shadow: 0 20px 40px #000;
 }
 .modal-discard strong {
   font: 600 24px "Fraunces";
+  color: var(--section-accent);
 }
 .modal-discard p {
   color: var(--muted);
@@ -1734,6 +1749,7 @@ a {
   flex: 1;
   flex-flow: row wrap;
   align-items: baseline;
+  justify-content: space-between;
   gap: 8px 18px;
   min-width: 0;
 }
@@ -3183,8 +3199,9 @@ a {
 }
 .tmdb-cast-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 128px));
+  justify-content: start;
+  gap: 9px;
 }
 .tmdb-cast-grid article {
   min-width: 0;
@@ -3197,9 +3214,26 @@ a {
 .tmdb-cast-grid > article > span {
   display: block;
   width: 100%;
-  aspect-ratio: 1/1;
+  aspect-ratio: 2/3;
   object-fit: cover;
   background: #29243c;
+}
+.tmdb-cast-grid__more {
+  display: grid;
+  min-height: 0;
+  place-content: center;
+  gap: 2px;
+  border-color: #5f5687 !important;
+  background: color-mix(in srgb, var(--section-accent) 13%, #1a1821) !important;
+  color: var(--section-accent);
+  text-align: center;
+}
+.tmdb-cast-grid__more strong {
+  font: 700 25px/1 "Fraunces";
+}
+.tmdb-cast-grid__more small {
+  color: var(--muted);
+  font: 500 10px "DM Mono";
 }
 .tmdb-cast-grid > article > span {
   display: grid;
@@ -3207,21 +3241,23 @@ a {
   font-size: 32px;
 }
 .tmdb-cast-grid article > div {
-  padding: 9px;
+  padding: 7px;
 }
 .tmdb-cast-grid h3,
 .tmdb-cast-grid p {
   margin: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tmdb-cast-grid h3 {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.2;
 }
 .tmdb-cast-grid p {
   margin-top: 3px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1.25;
 }
 .tmdb-film-info > .tmdb-attribution {
@@ -3229,7 +3265,7 @@ a {
 }
 @media (max-width: 820px) {
   .tmdb-cast-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(96px, 112px));
   }
   .tmdb-film-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3261,8 +3297,14 @@ a {
     padding: 9px;
   }
   .tmdb-cast-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
+  }
+  .tmdb-cast-grid article > div {
+    padding: 6px;
+  }
+  .tmdb-cast-grid h3 {
+    font-size: 10px;
   }
   .tmdb-cast .section-title {
     padding: 28px 0 13px;

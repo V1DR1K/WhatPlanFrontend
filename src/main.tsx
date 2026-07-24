@@ -9,5 +9,6 @@ import './styles/touch.css';
 import './styles/media.css';
 import './styles/experiences.css';
 import './styles/action-buttons.css';
+import './styles/catalog-controls.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

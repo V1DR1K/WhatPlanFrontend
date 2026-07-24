@@ -43,6 +43,7 @@ export function PlaceForm({
           address: address || undefined,
           sourceUrl: String(form.get("sourceUrl")) || undefined,
           mapsUrl: mapsSearch(address),
+          acceptsReservations: form.get("acceptsReservations") === "on",
           categoryId: Number(form.get("categoryId")),
           tagIds,
         },
@@ -95,6 +96,11 @@ export function PlaceForm({
         <label>
           URL de referencia <small className="tiny">Opcional</small>
           <input name="sourceUrl" type="url" defaultValue={place?.sourceUrl ?? undefined} placeholder="https://instagram.com/reel/..." />
+        </label>
+        <label className="place-reservation-toggle">
+          <input name="acceptsReservations" type="checkbox" defaultChecked={place?.acceptsReservations} />
+          <span>📅 Acepta reservas</span>
+          <small className="tiny">Marcá esta opción si el lugar permite reservar antes de ir.</small>
         </label>
         <label>
           Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small>

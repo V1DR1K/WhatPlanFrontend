@@ -1,0 +1,69 @@
+.catalog-search-sort {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(185px, 0.42fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.catalog-search-sort__field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+/* Existing film controls use horizontal label layouts; catalog fields stay vertical. */
+.film-controls .catalog-search-sort__field {
+  grid-template-columns: 1fr;
+}
+
+.catalog-search-sort__field > span {
+  color: var(--muted);
+  font: 500 11px "DM Mono";
+  letter-spacing: 0.8px;
+}
+
+.catalog-search-sort__field input,
+.catalog-search-sort__field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 48%, var(--line));
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--section-accent) 7%, #151415);
+  color: var(--cream);
+  outline-color: var(--section-accent);
+}
+
+.catalog-search-sort__field input::placeholder {
+  color: color-mix(in srgb, var(--muted) 88%, transparent);
+}
+
+.catalog-search-sort__field select {
+  cursor: pointer;
+}
+
+.catalog-sort-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.home-recipe-controls {
+  display: grid;
+  gap: 14px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.home-recipe-controls .home-recipe-home-filters {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .catalog-search-sort {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

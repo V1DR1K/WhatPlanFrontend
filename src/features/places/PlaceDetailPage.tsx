@@ -153,15 +153,19 @@ export function PlaceDetailPage() {
             ) : venue.address || "Sin dirección"}
           </p>
           {venue.sourceUrl && <a className="source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
+          {venue.acceptsReservations && <p className="place-reservation-status">📅 Acepta reservas</p>}
           <p className="byline">Agregado por {venue.author}</p>
           </>
         }
         title={venue.name}
       />
-      <section className="rating-breakdown" aria-label="Promedios del lugar">
-        <div><span>Experiencia</span><strong>{venue.rating ? venue.rating.toFixed(1) : "-"}</strong></div>
-        <div><span>Sabor</span><strong>{venue.tasteAverage ? venue.tasteAverage.toFixed(1) : "-"}</strong></div>
-        <div><span>Precio y lugar</span><strong>{venue.priceAverage || venue.venueAverage ? Math.max(venue.priceAverage, venue.venueAverage).toFixed(1) : "-"}</strong></div>
+      <section className="rating-breakdown rating-breakdown--food" aria-label="Promedios del lugar">
+        <div className="rating-breakdown__experience"><span>✨ Experiencia total</span><strong>{venue.rating ? `${venue.rating.toFixed(1)}/5` : "Sin reseñas"}</strong><small>Promedio de sabor, precio y espacio/atención.</small></div>
+        <div className="rating-breakdown__metrics">
+          <div><span>😋 Sabor</span><strong>{venue.tasteAverage ? `${venue.tasteAverage.toFixed(1)}/5` : "-"}</strong></div>
+          <div><span>💳 Precio</span><strong>{venue.priceAverage ? `${venue.priceAverage.toFixed(1)}/5` : "-"}</strong></div>
+          <div><span>🏠 Espacio y atención</span><strong>{venue.venueAverage ? `${venue.venueAverage.toFixed(1)}/5` : "-"}</strong></div>
+        </div>
       </section>
       <section className="reviews-section place-venue-reviews">
         <div className="section-title">

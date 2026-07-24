@@ -9,6 +9,7 @@ export function PlaceCard({ place }: { place: Place }) {
   const photoHeight = place.photoHeight ?? undefined;
   const orientation = getPhotoOrientation(photoWidth, photoHeight);
   const photoStyle = photoAspectRatioStyle(photoWidth, photoHeight);
+  const hasExperienceRating = place.rating > 0;
   return (
     <Link
       className={`place-card-link media-card media-card--${orientation}`}
@@ -41,8 +42,8 @@ export function PlaceCard({ place }: { place: Place }) {
             {pending ? (
               <b className="pending-score">⌛ Ir</b>
             ) : (
-              <b>
-                {place.rating.toFixed(1)} <span>★</span>
+              <b className="food-experience-kpi">
+                ✨ {hasExperienceRating ? `${place.rating.toFixed(1)}/5` : "—"}
               </b>
             )}
           </div>
@@ -55,9 +56,9 @@ export function PlaceCard({ place }: { place: Place }) {
           ) : (
             <>
               <div className="rating-preview">
-                <span>Promedio global</span>
+                <span>✨ Experiencia</span>
                 <StarRating
-                  label="Puntuación promedio"
+                  label="Experiencia promedio"
                   value={Math.round(place.rating)}
                 />
               </div>

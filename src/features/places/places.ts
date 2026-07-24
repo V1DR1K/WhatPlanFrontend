@@ -1,4 +1,5 @@
 import { api } from "../../lib/api";
+import type { CatalogSort } from "../../lib/catalogSort";
 import type {
   Place,
   PlaceReview,
@@ -10,6 +11,7 @@ export type PlaceInput = {
   address?: string;
   sourceUrl?: string;
   mapsUrl?: string;
+  acceptsReservations: boolean;
   categoryId: number;
   tagIds: number[];
 };
@@ -19,10 +21,18 @@ export const getPlaces = (
   cursor?: number,
   status?: PlaceStatus,
   highlightTagId?: number,
-) =>
-  api<Slice<Place>>(
-    `/places?size=12${categoryId ? `&categoryId=${categoryId}` : ""}${cursor ? `&cursor=${cursor}` : ""}${status ? `&status=${status}` : ""}${highlightTagId ? `&highlightTagId=${highlightTagId}` : ""}`,
-  );
+  search?: string,
+  sort?: CatalogSort,
+) => {
+  const query = new URLSearchParams({ size: "12" });
+  if (categoryId) query.set("categoryId", String(categoryId));
+  if (cursor !== undefined) query.set("cursor", String(cursor));
+  if (status) query.set("status", status);
+  if (highlightTagId) query.set("highlightTagId", String(highlightTagId));
+  if (search) query.set("search", search);
+  if (sort) query.set("sort", sort);
+  return api<Slice<Place>>(`/places?${query}`);
+};
 export const getPlace = (id: number) => api<Place>(`/places/${id}`);
 export const savePlace = (input: PlaceInput, id?: number) =>
   api<Place>(`/places${id ? `/${id}` : ""}`, {

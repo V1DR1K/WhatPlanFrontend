@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { Button } from "../../components/ui/Button";
@@ -11,7 +12,17 @@ import { PlaceCard } from "./PlaceCard";
 import { PlaceForm } from "./PlaceForm";
 import { getArchivedPlaces, getPlaces, restorePlace } from "./places";
 import { showNotice } from "../../lib/flash";
+import {
+  catalogSortFromQuery,
+  catalogSortOptions,
+  type CatalogSortValue,
+} from "../../lib/catalogSort";
 type FilterOption = { id: number; label: string };
+
+const positiveIdFromQuery = (value: string | null) => {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : undefined;
+};
 function FoodFilterChips({
   label,
   allLabel,
@@ -103,6 +114,8 @@ function PlaceSection({
   status,
   category,
   highlightTagId,
+  search,
+  sort,
   title,
   eyebrow,
   empty,
@@ -111,15 +124,25 @@ function PlaceSection({
   status: PlaceStatus;
   category?: number;
   highlightTagId?: number;
+  search: string;
+  sort: CatalogSortValue;
   title: string;
   eyebrow: string;
   empty: string;
   hasFilter: boolean;
 }) {
   const query = useInfiniteQuery({
-    queryKey: ["places", status, category, highlightTagId],
+    // A changed search or sort starts a distinct infinite query at cursor zero.
+    queryKey: ["places", status, category, highlightTagId, search, sort],
     queryFn: ({ pageParam }) =>
-      getPlaces(category, pageParam, status, highlightTagId),
+      getPlaces(
+        category,
+        pageParam,
+        status,
+        highlightTagId,
+        search || undefined,
+        sort || undefined,
+      ),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
@@ -153,10 +176,21 @@ function PlaceSection({
   );
 }
 export function DiscoverPage() {
-  const [category, setCategory] = useState<number>();
-  const [highlightTagId, setHighlightTagId] = useState<number>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [category, setCategory] = useState<number | undefined>(() =>
+    positiveIdFromQuery(searchParams.get("category")),
+  );
+  const [highlightTagId, setHighlightTagId] = useState<number | undefined>(() =>
+    positiveIdFromQuery(searchParams.get("highlightTag")),
+  );
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
+  const [sort, setSort] = useState<CatalogSortValue>(() =>
+    catalogSortFromQuery(searchParams.get("sort")),
+  );
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const searchTerm = search.trim();
+  const deferredSearch = useDeferredValue(searchTerm);
   const qc = useQueryClient();
   const categories = useQuery({
     queryKey: ["categories"],
@@ -168,7 +202,15 @@ export function DiscoverPage() {
   });
   const archived = useQuery({ queryKey: ["places", "archived"], queryFn: getArchivedPlaces, enabled: showArchived });
   const restore = useMutation({ mutationFn: restorePlace, onSuccess: async place => { await Promise.all([qc.invalidateQueries({ queryKey: ["places"] }), qc.invalidateQueries({ queryKey: ["places", "archived"] })]); showNotice(`${place.name} volvió a la lista de lugares.`); } });
-  const hasFilter = Boolean(category || highlightTagId);
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (category) next.set("category", String(category));
+    if (highlightTagId) next.set("highlightTag", String(highlightTagId));
+    if (searchTerm) next.set("search", searchTerm);
+    if (sort) next.set("sort", sort);
+    setSearchParams(next, { replace: true });
+  }, [category, highlightTagId, searchTerm, setSearchParams, sort]);
+  const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
   return (
     <>
       <section className="hero">
@@ -194,6 +236,23 @@ export function DiscoverPage() {
         />
       </nav>
       <section className="food-controls">
+        <div className="catalog-search-sort">
+          <label className="catalog-search-sort__field">
+            <span>Buscar lugares</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Nombre, dirección o categoría"
+            />
+          </label>
+          <label className="catalog-search-sort__field">
+            <span>Ordenar catálogo</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as CatalogSortValue)}>
+              {catalogSortOptions.map((option) => <option key={option.value || "default"} value={option.value}>{option.label}</option>)}
+            </select>
+          </label>
+        </div>
         <FoodFilterChips
           label="Categorías"
           allLabel="🍽️ Todos"
@@ -219,6 +278,8 @@ export function DiscoverPage() {
         status="PENDING"
         category={category}
         highlightTagId={highlightTagId}
+        search={deferredSearch}
+        sort={sort}
         eyebrow="POR PROBAR"
         title="Pendientes para ir"
         empty="Todavía no agendaste ningún lugar."
@@ -228,6 +289,8 @@ export function DiscoverPage() {
         status="REVIEWED"
         category={category}
         highlightTagId={highlightTagId}
+        search={deferredSearch}
+        sort={sort}
         eyebrow="YA FUIMOS"
         title="Visitas registradas"
         empty="Cuando registren la primera visita, aparecerá acá."
