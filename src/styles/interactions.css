@@ -171,10 +171,12 @@
   font: 600 28px/0.9 "Fraunces";
   color: var(--cream);
 }
-.rating-breakdown--food {
+.rating-breakdown--food,
+.rating-breakdown--film,
+.rating-breakdown--cook {
   grid-template-columns: minmax(210px, 0.8fr) minmax(0, 1.6fr);
 }
-.rating-breakdown--food > .rating-breakdown__experience {
+:is(.rating-breakdown--food, .rating-breakdown--film, .rating-breakdown--cook, .rating-breakdown--fun) > .rating-breakdown__experience {
   border-color: color-mix(in srgb, var(--section-accent) 62%, var(--line));
   background: linear-gradient(145deg, color-mix(in srgb, var(--section-accent) 22%, var(--panel)), var(--panel));
   box-shadow: 4px 4px 0 var(--section-shadow);
@@ -186,13 +188,27 @@
   color: var(--muted);
   line-height: 1.35;
 }
-.rating-breakdown--food > .rating-breakdown__metrics {
+.rating-breakdown--food > .rating-breakdown__metrics,
+.rating-breakdown--film > .rating-breakdown__metrics,
+.rating-breakdown--cook > .rating-breakdown__metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 9px;
   padding: 0;
   border: 0;
   background: transparent;
+}
+.rating-breakdown--food > .rating-breakdown__metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.rating-breakdown--film > .rating-breakdown__metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.rating-breakdown--cook > .rating-breakdown__metrics {
+  grid-template-columns: minmax(0, 1fr);
+}
+.rating-breakdown--fun {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 460px;
 }
 .rating-breakdown__metrics > div {
   display: grid;
@@ -249,7 +265,7 @@
   .place-review > div {
     grid-template-columns: 1fr;
   }
-  .rating-breakdown--food > .rating-breakdown__metrics {
+  :is(.rating-breakdown--food, .rating-breakdown--film) > .rating-breakdown__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .rating-breakdown--food > .rating-breakdown__metrics > div:last-child {
@@ -867,6 +883,27 @@
 }
 .home-recipe-review .star-control {
   margin: 14px 0 10px;
+}
+.recipe-review-scores {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 14px 0 10px;
+}
+.home-recipe-review .recipe-review-scores .review-score {
+  margin: 0;
+}
+.recipe-review-complexity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.recipe-review-complexity b {
+  color: var(--section-accent);
+  font: 700 12px "DM Mono", ui-monospace, monospace;
 }
 .home-recipe-review p:not(.muted) {
   margin-top: 14px;

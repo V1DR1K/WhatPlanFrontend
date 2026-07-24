@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
 import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { FilmReview, FilmView } from "../../types/domain";
@@ -21,6 +22,10 @@ const viewedLabel = (date?: string) =>
   date
     ? `VISTA ${date.split("-").reverse().join("/")}`
     : "PARA VER";
+const average = (values: number[]) =>
+  values.length
+    ? values.reduce((total, value) => total + value, 0) / values.length
+    : undefined;
 
 export function FilmDetailPage() {
   const id = Number(useParams().id);
@@ -98,6 +103,13 @@ export function FilmDetailPage() {
   const cast = tmdb?.cast ?? [];
   const visibleCast = cast.slice(0, 8);
   const hiddenCastCount = cast.length - visibleCast.length;
+  const reviewAverage = average(film.reviews.map((review) => review.rating));
+  const metricAverage = (key: (typeof filmReviewMetrics)[number]["key"]) =>
+    average(
+      film.reviews
+        .map((review) => review.metrics?.[key])
+        .filter((value): value is number => value !== undefined),
+    );
   const viewAction = film.watchedCount
     ? "Registrar otra vista"
     : "Registrar primera vista";
@@ -153,6 +165,21 @@ export function FilmDetailPage() {
         }
         title={title}
       />
+      <section className="rating-breakdown rating-breakdown--film" aria-label="Promedios de la película">
+        <div className="rating-breakdown__experience">
+          <span>🎬 Nota promedio</span>
+          <RatingStars label="Nota promedio de la película" value={reviewAverage} />
+          <small>Calculada sobre todas las reseñas cargadas.</small>
+        </div>
+        <div className="rating-breakdown__metrics">
+          {filmReviewMetrics.map((metric) => (
+            <div key={metric.key}>
+              <span>{metric.shortLabel}</span>
+              <RatingStars label={`${metric.label} promedio`} value={metricAverage(metric.key)} />
+            </div>
+          ))}
+        </div>
+      </section>
       {tmdb && (
         <section className="tmdb-film-info">
           <div className="tmdb-film-stats">

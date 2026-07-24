@@ -22,6 +22,6 @@ export const getCooking = (id: number) => api<Cooking>(`/how-cook/cookings/${id}
 export const createCooking = (recipeId: number, input: CookingInput) => api<Cooking>(`/how-cook/recipes/${recipeId}/cookings`, { method: 'POST', body: JSON.stringify(input) });
 export const updateCooking = (id: number, input: CookingInput) => api<Cooking>(`/how-cook/cookings/${id}`, { method: 'PUT', body: JSON.stringify(input) });
 export const deleteCooking = (id: number) => api<void>(`/how-cook/cookings/${id}`, { method: 'DELETE' });
-export const createCookingReview = (cookingId: number, input: Pick<CookingReview, 'rating' | 'comment'>) => api<CookingReview>(`/how-cook/cookings/${cookingId}/reviews`, { method: 'POST', body: JSON.stringify(input) });
-export const updateCookingReview = (reviewId: number, input: Pick<CookingReview, 'rating' | 'comment'>) => api<CookingReview>(`/how-cook/cooking-reviews/${reviewId}`, { method: 'PUT', body: JSON.stringify(input) });
+export const createCookingReview = (cookingId: number, input: Pick<CookingReview, 'rating' | 'complexity' | 'comment'>) => api<CookingReview>(`/how-cook/cookings/${cookingId}/reviews`, { method: 'POST', body: JSON.stringify(input) });
+export const updateCookingReview = (reviewId: number, input: Pick<CookingReview, 'rating' | 'complexity' | 'comment'>) => api<CookingReview>(`/how-cook/cooking-reviews/${reviewId}`, { method: 'PUT', body: JSON.stringify(input) });
 export const deleteCookingReview = (reviewId: number) => api<void>(`/how-cook/cooking-reviews/${reviewId}`, { method: 'DELETE' });

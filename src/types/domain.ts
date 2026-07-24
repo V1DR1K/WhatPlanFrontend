@@ -27,7 +27,7 @@ export type MealType='DESAYUNO'|'ALMUERZO'|'MERIENDA'|'CENA';
 export type RecipeIngredient={name:string;quantity:number;unit:string};
 export type RecipeStep={instruction:string};
 export type Recipe={id:number;name:string;sourceUrl?:string|null;photoUrl?:string|null;thumbnailUrl?:string|null;photoWidth?:number|null;photoHeight?:number|null;rating?:number|null;cookingCount:number;homes:Home[];ingredients:RecipeIngredient[];steps:RecipeStep[];createdBy:string;updatedBy:string;createdAt:string;updatedAt:string};
-export type CookingReview={id:number;author:string;updatedBy:string;rating:number;comment?:string;createdAt:string;updatedAt:string};
+export type CookingReview={id:number;author:string;updatedBy:string;rating:number;complexity:number;comment?:string;createdAt:string;updatedAt:string};
 export type Cooking={id:number;recipe:Recipe;home:Home;servings:number;cookedOn:string;mealType:MealType;createdBy:string;updatedBy:string;reviews:CookingReview[];createdAt:string;updatedAt:string};
 // Aliases keep ancillary legacy UI modules type-safe while routes move to recipes/cookings.
 export type HomeRecipeIngredient=RecipeIngredient;

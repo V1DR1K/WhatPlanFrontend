@@ -6,6 +6,7 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
 import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types/domain";
@@ -122,6 +123,13 @@ export function FunVenueDetailPage() {
         }
         title={value.name}
       />
+      <section className="rating-breakdown rating-breakdown--fun" aria-label="Puntuación promedio de la actividad">
+        <div className="rating-breakdown__experience">
+          <span>🎯 Puntuación promedio</span>
+          <RatingStars label="Puntuación promedio de la actividad" value={value.rating ?? undefined} />
+          <small>Calculada sobre todas las reseñas de sus salidas.</small>
+        </div>
+      </section>
       <section className="fun-detail-grid">
         <div className="fun-detail-panel">
           <p className="eyebrow">HORARIOS</p>

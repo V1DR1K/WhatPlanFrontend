@@ -5,6 +5,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
 import { mediaUrl, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { Cooking, CookingReview, SpecialDate } from "../../types/domain";
@@ -22,6 +23,10 @@ const mealName = (meal: string) =>
   ({ DESAYUNO: "Desayuno", ALMUERZO: "Almuerzo", MERIENDA: "Merienda", CENA: "Cena" })[
     meal as "DESAYUNO"
   ] ?? meal;
+const average = (values: number[]) =>
+  values.length
+    ? values.reduce((total, value) => total + value, 0) / values.length
+    : undefined;
 
 export function HomeRecipeDetailPage() {
   const id = Number(useParams().id);
@@ -39,6 +44,9 @@ export function HomeRecipeDetailPage() {
   const list = cookings.data ?? [];
   const specialDateList = specialDates.data ?? [];
   const current = list.find((cooking) => cooking.id === selectedCookingId);
+  const reviews = list.flatMap((cooking) => cooking.reviews);
+  const ratingAverage = average(reviews.map((review) => review.rating));
+  const complexityAverage = average(reviews.map((review) => review.complexity));
   const invalidate = () => Promise.all([
     qc.invalidateQueries({ queryKey: ["recipes"] }),
     qc.invalidateQueries({ queryKey: ["recipe", id] }),
@@ -92,6 +100,19 @@ export function HomeRecipeDetailPage() {
         }
         title={value.name}
       />
+      <section className="rating-breakdown rating-breakdown--cook" aria-label="Promedios de la receta">
+        <div className="rating-breakdown__experience">
+          <span>🍳 Nota promedio</span>
+          <RatingStars label="Nota promedio de la receta" value={ratingAverage} />
+          <small>Calculada sobre todas las reseñas de sus cocinadas.</small>
+        </div>
+        <div className="rating-breakdown__metrics">
+          <div>
+            <span>🧩 Complejidad</span>
+            <RatingStars label="Complejidad promedio de la receta" value={complexityAverage} />
+          </div>
+        </div>
+      </section>
       <section className="home-recipe-detail__content">
         <div className="home-recipe-detail__panel"><p className="eyebrow">INGREDIENTES</p><h2>Lo que hace falta</h2><ul>{value.ingredients.map((ingredient, index) => <li key={`${ingredient.name}-${index}`}><strong>{ingredient.quantity} {ingredient.unit}</strong> {ingredient.name}</li>)}</ul></div>
         <div className="home-recipe-detail__panel"><p className="eyebrow">RECETA</p><h2>Cómo se hace</h2><ol className="recipe-steps">{value.steps.map((step, index) => <li key={`${step.instruction}-${index}`}>{step.instruction}</li>)}</ol></div>
@@ -125,7 +146,7 @@ function CookingExperience({ cooking, specialDates, onReview, ownReview }: { coo
       <p className="muted">{dateLabel(cooking.cookedOn)}<SpecialDateLabels date={cooking.cookedOn} specialDates={specialDates} /> · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠 Casa de Tomás" : "🏡 Casa de Avril"} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
       <section className="reviews-section">
         <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS</p><h2>Cómo salió</h2></div><strong>{cooking.reviews.length}</strong></div>
-        {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><div className="review-score"><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><span>{scoreLabel(review.rating)}</span></div><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}
+        {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><div className="recipe-review-scores"><div className="review-score"><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><span>{scoreLabel(review.rating)}</span></div><div className="recipe-review-complexity"><span>Complejidad</span><RatingStars label={`Complejidad de ${review.author}`} value={review.complexity} /><b>{scoreLabel(review.complexity)}</b></div></div><p>{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}
         <div className="experience-review-action"><Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button></div>
       </section>
     </div>
