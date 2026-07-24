@@ -166,10 +166,11 @@
 
 .modal .score-field .place-score-input {
   width: 100%;
-  justify-content: space-between;
+  justify-items: start;
 }
 
 .modal .score-field .star-control--input {
+  width: 100%;
   flex: 1;
   min-width: 0;
   justify-content: space-between;
@@ -186,6 +187,7 @@
   .modal {
     --modal-content-max-height: calc(100svh - 76px);
     width: 100%;
+    padding: 28px 22px;
     margin: 0 auto;
   }
 

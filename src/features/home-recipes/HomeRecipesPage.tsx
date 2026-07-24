@@ -21,6 +21,11 @@ function homeFromQuery(value: string | null): Home | "ALL" {
 
 function RecipeCard({ recipe }: { recipe: Recipe }) {
   const photo = recipe.thumbnailUrl ?? recipe.photoUrl;
+  const kpi = recipe.rating != null
+    ? { label: `Puntuación promedio: ${recipe.rating.toFixed(1)} de 5`, value: `★ ${recipe.rating.toFixed(1)}` }
+    : recipe.cookingCount
+      ? { label: `${recipe.cookingCount} ${recipe.cookingCount === 1 ? "cocinada registrada" : "cocinadas registradas"}`, value: `🍳 ${recipe.cookingCount}` }
+      : { label: "Pendiente de cocinar", value: "⌛ Pendiente" };
   return (
     <Link className="home-recipe-card-link" to={`/how-cook/${recipe.id}`}>
       <article className="home-recipe-card">
@@ -28,6 +33,7 @@ function RecipeCard({ recipe }: { recipe: Recipe }) {
         <div className="home-recipe-card__body">
           <div className="home-recipe-card__heading">
             <div><p>{recipe.ingredients.length} ingredientes · {recipe.steps.length} pasos</p><h3>{recipe.name}</h3></div>
+            <b className="home-recipe-card__rating" aria-label={kpi.label}>{kpi.value}</b>
           </div>
           <footer className="recipe-card-actions"><small>{recipe.homes.length ? recipe.homes.map((value) => value === "TOMAS" ? "🏠 Tomás" : "🏡 Avril").join(" · ") : "Sin cocinadas"}</small><span>Ver receta →</span></footer>
         </div>

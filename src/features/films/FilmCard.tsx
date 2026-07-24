@@ -51,6 +51,11 @@ export function FilmCard({ film }: { film: Film }) {
     posterHeight,
     "--film-poster-ratio",
   );
+  const kpi = rating !== undefined
+    ? { label: `Opinión actual: ${rating.toFixed(1)} de 5`, value: `★ ${rating.toFixed(1)}` }
+    : film.watchedCount
+      ? { label: `${film.watchedCount} ${film.watchedCount === 1 ? "vista" : "vistas"} registradas`, value: `👁 ${film.watchedCount}` }
+      : { label: "Pendiente de ver", value: "⌛ Pendiente" };
 
   return (
     <Link
@@ -79,12 +84,15 @@ export function FilmCard({ film }: { film: Film }) {
           </small>
         </div>
         <div className="film-card__body">
-          <div>
-            <p>
-              {watchedLabel(film.lastWatchedOn)}{" "}
-              {film.platform && `· ${film.platform.icon} ${film.platform.name}`}
-            </p>
-            <h3>{title}</h3>
+          <div className="film-card__heading">
+            <div>
+              <p>
+                {watchedLabel(film.lastWatchedOn)}{" "}
+                {film.platform && `· ${film.platform.icon} ${film.platform.name}`}
+              </p>
+              <h3>{title}</h3>
+            </div>
+            <b className="film-card__kpi" aria-label={kpi.label}>{kpi.value}</b>
           </div>
           {rating !== undefined && (
             <div

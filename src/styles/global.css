@@ -495,8 +495,9 @@ a {
 }
 .modal {
   --modal-content-max-height: min(calc(90vh - 60px), calc(100svh - 100px));
-  width: min(560px, 100%);
+  width: min(720px, calc(100vw - 48px));
   max-width: 100%;
+  max-height: calc(100svh - 40px);
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -504,7 +505,7 @@ a {
   background: #211f21;
   border: 1px solid #5a4a52;
   border-radius: 20px;
-  padding: 30px;
+  padding: 38px 42px;
   position: relative;
   box-shadow: 0 25px 60px #000;
 }
@@ -1030,11 +1031,10 @@ a {
   padding: 8px 11px;
 }
 .place-score-input {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 5px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 6px;
 }
 .place-score-input .button--tertiary {
   padding: 0 4px;
@@ -1589,9 +1589,14 @@ a {
   min-height: 175px;
   padding: 13px;
 }
-.film-card__body > div:first-child {
-  gap: 8px;
+.film-card__heading {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
+}
+.film-card__heading > div {
+  min-width: 0;
 }
 .film-card__body p {
   margin: 0;
@@ -1603,12 +1608,15 @@ a {
   margin: 7px 0;
   font: 600 19px/1.02 "Fraunces";
 }
-.film-card__body > b {
-  color: var(--lime);
+.film-card__kpi {
+  flex: 0 0 auto;
+  padding: 5px 7px;
+  border: 1px solid #665d96;
+  border-radius: 8px;
+  background: #292541;
+  color: #d5ceff;
+  font: 700 10px "DM Mono";
   white-space: nowrap;
-}
-.film-card__body > b span {
-  color: #f0cf55;
 }
 .film-card__rating {
   display: flex;
@@ -2566,14 +2574,12 @@ a {
 .fun-card__body > b {
   align-self: start;
   padding: 5px 7px;
+  border: 1px solid #9b5488;
   border-radius: 7px;
   background: #39283c;
-  color: var(--lime);
+  color: #ffb6df;
   font: 600 11px "DM Mono";
   white-space: nowrap;
-}
-.fun-card__body > b span {
-  color: #ffc52e;
 }
 .fun-card__body address {
   grid-column: 1/-1;
