@@ -9,6 +9,7 @@ import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { useCatalogPageSize } from "../../lib/settings";
 import { getRecipes } from "./homeRecipes";
+import { CatalogRecipeCard } from "./CatalogRecipeCard";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -19,7 +20,7 @@ function homeFromQuery(value: string | null): Home | "ALL" {
   return value === "TOMAS" || value === "AVRIL" ? value : "ALL";
 }
 
-function RecipeCard({ recipe }: { recipe: Recipe }) {
+function LegacyRecipeCard({ recipe }: { recipe: Recipe }) {
   const photo = recipe.thumbnailUrl ?? recipe.photoUrl;
   const kpi = recipe.rating != null
     ? { label: `Puntuación promedio: ${recipe.rating.toFixed(1)} de 5`, value: `★ ${recipe.rating.toFixed(1)}` }
@@ -87,7 +88,7 @@ function RecipeSection({
   const recipes = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="home-recipe-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {recipes.length} recetas</strong></div>
-    {query.isError ? <p className="form-error">{query.error.message}</p> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} />)}</div> : !query.isLoading && <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
+    {query.isError ? <p className="form-error">{query.error.message}</p> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : !query.isLoading && <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
