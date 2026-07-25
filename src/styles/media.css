@@ -80,8 +80,10 @@
 }
 
 .place-card-link.media-card--landscape:not(.place-card-link--pending) .food-poster {
-  height: 142px;
-  aspect-ratio: auto;
+  width: max(120px, 35%);
+  height: auto;
+  align-self: center;
+  aspect-ratio: var(--media-aspect-ratio, 4 / 3);
 }
 
 .food-poster {
@@ -168,6 +170,10 @@
 
   .place-card-link:is(.media-card--portrait, .place-card-link--pending) .place-card .card-body {
     padding: 13px;
+  }
+
+  .place-card-link.media-card--landscape:not(.place-card-link--pending) .food-poster {
+    width: 108px;
   }
 
   .place-card .card-body {
