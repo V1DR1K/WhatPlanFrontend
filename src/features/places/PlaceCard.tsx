@@ -12,7 +12,7 @@ export function PlaceCard({ place }: { place: Place }) {
   const hasExperienceRating = place.rating > 0;
   return (
     <Link
-      className={`place-card-link media-card media-card--${orientation}`}
+      className={`place-card-link media-card media-card--${orientation} ${pending ? "place-card-link--pending" : ""}`}
       to={`/food/places/${place.id}`}
       aria-label={`Ver detalle de ${place.name}`}
     >
