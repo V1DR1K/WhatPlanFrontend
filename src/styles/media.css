@@ -41,14 +41,14 @@
   grid-column: span 2;
 }
 
-.place-card-link.media-card--portrait .place-card {
+.place-card-link:is(.media-card--portrait, .media-card--landscape) .place-card {
   display: grid;
   height: auto;
   min-height: 185px;
   grid-template-columns: minmax(120px, 35%) minmax(0, 1fr);
 }
 
-.place-card-link.media-card--portrait .food-poster {
+.place-card-link:is(.media-card--portrait, .media-card--landscape) .food-poster {
   height: 100%;
   aspect-ratio: auto;
 }
@@ -57,7 +57,7 @@
   object-fit: cover;
 }
 
-.place-card-link.media-card--portrait .place-card .card-body {
+.place-card-link:is(.media-card--portrait, .media-card--landscape) .place-card .card-body {
   min-width: 0;
   padding: 15px;
 }
@@ -156,12 +156,12 @@
     grid-column: 1 / -1;
   }
 
-  .place-card-link.media-card--portrait .place-card {
+  .place-card-link:is(.media-card--portrait, .media-card--landscape) .place-card {
     min-height: 160px;
     grid-template-columns: 108px minmax(0, 1fr);
   }
 
-  .place-card-link.media-card--portrait .place-card .card-body {
+  .place-card-link:is(.media-card--portrait, .media-card--landscape) .place-card .card-body {
     padding: 13px;
   }
 
