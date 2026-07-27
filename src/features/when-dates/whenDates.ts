@@ -1,8 +1,8 @@
 import { api } from '../../lib/api';
 import type { Slice, WhenDateOccurrence, WhenDateEntry } from '../../types/domain';
 
-export const getWhenDates = (month: string, specialDateId?: number, cursor?: number) => {
-  const query = new URLSearchParams({ month, size: '12' });
+export const getWhenDates = (month: string, specialDateId?: number, cursor?: number, size = 12) => {
+  const query = new URLSearchParams({ month, size: String(size) });
   if (specialDateId) query.set('specialDateId', String(specialDateId));
   if (cursor !== undefined) query.set('cursor', String(cursor));
   return api<Slice<WhenDateEntry>>(`/when-dates?${query}`);

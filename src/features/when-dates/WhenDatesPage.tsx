@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
+import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
 import { mediaUrl } from '../../lib/api';
+import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
 import { getWhenDates } from './whenDates';
 
@@ -14,8 +16,15 @@ const sectionIcon: Record<string, string> = { FOOD: '🍽️', FILM: '🎬', COO
 export function WhenDatesPage() {
   const [month, setMonth] = useState(currentMonth);
   const [specialDateId, setSpecialDateId] = useState<number>();
+  const pageSize = useCatalogPageSize();
   const specialDates = useQuery({ queryKey: ['special-dates'], queryFn: getSpecialDates });
-  const entries = useQuery({ queryKey: ['when-dates', month, specialDateId], queryFn: () => getWhenDates(month, specialDateId) });
+  const entries = useInfiniteQuery({
+    queryKey: ['when-dates', month, specialDateId, pageSize],
+    queryFn: ({ pageParam }) => getWhenDates(month, specialDateId, pageParam, pageSize),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+  const results = entries.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="when-dates-page">
     <header className="when-dates-hero">
       <div><p className="eyebrow">RECUERDOS COMPARTIDOS</p><h1>when<span>dates</span></h1><p>Vuelvan a las experiencias que coincidieron con sus fechas importantes.</p></div>
@@ -29,8 +38,9 @@ export function WhenDatesPage() {
     </section>
     {entries.isLoading && <p className="muted">Buscando recuerdos…</p>}
     {entries.isError && <p className="form-error">{entries.error.message}</p>}
-    {!entries.isLoading && !entries.isError && !entries.data?.content.length && <p className="empty-state">No hay experiencias que coincidan con estas fechas en este mes.</p>}
-    <div className="when-dates-grid">{entries.data?.content.map((entry) => <WhenDateCard entry={entry} key={entry.id} specialDateId={specialDateId} />)}</div>
+    {!entries.isLoading && !entries.isError && !results.length && <p className="empty-state">No hay experiencias que coincidan con estas fechas en este mes.</p>}
+    <div className="when-dates-grid">{results.map((entry) => <WhenDateCard entry={entry} key={entry.id} specialDateId={specialDateId} />)}</div>
+    {entries.hasNextPage && <CatalogMoreButton loading={entries.isFetchingNextPage} onClick={() => entries.fetchNextPage()} />}
   </section>;
 }
 

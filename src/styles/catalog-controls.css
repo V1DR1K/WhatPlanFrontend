@@ -25,12 +25,14 @@
 .catalog-search-sort__field input,
 .catalog-search-sort__field select {
   width: 100%;
+  min-inline-size: 0;
   min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--section-accent) 48%, var(--line));
   border-radius: 10px;
   padding: 10px 12px;
   background: color-mix(in srgb, var(--section-accent) 7%, #151415);
   color: var(--cream);
+  color-scheme: dark;
   outline-color: var(--section-accent);
 }
 

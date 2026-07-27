@@ -71,7 +71,7 @@ export function ResponsiveImage({
 
 type AdaptivePhotoProps = {
   alt: string;
-  context: "place" | "item";
+  context: "place" | "item" | "dates";
   fullSrc?: string | null;
   height?: number;
   src?: string;
