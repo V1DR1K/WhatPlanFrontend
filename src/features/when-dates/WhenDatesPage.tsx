@@ -22,8 +22,10 @@ export function WhenDatesPage() {
       <div aria-hidden="true">💝</div>
     </header>
     <section className="when-dates-controls" aria-label="Filtrar recuerdos">
-      <label><span>Mes</span><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
-      <label><span>Fecha importante</span><select value={specialDateId ?? ''} onChange={(event) => setSpecialDateId(event.target.value ? Number(event.target.value) : undefined)}><option value="">Todas las fechas</option>{specialDates.data?.map((date) => <option key={date.id} value={date.id}>{date.label}</option>)}</select></label>
+      <div className="catalog-search-sort">
+        <label className="catalog-search-sort__field"><span>Mes</span><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
+        <label className="catalog-search-sort__field"><span>Fecha importante</span><select value={specialDateId ?? ''} onChange={(event) => setSpecialDateId(event.target.value ? Number(event.target.value) : undefined)}><option value="">Todas las fechas</option>{specialDates.data?.map((date) => <option key={date.id} value={date.id}>{date.label}</option>)}</select></label>
+      </div>
     </section>
     {entries.isLoading && <p className="muted">Buscando recuerdos…</p>}
     {entries.isError && <p className="form-error">{entries.error.message}</p>}

@@ -5,11 +5,7 @@
 .when-dates-hero h1 span { color: var(--section-accent); }
 .when-dates-hero p:not(.eyebrow) { max-width: 570px; margin: 0; color: #f2d5e6; font-size: 16px; }
 .when-dates-hero > div:last-child { font-size: clamp(82px, 15vw, 170px); filter: drop-shadow(7px 7px 0 #301d36); transform: rotate(-8deg); }
-.when-dates-controls { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
-.when-dates-controls label { display:grid; flex:1 1 230px; min-width:0; gap:7px; }
-.when-dates-controls label > span { color:var(--muted); font:500 11px "DM Mono"; letter-spacing:.8px; }
-.when-dates-controls input,.when-dates-controls select { width:100%; min-height:44px; border:1px solid color-mix(in srgb,var(--section-accent) 48%,var(--line)); border-radius:10px; padding:10px 12px; background:color-mix(in srgb,var(--section-accent) 7%,#151415); color:var(--cream); color-scheme:dark; font:inherit; outline-color:var(--section-accent); }
-.when-dates-controls select { cursor:pointer; }
+.when-dates-controls { display:grid; gap:14px; margin:28px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:13px 0; }
 .when-dates-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .when-dates-card__empty { display: grid; width: 100%; height: 100%; place-items: center; background: linear-gradient(135deg, #542c50, #261d2a); font-size: 62px; }
 .when-date-detail__back { display: inline-block; margin-bottom: 22px; color: var(--section-accent); font-weight: 800; text-decoration: none; }
