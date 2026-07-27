@@ -6,6 +6,7 @@
 .when-dates-hero p:not(.eyebrow) { max-width: 570px; margin: 0; color: #f2d5e6; font-size: 16px; }
 .when-dates-hero > div:last-child { font-size: clamp(82px, 15vw, 170px); filter: drop-shadow(7px 7px 0 #301d36); transform: rotate(-8deg); }
 .when-dates-controls { display:grid; gap:14px; margin:28px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:13px 0; }
+@media (max-width:640px) { .when-dates-controls input[type="month"] { display:block; inline-size:100%; min-inline-size:0; max-inline-size:100%; box-sizing:border-box; padding-inline:8px; font-size:16px; -webkit-appearance:none; appearance:none; } }
 .when-dates-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .when-dates-card__empty { display: grid; width: 100%; height: 100%; place-items: center; background: linear-gradient(135deg, #542c50, #261d2a); font-size: 62px; }
 .when-date-detail__back { display: inline-block; margin-bottom: 22px; color: var(--section-accent); font-weight: 800; text-decoration: none; }
