@@ -16,6 +16,7 @@
 .experience-gallery__actions .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; margin: 0; }
 .experience-gallery__upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .experience-gallery__delete { width: auto; }
+.experience-detail > .muted { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-inline: auto; text-align: center; line-height: 1.5; }
 .photo-lightbox__controls { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); display: flex; gap: 9px; }
 .photo-lightbox__controls .button--secondary { background: #1c1a1c; }
 @media (max-width: 540px) { .experience-gallery__image-button { height: 68vw; min-height: 220px; } .experience-gallery__actions > * { flex: 1 1 100%; } }

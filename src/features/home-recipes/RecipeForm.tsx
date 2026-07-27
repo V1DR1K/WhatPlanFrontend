@@ -13,10 +13,10 @@ const emptyStep = (): RecipeStep => ({ instruction: "" });
 export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () => void }) {
   const qc = useQueryClient();
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
-    recipe?.ingredients.length ? recipe.ingredients : [emptyIngredient()],
+    recipe?.ingredients ?? [],
   );
   const [steps, setSteps] = useState<RecipeStep[]>(
-    recipe?.steps.length ? recipe.steps : [emptyStep()],
+    recipe?.steps ?? [],
   );
   const [photo, setPhoto] = useState<File>();
   const [photoError, setPhotoError] = useState<string>();
@@ -28,9 +28,6 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
       const cleanSteps = steps
         .filter((step) => step.instruction.trim())
         .map((step) => ({ instruction: step.instruction.trim() }));
-      if (!cleanIngredients.length || !cleanSteps.length) {
-        throw new Error("Agregá al menos un ingrediente y un paso.");
-      }
       return saveRecipe(
         {
           name: String(form.get("name")).trim(),
@@ -113,7 +110,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
         </small>
         {photoError && <p className="form-error">{photoError}</p>}
         <fieldset className="ingredient-fields">
-          <legend>Ingredientes</legend>
+          <legend>Ingredientes <small className="tiny">Opcional</small></legend>
           {ingredients.map((ingredient, index) => (
             <div className="ingredient-row ingredient-row--units" key={index}>
               <label>
@@ -170,7 +167,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
           </Button>
         </fieldset>
         <fieldset className="ingredient-fields">
-          <legend>Pasos</legend>
+          <legend>Pasos <small className="tiny">Opcional</small></legend>
           {steps.map((step, index) => (
             <div className="recipe-step-input" key={index}>
               <label>
