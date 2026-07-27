@@ -16,7 +16,7 @@
 }
 .film-shell { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
 .cook-shell { --section-accent: var(--lime); --section-contrast: #26351d; --section-shadow: #394321; }
-.fun-shell { --section-accent: #ff8bca; --section-contrast: #351528; --section-shadow: #7c376b; }
+.fun-shell { --section-accent: #ffd166; --section-contrast: #342500; --section-shadow: #8a6418; }
 
 @media (max-width: 540px) {
   .picks-dashboard { padding-right: 10px; }
@@ -273,7 +273,7 @@
 :is(html, body):has(.food-shell) { --page-scrollbar: #ff8a00; }
 :is(html, body):has(.film-shell) { --page-scrollbar: #b8adff; }
 :is(html, body):has(.cook-shell) { --page-scrollbar: #d4ef55; }
-:is(html, body):has(.fun-shell) { --page-scrollbar: #ff8bca; }
+:is(html, body):has(.fun-shell) { --page-scrollbar: #ffd166; }
 
 :is(html, body):has(.app-shell) {
   scrollbar-color: var(--page-scrollbar) #050505;
@@ -491,7 +491,7 @@
 .catalog-media-card-link--film { --catalog-accent: #b8adff; --catalog-contrast: #291f43; }
 .catalog-media-card-link--food { --catalog-accent: #ff8a00; --catalog-contrast: #2a1600; }
 .catalog-media-card-link--cook { --catalog-accent: #d4ef55; --catalog-contrast: #26351d; }
-.catalog-media-card-link--fun { --catalog-accent: #ff8bca; --catalog-contrast: #351528; }
+.catalog-media-card-link--fun { --catalog-accent: #ffd166; --catalog-contrast: #342500; }
 
 .catalog-media-card-link:focus-visible {
   outline: 2px solid var(--catalog-accent);

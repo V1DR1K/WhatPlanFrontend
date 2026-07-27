@@ -2463,7 +2463,7 @@ a {
   }
 }
 
-/* WhyFun keeps the shared layout while using its own vivid night-arcade palette. */
+/* WhyFun keeps the shared layout while using its own golden night-arcade palette. */
 .fun-hero {
   position: relative;
   display: grid;
@@ -2471,19 +2471,19 @@ a {
   align-items: center;
   min-height: 270px;
   overflow: hidden;
-  border: 1px solid #75486e;
+  border: 1px solid #8a6418;
   border-radius: 24px;
   padding: 36px 6% 25px;
   background:
-    radial-gradient(circle at 85% 50%, #ff70bd35, transparent 27%),
-    linear-gradient(115deg, #321d3d, #1d1725);
+    radial-gradient(circle at 85% 50%, #ffd16635, transparent 27%),
+    linear-gradient(115deg, #33270d, #211c10);
 }
 .fun-hero::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(115deg, transparent 58%, #ff93ce10);
+  background: linear-gradient(115deg, transparent 58%, #ffe29a10);
 }
 .fun-hero > * {
   position: relative;
@@ -2495,20 +2495,20 @@ a {
   letter-spacing: -3px;
 }
 .fun-hero h1 em {
-  color: #ff91ce;
+  color: #ffd166;
 }
 .fun-hero p:not(.eyebrow) {
   max-width: 510px;
-  color: #d6cbd7;
+  color: #ffe29a;
   font-size: 16px;
 }
 .fun-hero-art {
   position: relative;
   justify-self: center;
-  color: #ffc0e0;
+  color: #ffe29a;
   font-size: clamp(94px, 14vw, 170px);
   line-height: 1;
-  filter: drop-shadow(7px 7px 0 #301d36);
+  filter: drop-shadow(7px 7px 0 #8a6418);
   transform: rotate(-8deg);
   animation: floaty 5.5s ease-in-out infinite;
 }
@@ -2516,7 +2516,7 @@ a {
   position: absolute;
   top: -12px;
   right: -24px;
-  color: var(--lime);
+  color: var(--section-accent);
   font-size: 0.35em;
 }
 .fun-hero-art b {
@@ -2547,11 +2547,11 @@ a {
   overflow: visible;
 }
 .fun-filter .chips button {
-  background: #ff91ce13;
+  background: #ffd16613;
 }
 .fun-filter .chips button.selected {
-  border-color: #ff91ce;
-  background: #ff91ce22;
+  border-color: #ffd166;
+  background: #ffd16622;
 }
 .fun-filter-dialog {
   margin-top: 20px;
@@ -2572,7 +2572,7 @@ a {
   border-radius: 17px;
 }
 .fun-card-link:focus-visible {
-  outline: 2px solid #ff91ce;
+  outline: 2px solid #ffd166;
   outline-offset: 3px;
 }
 .fun-card {
@@ -2588,7 +2588,7 @@ a {
 .fun-card-link:hover .fun-card,
 .fun-card-link:focus-visible .fun-card {
   transform: translateY(-4px);
-  border-color: #c56faf;
+  border-color: #ffd166;
 }
 .fun-card__photo {
   position: relative;
@@ -2596,7 +2596,7 @@ a {
   overflow: hidden;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, #513153, #271d31);
+  background: linear-gradient(135deg, #33270d, #211c10);
   font-size: 58px;
 }
 .fun-card__photo img {
@@ -2610,8 +2610,8 @@ a {
   left: 8px;
   padding: 5px 7px;
   border-radius: 7px;
-  background: #1b1320d9;
-  color: #f8eaf3;
+  background: #211c10d9;
+  color: #fff1c4;
   font: 500 9px "DM Mono";
   letter-spacing: 0.5px;
 }
@@ -2627,7 +2627,7 @@ a {
 }
 .fun-card__body p {
   margin: 0;
-  color: #ff9cd4;
+  color: #ffe29a;
   font: 500 9px "DM Mono";
   letter-spacing: 0.5px;
 }
@@ -2639,10 +2639,10 @@ a {
 .fun-card__body > b {
   align-self: start;
   padding: 5px 7px;
-  border: 1px solid #9b5488;
+  border: 1px solid #8a6418;
   border-radius: 7px;
-  background: #39283c;
-  color: #ffb6df;
+  background: #33270d;
+  color: #ffe29a;
   font: 600 11px "DM Mono";
   white-space: nowrap;
 }
@@ -2666,7 +2666,7 @@ a {
   font-size: 10px;
 }
 .fun-card__body footer span:last-child {
-  color: #ff9cd4;
+  color: #ffe29a;
 }
 .fun-detail {
   padding-top: 26px;
@@ -2685,10 +2685,10 @@ a {
   overflow: hidden;
   display: grid;
   place-items: center;
-  border: 1px solid #5c3d5b;
+  border: 1px solid #8a6418;
   border-radius: 18px;
-  background: linear-gradient(135deg, #513153, #271d31);
-  box-shadow: 6px 6px 0 #3b263e;
+  background: linear-gradient(135deg, #33270d, #211c10);
+  box-shadow: 6px 6px 0 #8a6418;
   font-size: 96px;
 }
 .fun-detail__cover img {
@@ -2720,11 +2720,11 @@ a {
   font-size: 13px;
 }
 .fun-detail-rating strong {
-  color: var(--lime);
+  color: var(--section-accent);
 }
 .fun-plan-date {
   margin: 0;
-  color: #f2e9f2;
+  color: #ffe29a;
   font-size: 14px;
   line-height: 1.45;
   text-transform: capitalize;
@@ -2741,10 +2741,10 @@ a {
 }
 .fun-detail-panel {
   min-height: 195px;
-  border: 1px solid #5c3d5b;
+  border: 1px solid #8a6418;
   border-radius: 17px;
   padding: 19px;
-  background: linear-gradient(125deg, #2b202e, #211e24);
+  background: linear-gradient(125deg, #33270d, #211c10);
 }
 .fun-detail-panel h2 {
   margin: 4px 0 16px;
@@ -2763,7 +2763,7 @@ a {
   font-size: 12px;
 }
 .fun-hours strong {
-  color: #f2edf1;
+  color: #ffe29a;
 }
 .fun-hours span {
   color: var(--muted);
@@ -2777,7 +2777,7 @@ a {
 }
 .fun-rating-summary > strong {
   font: 600 43px/1 "Fraunces";
-  color: #ff9cd4;
+  color: #ffe29a;
 }
 .fun-rating-summary .star-control {
   gap: 2px;
@@ -2828,7 +2828,7 @@ a {
 .fun-cover-label {
   display: block;
   margin-top: 6px;
-  color: var(--lime);
+  color: var(--section-accent);
   font-size: 11px;
 }
 .fun-review-columns {
@@ -2861,7 +2861,7 @@ a {
   font-size: 17px;
 }
 .fun-review-card p {
-  color: #ddd8dc;
+  color: #fff1c4;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -2961,9 +2961,9 @@ a {
   display: grid;
   gap: 8px;
   padding: 14px;
-  border: 1px solid color-mix(in srgb, #ff91ce 34%, var(--line));
+  border: 1px solid color-mix(in srgb, #ffd166 34%, var(--line));
   border-radius: 16px;
-  background: linear-gradient(145deg, color-mix(in srgb, #ff91ce 8%, var(--panel)), var(--panel));
+  background: linear-gradient(145deg, color-mix(in srgb, #ffd166 8%, var(--panel)), var(--panel));
 }
 .fun-catalog-group .category-list {
   margin: 0;
@@ -2971,19 +2971,19 @@ a {
 .fun-catalog-group .category-list + .category-list {
   margin-left: 16px;
   padding-left: 12px;
-  border-left: 1px solid color-mix(in srgb, #ff91ce 34%, var(--line));
+  border-left: 1px solid color-mix(in srgb, #ffd166 34%, var(--line));
 }
 .fun-catalog-root {
-  border-color: #6e4d6d !important;
-  background: #32233a;
-  color: #ffe9f5 !important;
+  border-color: #8a6418 !important;
+  background: #33270d;
+  color: #ffe29a !important;
   font-weight: 700;
 }
 .settings-page .category-list > span.fun-catalog-root {
-  background: #32233a;
+  background: #33270d;
 }
 .fun-catalog-root .button--tertiary {
-  color: #ff9cd4;
+  color: #ffe29a;
 }
 .fun-active-toggle {
   display: flex !important;
