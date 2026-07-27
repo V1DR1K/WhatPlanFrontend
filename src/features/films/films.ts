@@ -16,6 +16,7 @@ export const getFilms = (filters: { genre?: string; platformId?: number; watched
 };
 export const getFilm = (id: number) => api<Film>(`/films/${id}`);
 export const searchTmdbMovies = (query: string) => api<TmdbMovie[]>(`/tmdb/movies?${new URLSearchParams({ query })}`);
+export const getTmdbRecommendations = (tmdbId: number) => api<TmdbMovie[]>(`/tmdb/movies/${tmdbId}/recommendations`);
 export const saveFilm = (input: FilmInput, id?: number) => api<Film>(`/films${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const uploadFilmPhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Film>(`/films/${id}/photo`, { method: 'POST', body: data }); };
 export const deleteFilm = (id: number) => api<void>(`/films/${id}`, { method: 'DELETE' });

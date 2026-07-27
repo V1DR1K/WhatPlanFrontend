@@ -510,10 +510,14 @@ a {
   box-shadow: 0 25px 60px #000;
 }
 .modal__content {
+  box-sizing: border-box;
   min-width: 0;
   max-height: var(--modal-content-max-height);
   overflow-x: clip;
   overflow-y: auto;
+  /* Keep the scrollbar from covering form controls, including overlay scrollbars. */
+  scrollbar-gutter: stable;
+  padding: 0 14px 16px 0;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -3333,6 +3337,9 @@ a {
   color: var(--muted);
   font-size: 9px;
   line-height: 1.25;
+}
+.tmdb-recommendations {
+  margin-top: 30px;
 }
 .tmdb-film-info > .tmdb-attribution {
   margin-top: 18px;

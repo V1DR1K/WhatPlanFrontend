@@ -6,6 +6,8 @@ export const specialDateRecurrenceLabel: Record<SpecialDateRecurrence, string> =
   MONTHLY: 'Mensual',
 };
 
+export const specialDateDisplay = (date: string) => date.split('-').reverse().join('/');
+
 const matchesDate = (date: string, specialDate: SpecialDate) => {
   if (specialDate.recurrence === 'ANNUAL') return specialDate.date.slice(5) === date.slice(5);
   if (specialDate.recurrence === 'MONTHLY') return specialDate.date.slice(-2) === date.slice(-2);

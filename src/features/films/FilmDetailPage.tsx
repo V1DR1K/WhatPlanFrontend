@@ -13,7 +13,7 @@ import { FilmViewForm } from "./FilmViewForm";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { Button } from "../../components/ui/Button";
-import { deleteFilm, deleteFilmView, getFilm } from "./films";
+import { deleteFilm, deleteFilmView, getFilm, getTmdbRecommendations } from "./films";
 import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
@@ -46,6 +46,12 @@ export function FilmDetailPage() {
     queryKey: ["film", id],
     queryFn: () => getFilm(id),
     enabled: validId,
+  });
+  const tmdbId = filmQuery.data?.tmdbId;
+  const recommendationsQuery = useQuery({
+    queryKey: ["tmdb-recommendations", tmdbId],
+    queryFn: () => tmdbId === undefined ? Promise.resolve([]) : getTmdbRecommendations(tmdbId),
+    enabled: tmdbId !== undefined,
   });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const remove = useMutation({
@@ -103,6 +109,7 @@ export function FilmDetailPage() {
   const cast = tmdb?.cast ?? [];
   const visibleCast = cast.slice(0, 8);
   const hiddenCastCount = cast.length - visibleCast.length;
+  const recommendations = recommendationsQuery.data ?? [];
   const reviewAverage = average(film.reviews.map((review) => review.rating));
   const metricAverage = (key: (typeof filmReviewMetrics)[number]["key"]) =>
     average(
@@ -248,6 +255,35 @@ export function FilmDetailPage() {
                   </article>
                 ))}
                 {hiddenCastCount > 0 && <article className="tmdb-cast-grid__more" aria-label={`${hiddenCastCount} integrantes más`}><strong>+{hiddenCastCount}</strong><small>más</small></article>}
+              </div>
+            </section>
+          )}
+          {!!recommendations.length && (
+            <section className="tmdb-cast tmdb-recommendations">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">DESDE TMDB</p>
+                  <h2>Recomendaciones</h2>
+                </div>
+              </div>
+              <div className="tmdb-cast-grid">
+                {recommendations.map((recommendation) => (
+                  <article key={recommendation.tmdbId}>
+                    {recommendation.posterUrl ? (
+                      <img
+                        src={mediaUrl(recommendation.posterUrl)}
+                        alt={`Póster de ${recommendation.title ?? 'película recomendada'}`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span aria-hidden="true">🍿</span>
+                    )}
+                    <div>
+                      <h3 title={recommendation.title}>{recommendation.title ?? 'Sin título'}</h3>
+                      <p>{recommendation.releaseDate?.slice(0, 4) ?? 'Sin fecha'}</p>
+                    </div>
+                  </article>
+                ))}
               </div>
             </section>
           )}

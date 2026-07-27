@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchingSpecialDates, specialDateOptionSuffix } from './SpecialDateLabels';
+import { matchingSpecialDates, specialDateDisplay, specialDateOptionSuffix } from './SpecialDateLabels';
 
 const specialDates = [
   { id: 1, date: '2026-02-14', label: 'San Valentín', recurrence: 'ANNUAL' as const, createdAt: '', updatedAt: '' },
@@ -16,5 +16,9 @@ describe('special date labels', () => {
 
   it('adds all matching labels to a history option', () => {
     expect(specialDateOptionSuffix('2026-02-14', specialDates)).toBe(' · San Valentín · Cena especial');
+  });
+
+  it('formats special dates for display without changing their ISO value', () => {
+    expect(specialDateDisplay('2026-02-14')).toBe('14/02/2026');
   });
 });

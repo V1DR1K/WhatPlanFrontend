@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal';
 import { showNotice } from '../../lib/flash';
 import type { SpecialDate, SpecialDateRecurrence } from '../../types/domain';
 import { getGlobalSettings, saveGlobalSettings } from '../../lib/settings';
-import { specialDateRecurrenceLabel } from './SpecialDateLabels';
+import { specialDateDisplay, specialDateRecurrenceLabel } from './SpecialDateLabels';
 import { deleteSpecialDate, getSpecialDates, saveSpecialDate, type SpecialDateInput } from './specialDates';
 
 const emptyDraft: SpecialDateInput = { date: '', label: '', recurrence: 'ONCE' };
@@ -91,7 +91,7 @@ export function SettingsPage() {
       specialDates.data?.length ? <ul className="special-dates-settings__list">
         {specialDates.data.map((specialDate) => <li key={specialDate.id}>
           <div>
-            <time dateTime={specialDate.date}>{specialDate.date}</time>
+            <time dateTime={specialDate.date}>{specialDateDisplay(specialDate.date)}</time>
             <strong>{specialDate.label}</strong>
             <small className="special-date-recurrence">{specialDateRecurrenceLabel[specialDate.recurrence]}</small>
           </div>
@@ -116,7 +116,7 @@ export function SettingsPage() {
     </Modal>}
     {deleting && <ConfirmDialog
       title="¿Borrar esta fecha especial?"
-      message={remove.error?.message ?? `"${deleting.label}" dejará de mostrarse para el ${deleting.date}.`}
+      message={remove.error?.message ?? `"${deleting.label}" dejará de mostrarse para el ${specialDateDisplay(deleting.date)}.`}
       confirmLabel="Borrar fecha"
       pending={remove.isPending}
       onClose={() => { remove.reset(); setDeleting(undefined); }}
