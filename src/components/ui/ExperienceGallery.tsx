@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "../../lib/api";
-import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { ExperiencePhoto } from "../../types/domain";
-import { Button, buttonClassName } from "./Button";
+import { Button } from "./Button";
+import { PhotoPicker } from "./PhotoPicker";
 
 const AUTO_ADVANCE_MS = 5_000;
 export const MAX_EXPERIENCE_PHOTOS = 4;
@@ -50,6 +50,9 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
   const [manualPaused, setManualPaused] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [preparingPhotos, setPreparingPhotos] = useState(false);
+  const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
+  const [pickerKey, setPickerKey] = useState(0);
   const [uploadError, setUploadError] = useState<string>();
   const touchStart = useRef<number | undefined>(undefined);
   const reducedMotion = useReducedMotion();
@@ -86,17 +89,19 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
     setSelected((current) => direction === "next" ? nextPhotoIndex(current, photos.length) : previousPhotoIndex(current, photos.length));
   };
 
-  const upload = async (files: FileList | null) => {
-    if (!onUpload || !files?.length) return;
+  const upload = async () => {
+    if (!onUpload || !pendingPhotos.length) return;
     const remaining = experiencePhotoSlots(photos.length);
-    if (files.length > remaining) {
+    if (pendingPhotos.length > remaining) {
       setUploadError(`Esta experiencia admite hasta ${MAX_EXPERIENCE_PHOTOS} fotos. Podés subir ${remaining} más.`);
       return;
     }
     try {
       setUploading(true);
       setUploadError(undefined);
-      await onUpload(await Promise.all([...files].map(preparePhoto)));
+      await onUpload(pendingPhotos);
+      setPendingPhotos([]);
+      setPickerKey((current) => current + 1);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "No pudimos subir las fotos.");
     } finally {
@@ -115,7 +120,7 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
     </div>
     {photos.length > 1 && <div className="experience-gallery__dots" role="tablist" aria-label="Elegir foto">{photos.map((value, index) => <button key={value.id} type="button" role="tab" aria-selected={selected === index} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} />)}</div>}
     <div className="experience-gallery__actions">
-      {onUpload && <label className={buttonClassName("secondary", "experience-gallery__upload")}><span className="button__icon" aria-hidden="true">🖼️</span><span className="button__label">{uploading ? "Subiendo fotos…" : "Agregar fotos"}</span><input type="file" accept={photoInputAccept} multiple disabled={uploading || experiencePhotoSlots(photos.length) === 0} onChange={(event) => { void upload(event.target.files); event.currentTarget.value = ""; }} /></label>}
+      {onUpload && <div className="experience-gallery__upload"><PhotoPicker key={pickerKey} multiple maxFiles={experiencePhotoSlots(photos.length)} disabled={uploading} onChange={setPendingPhotos} onPreparingChange={setPreparingPhotos} selectLabel="Agregar fotos" />{pendingPhotos.length > 0 && <Button type="button" variant="secondary" disabled={uploading || preparingPhotos} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos..." : `Subir ${pendingPhotos.length} ${pendingPhotos.length === 1 ? "foto" : "fotos"}`}</Button>}</div>}
       {photo && onSetCover && photo.id !== coverPhotoId && <Button icon="⭐" variant="secondary" type="button" onClick={() => onSetCover(photo)}>Usar de portada</Button>}
       {photo && onDelete && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}
     </div>

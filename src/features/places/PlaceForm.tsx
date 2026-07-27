@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
+import { PhotoPicker } from "../../components/ui/PhotoPicker";
 import { showNotice } from "../../lib/flash";
-import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { Place } from "../../types/domain";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags } from "./highlightTags";
@@ -30,7 +30,7 @@ export function PlaceForm({
     place?.tags.map((tag) => tag.id) ?? [],
   );
   const [photo, setPhoto] = useState<File>();
-  const [photoError, setPhotoError] = useState<string>();
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const qc = useQueryClient();
   const categoriesQuery = useQuery({ queryKey: ["categories"], queryFn: getCategories });
   const tagsQuery = useQuery({ queryKey: ["highlight-tags"], queryFn: getHighlightTags });
@@ -102,28 +102,10 @@ export function PlaceForm({
           <span>📅 Acepta reservas</span>
           <small className="tiny">Marcá esta opción si el lugar permite reservar antes de ir.</small>
         </label>
-        <label>
-          Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small>
-          <input
-            type="file"
-            accept={photoInputAccept}
-            onChange={async (event) => {
-              const selected = event.target.files?.[0];
-              setPhotoError(undefined);
-              if (!selected) {
-                setPhoto(undefined);
-                return;
-              }
-              try {
-                setPhoto(await preparePhoto(selected));
-              } catch (error) {
-                setPhoto(undefined);
-                setPhotoError(error instanceof Error ? error.message : "No pudimos preparar la foto.");
-                event.currentTarget.value = "";
-              }
-            }}
-          />
-        </label>
+        <div className="photo-field">
+          <span>Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span>
+          <PhotoPicker onChange={(files) => setPhoto(files[0])} onPreparingChange={setPreparingPhoto} />
+        </div>
         <small className="tiny">
           {photo
             ? `Se guardará ${photo.name} como foto del lugar.`
@@ -131,7 +113,6 @@ export function PlaceForm({
               ? "La foto actual se conservará si no elegís otra."
               : "Esta foto es independiente de las galerías de cada visita."}
         </small>
-        {photoError && <p className="form-error">{photoError}</p>}
         <label>
           Tipo
           <select name="categoryId" value={categoryId} onChange={(event) => setCategoryId(event.target.value)} required>
@@ -165,7 +146,7 @@ export function PlaceForm({
             ))}
           </div>
         </fieldset>
-        <Button icon={place ? "💾" : "➕"} disabled={pending}>
+        <Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto}>
           {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
         </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}

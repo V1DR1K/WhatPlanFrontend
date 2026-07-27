@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
+import { PhotoPicker } from "../../components/ui/PhotoPicker";
 import { showNotice } from "../../lib/flash";
-import { photoInputAccept, preparePhoto } from "../../lib/photos";
 import type { Activity, ActivitySchedule } from "../../types/domain";
 import { getFunCategories, saveActivity, uploadActivityProfilePhoto } from "./whyFun";
 
@@ -27,7 +27,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
     activity?.schedules.length ? activity.schedules : [],
   );
   const [photo, setPhoto] = useState<File>();
-  const [photoError, setPhotoError] = useState<string>();
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const categories = useQuery({ queryKey: ["fun-categories"], queryFn: getFunCategories });
   const roots = (categories.data ?? []).filter((value) => !value.parentId);
   const children = (categories.data ?? []).filter((value) => value.parentId === categoryId);
@@ -85,28 +85,10 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
           Dirección
           <input name="address" defaultValue={activity?.address} required placeholder="Calle 123, Rosario" />
         </label>
-        <label>
-          Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small>
-          <input
-            type="file"
-            accept={photoInputAccept}
-            onChange={async (event) => {
-              const selected = event.target.files?.[0];
-              setPhotoError(undefined);
-              if (!selected) {
-                setPhoto(undefined);
-                return;
-              }
-              try {
-                setPhoto(await preparePhoto(selected));
-              } catch (error) {
-                setPhoto(undefined);
-                setPhotoError(error instanceof Error ? error.message : "No pudimos preparar la foto.");
-                event.currentTarget.value = "";
-              }
-            }}
-          />
-        </label>
+        <div className="photo-field">
+          <span>Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span>
+          <PhotoPicker onChange={(files) => setPhoto(files[0])} onPreparingChange={setPreparingPhoto} />
+        </div>
         <small className="tiny">
           {photo
             ? `Se guardará ${photo.name} como foto de la actividad.`
@@ -114,7 +96,6 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
               ? "La foto actual se conservará si no elegís otra."
               : "Esta foto es independiente de las galerías de cada salida."}
         </small>
-        {photoError && <p className="form-error">{photoError}</p>}
         <fieldset className="tag-picker">
           <legend>Categoría</legend>
           <div className="tag-options">
@@ -208,7 +189,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
             Agregar horario
           </Button>
         </fieldset>
-        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending}>
+        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
           {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
         </Button>
         {mutation.error && <p className="form-error">{mutation.error.message}</p>}

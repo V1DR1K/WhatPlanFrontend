@@ -21,6 +21,18 @@
   border: 1px solid var(--line);
   margin: 8px 0;
 }
+.photo-picker { display: grid; gap: 10px; margin: 8px 0; }
+.photo-picker + .tiny { display: block; }
+.photo-field > span { display: block; font: inherit; }
+.photo-picker__select { position: relative; justify-self: start; margin: 0; }
+.photo-picker__select input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.photo-picker__previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.photo-picker__preview { display: grid; gap: 7px; margin: 0; padding: 9px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.photo-picker__preview .form-photo-preview { height: 180px; margin: 0; }
+.photo-picker__preview figcaption { display: grid; gap: 8px; min-width: 0; color: var(--muted); font-size: 11px; }
+.photo-picker__preview figcaption > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.photo-picker__controls { display: flex; flex-wrap: wrap; gap: 7px; }
+.photo-picker__controls .button { min-height: 36px; margin: 0; padding: 7px 9px; font-size: 11px; }
 .score-grid,
 .venue-score-grid {
   display: grid;

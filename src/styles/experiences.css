@@ -14,7 +14,8 @@
 .experience-gallery__dots button.is-selected { border-color: var(--section-accent); background: var(--section-accent); }
 .experience-gallery__actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .experience-gallery__actions .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; margin: 0; }
-.experience-gallery__upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.experience-gallery__upload { display: grid; gap: 9px; }
+.experience-gallery__upload .photo-picker { margin: 0; }
 .experience-gallery__delete { width: auto; }
 .experience-detail > .muted { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-inline: auto; text-align: center; line-height: 1.5; }
 .photo-lightbox__controls { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); display: flex; gap: 9px; }

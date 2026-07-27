@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Film, TmdbMovie } from '../../types/domain';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { PhotoPicker } from '../../components/ui/PhotoPicker';
 import { getFilmGenres, getPlatforms, saveFilm, searchTmdbMovies, type FilmInput, uploadFilmPhoto } from './films';
 import { ReviewPrompt } from '../../components/ui/ReviewPrompt';
 import { mediaUrl } from '../../lib/api';
 import { showNotice } from '../../lib/flash';
-import { photoInputAccept, preparePhoto } from '../../lib/photos';
 
 const manualInput = (form: FormData, synopsis: string | undefined, genres: string[]): FilmInput => ({
   title: String(form.get('title')).trim(),
@@ -26,7 +26,7 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
   const qc = useQueryClient();
   const [genres, setGenres] = useState<string[]>(film?.genres ?? []);
   const [file, setFile] = useState<File>();
-  const [photoError, setPhotoError] = useState<string>();
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [created, setCreated] = useState<Film>();
   const [manualMode, setManualMode] = useState(Boolean(film && !film.tmdbId));
   const [search, setSearch] = useState('');
@@ -82,11 +82,10 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
     {isTmdbFilm && <TmdbAttribution />}
     {!isTmdbFilm && (manualMode || film) && <>
       <label>Título<input name="title" defaultValue={film?.title} required autoFocus /></label>
-      <label>Foto o póster <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small><input type="file" accept={photoInputAccept} onChange={async event => { const selected = event.target.files?.[0]; setPhotoError(undefined); if (!selected) return setFile(undefined); try { setFile(await preparePhoto(selected)); } catch (error) { setFile(undefined); setPhotoError(error instanceof Error ? error.message : 'No pudimos preparar el póster'); event.currentTarget.value = ''; } }} /></label>
-      {photoError && <p className="form-error">{photoError}</p>}
+      <div className="photo-field"><span>Foto o póster <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span><PhotoPicker onChange={files => setFile(files[0])} onPreparingChange={setPreparingPhoto} /></div>
       <small className="tiny">{file ? `Se cargará ${file.name}.` : film?.posterUrl ? 'La imagen actual se conservará si no elegís otra.' : 'Podés subir una imagen; se adapta automáticamente a los mosaicos.'}</small>
       <fieldset className="tag-picker film-genre-picker"><legend>Géneros</legend><p>Elegí todos los que correspondan. El catálogo se administra desde Configuración.</p><div className="tag-options">{visibleOptions.map(option => <label className="tag-option" key={option.id}><input type="checkbox" checked={genres.includes(option.name)} onChange={() => toggleGenre(option.name)} /><span>{option.emoji} {option.name}</span></label>)}</div></fieldset>
     </>}
-    {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><Button icon={film ? '💾' : '➕'} disabled={save.isPending || Boolean(photoError)}>{save.isPending ? 'Guardando…' : film ? 'Guardar película' : 'Agregar película'}</Button>{save.error && <p className="form-error">{save.error.message}</p>}</> : null}
+    {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><Button icon={film ? '💾' : '➕'} disabled={save.isPending || preparingPhoto}>{save.isPending ? 'Guardando…' : film ? 'Guardar película' : 'Agregar película'}</Button>{save.error && <p className="form-error">{save.error.message}</p>}</> : null}
   </form></Modal>;
 }
