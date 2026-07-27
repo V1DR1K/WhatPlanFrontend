@@ -228,8 +228,11 @@
 }
 
 .modal-discard__actions .button {
+  display: flex;
   width: 100%;
   min-height: 48px;
+  align-items: center;
+  justify-content: center;
 }
 
 .experience-review-action {
@@ -252,13 +255,19 @@
 .login-card .button,
 .modal form > .button,
 .modal .review-prompt > .button {
+  display: flex;
   width: 100%;
+  align-items: center;
+  justify-content: center;
   margin-top: 10px;
 }
 
 .modal .photo-picker__select {
+  display: flex;
   justify-self: stretch;
   width: 100%;
+  align-items: center;
+  justify-content: center;
 }
 
 .experience-gallery__actions .button {

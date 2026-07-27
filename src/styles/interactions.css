@@ -852,7 +852,10 @@
   margin-top: 4px;
 }
 .confirm-dialog__actions .button {
+  display: flex;
   width: 100%;
+  align-items: center;
+  justify-content: center;
 }
 .confirm-dialog__actions .button--destructive {
   margin: 0;
