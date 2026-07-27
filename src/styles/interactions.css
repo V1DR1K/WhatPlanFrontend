@@ -847,9 +847,12 @@
 }
 .confirm-dialog__actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
   margin-top: 4px;
+}
+.confirm-dialog__actions .button {
+  width: 100%;
 }
 .confirm-dialog__actions .button--destructive {
   margin: 0;

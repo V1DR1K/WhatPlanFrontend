@@ -221,13 +221,14 @@
 }
 
 .modal-discard__actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-top: 14px;
 }
 
 .modal-discard__actions .button {
-  flex: 1;
+  width: 100%;
   min-height: 48px;
 }
 
@@ -249,10 +250,15 @@
 }
 
 .login-card .button,
-.modal form > .button--primary,
-.modal form > .button--destructive {
+.modal form > .button,
+.modal .review-prompt > .button {
   width: 100%;
   margin-top: 10px;
+}
+
+.modal .photo-picker__select {
+  justify-self: stretch;
+  width: 100%;
 }
 
 .experience-gallery__actions .button {
@@ -304,8 +310,6 @@
 
   .item-date-pager,
   .item-date-pager__actions,
-  .confirm-dialog__actions,
-  .modal-discard__actions,
   .experience-gallery__actions {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -317,8 +321,6 @@
   .item-date-pager__actions .button,
   .experience-review-action .button,
   .section-title > .button,
-  .confirm-dialog__actions .button,
-  .modal-discard__actions .button,
   .experience-gallery__actions .button,
   .experience-gallery__upload,
   .archived-place .button,
