@@ -13,19 +13,20 @@ export function AppLayout() {
   const inFilms = location.pathname.startsWith('/films');
   const inCook = location.pathname.startsWith('/how-cook');
   const inFun = location.pathname.startsWith('/why-fun');
-  const sectionHome = inFood ? '/food' : inFilms ? '/films' : inCook ? '/how-cook' : '/why-fun';
+  const inDates = location.pathname.startsWith('/when-dates');
+  const sectionHome = inFood ? '/food' : inFilms ? '/films' : inCook ? '/how-cook' : inFun ? '/why-fun' : '/when-dates';
   const mobileBackTarget = location.pathname === sectionHome ? '/' : sectionHome;
   const isDetail = location.pathname !== sectionHome;
 
-  const sectionShell = inFood ? 'food-shell' : inFilms ? 'film-shell' : inCook ? 'cook-shell' : inFun ? 'fun-shell' : '';
+  const sectionShell = inFood ? 'food-shell' : inFilms ? 'film-shell' : inCook ? 'cook-shell' : inFun ? 'fun-shell' : inDates ? 'dates-shell' : '';
   const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : undefined;
-  const outsideSection = !inFood && !inFilms && !inCook && !inFun;
+  const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
   return <main className={`app-shell ${sectionShell}`}>
     <header className="app-header">
       <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
       <div className="header-actions">
-        {(inFood || inFilms || inCook || inFun) && <>
+        {(inFood || inFilms || inCook || inFun || inDates) && <>
           <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
           <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={mobileBackTarget} aria-label="Volver" title="Volver">↩️</Link>
         </>}

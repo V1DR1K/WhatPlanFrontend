@@ -1410,16 +1410,30 @@ a {
 }
 .module-card--fun {
   background:
-    radial-gradient(circle at 90% 12%, #ff6fbe 0 4%, transparent 27%),
-    linear-gradient(135deg, #3a1f46, #21182b 68%);
-  box-shadow: 7px 7px 0 #7d3e7f;
+    radial-gradient(circle at 90% 12%, #ffe29a 0 4%, transparent 27%),
+    linear-gradient(135deg, #33270d, #211c10 68%);
+  box-shadow: 7px 7px 0 #8a6418;
 }
 .module-card--fun:hover,
 .module-card--fun:focus-visible {
-  border-color: #ff8aca;
-  box-shadow: 10px 12px 0 #7d3e7f;
+  border-color: #ffd166;
+  box-shadow: 10px 12px 0 #8a6418;
 }
 .module-card--fun h2 span {
+  color: #ffe29a;
+}
+.module-card--dates {
+  background:
+    radial-gradient(circle at 90% 12%, #ff8bca 0 4%, transparent 27%),
+    linear-gradient(135deg, #3a1f46, #21182b 68%);
+  box-shadow: 7px 7px 0 #7d3e7f;
+}
+.module-card--dates:hover,
+.module-card--dates:focus-visible {
+  border-color: #ff8bca;
+  box-shadow: 10px 12px 0 #7d3e7f;
+}
+.module-card--dates h2 span {
   color: #ff91ce;
 }
 .module-card small {

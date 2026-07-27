@@ -12,5 +12,6 @@ import './styles/action-buttons.css';
 import './styles/catalog-controls.css';
 import './styles/special-dates.css';
 import './styles/catalog-experience.css';
+import './styles/when-dates.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

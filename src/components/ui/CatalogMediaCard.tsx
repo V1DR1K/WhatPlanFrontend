@@ -12,7 +12,7 @@ type CatalogMediaCardProps = {
   image: ReactNode;
   kpi?: ReactNode;
   orientation: PhotoOrientation;
-  theme: "food" | "film" | "cook" | "fun";
+  theme: "food" | "film" | "cook" | "fun" | "dates";
   title: ReactNode;
   to: string;
 };

@@ -1,6 +1,6 @@
 # Manual de marca · WhatPlan
 
-> Guía cromática de las experiencias **WhereFood**, **WhichMovie**, **WhoCook** y **WhyFun**.
+> Guía cromática de las experiencias **WhereFood**, **WhichMovie**, **WhoCook**, **WhyFun** y **WhenDates**.
 >
 > Nota de nomenclatura: en el producto actual las rutas y componentes se llaman `WhichFilm` y `HowCook`; en este manual se usa el nombre solicitado, **WhichMovie** y **WhoCook**, respectivamente.
 
@@ -13,11 +13,12 @@ WhatPlan reúne planes compartidos con una estética nocturna, cercana y un poco
 | WhereFood | Comer y descubrir lugares | Naranja luminoso `#FF8A00` |
 | WhichMovie | Películas y noches de cine | Lavanda eléctrica `#B8ADFF` |
 | WhoCook | Recetas y cocina en casa | Lima cítrico `#D4EF55` |
-| WhyFun | Salidas, juegos y experiencias | Rosa chicle `#FF8BCA` |
+| WhyFun | Salidas, juegos y experiencias | Amarillo dorado `#FFD166` |
+| WhenDates | Fechas importantes y recuerdos | Rosa chicle `#FF8BCA` |
 
 ## 2. Base compartida de WhatPlan
 
-Estos colores no identifican a una sección: ordenan todo el ecosistema y deben mantenerse iguales en las cuatro experiencias.
+Estos colores no identifican a una sección: ordenan todo el ecosistema y deben mantenerse iguales en las cinco experiencias.
 
 | Rol | Color | Cómo se ve / ejemplo | Uso |
 | --- | --- | --- | --- |
@@ -77,20 +78,29 @@ El lima comunica ingredientes, frescura y el gesto de hacer algo en casa. Es el 
 
 **Aplicación:** en botones lima, usar texto oscuro `#26351D`. No usar lima para cuerpos de texto largos ni para fondos extensos: pierde comodidad visual.
 
-### WhyFun · rosa eléctrico
+### WhyFun · amarillo dorado
 
-El rosa da una personalidad expresiva y social a planes, juegos y experiencias. Debe verse divertido sin competir con el contenido.
+El amarillo dorado comunica diversión, juego y celebración sin confundirse con el lima de WhoCook.
 
 | Rol | Color | Cómo se ve / ejemplo | Uso recomendado |
 | --- | --- | --- | --- |
-| Acento principal | `#FF8BCA` | Rosa chicle, como un globo de bubblegum. | CTA, acciones, filtros seleccionados y detalles principales. |
-| Rosa brillante | `#FF6FBE` | Fucsia vivo, como neón rosa. | Íconos, destellos y puntos de énfasis. |
-| Rosa suave | `#FF91CE` | Rosa pastel luminoso, como algodón de azúcar. | Nombre destacado, títulos y detalles de baja intensidad. |
-| Fondo temático oscuro | `#3A1F46` | Violeta ciruela profundo. | Hero y fondos de piezas especiales. |
-| Fondo profundo | `#21182B` | Morado casi negro. | Degradados y zonas de descanso. |
-| Sombra de acción | `#7C376B` | Ciruela rosada oscura. | Sombra sólida de botones. |
+| Acento principal | `#FFD166` | Amarillo dorado, como una marquesina de feria. | CTA, acciones, filtros seleccionados y detalles principales. |
+| Amarillo claro | `#FFE29A` | Dorado suave y luminoso. | Íconos, destellos y títulos. |
+| Fondo temático oscuro | `#33270D` | Ocre nocturno. | Hero y fondos de piezas especiales. |
+| Fondo profundo | `#211C10` | Marrón casi negro. | Degradados y zonas de descanso. |
+| Sombra de acción | `#8A6418` | Dorado tostado oscuro. | Sombra sólida de botones. |
 
-**Aplicación:** en botones rosa, usar texto `#351528`. Reservar el rosa brillante para focos puntuales, nunca para todo el fondo de una pantalla.
+**Aplicación:** en botones amarillos, usar texto `#342500`. Reservar el amarillo claro para focos puntuales, nunca para todo el fondo de una pantalla.
+
+### WhenDates · rosa chicle
+
+WhenDates reúne recuerdos, fotos y comentarios de las fechas importantes. Usa el rosa expresivo que antes identificaba a WhyFun.
+
+| Rol | Color | Uso recomendado |
+| --- | --- | --- |
+| Acento principal | `#FF8BCA` | Filtros, acciones y recuerdos destacados. |
+| Contraste de acción | `#351528` | Texto e íconos sobre rosa. |
+| Sombra de acción | `#7C376B` | Sombra sólida de botones. |
 
 ## 4. Sistema tipográfico
 
@@ -219,7 +229,7 @@ El grupo de acciones conserva siempre este orden: registrar visita/vista/cocinad
 
 ## 7. Reglas de uso
 
-1. **Una sección, un acento.** No combinar coral, lavanda, lima y rosa dentro de una misma pantalla funcional, excepto en el dashboard de elección de módulos.
+1. **Una sección, un acento.** No combinar coral, lavanda, lima, amarillo y rosa dentro de una misma pantalla funcional, excepto en el dashboard de elección de módulos.
 2. **Jerarquía.** El color distintivo debe señalar acción, selección o identidad; el contenido sigue siendo crema sobre fondo oscuro.
 3. **Botones.** Usar acento como relleno, texto oscuro de contraste y sombra sólida propia de la sección. Mantener una sombra desplazada de 3–5 px para conservar el lenguaje visual del producto.
 4. **Estados suaves.** Para chips, fondos de selección y cajas informativas, aplicar el acento con baja opacidad sobre una superficie oscura, en lugar de usar el color pleno.
@@ -238,12 +248,13 @@ Centralizar estos tokens ayuda a que las próximas pantallas respeten la identid
   --wf-muted: #aaa3a3;
 }
 
-.wherefood { --section-accent: #ff8a00; --section-contrast: #2a1600; --section-shadow: #6b3600; }
-.whichmovie { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
-.whocook { --section-accent: #d4ef55; --section-contrast: #26351d; --section-shadow: #394321; }
-.whyfun { --section-accent: #ff8bca; --section-contrast: #351528; --section-shadow: #7c376b; }
+.food-shell { --section-accent: #ff8a00; --section-contrast: #2a1600; --section-shadow: #6b3600; }
+.film-shell { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
+.cook-shell { --section-accent: #d4ef55; --section-contrast: #26351d; --section-shadow: #394321; }
+.fun-shell { --section-accent: #ffd166; --section-contrast: #342500; --section-shadow: #8a6418; }
+.dates-shell { --section-accent: #ff8bca; --section-contrast: #351528; --section-shadow: #7c376b; }
 ```
 
 ## 9. Referencia rápida
 
-`WhatPlan #FF6049` · `WhereFood #FF8A00` · `WhichMovie #B8ADFF` · `WhoCook #D4EF55` · `WhyFun #FF8BCA`
+`WhatPlan #FF6049` · `WhereFood #FF8A00` · `WhichMovie #B8ADFF` · `WhoCook #D4EF55` · `WhyFun #FFD166` · `WhenDates #FF8BCA`

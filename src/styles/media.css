@@ -391,19 +391,19 @@
   align-items: center;
   gap: 7px;
   padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, #ff8bca 48%, #3a1f46);
+  border: 1px solid color-mix(in srgb, #ffd166 48%, #33270d);
   border-radius: 999px;
-  background: color-mix(in srgb, #ff8bca 12%, #21182b);
-  color: #ffe9f5;
+  background: color-mix(in srgb, #ffd166 12%, #211c10);
+  color: #fff1c4;
   font-size: 12px;
 }
 
 .fun-detail .fun-hours strong {
-  color: #ff9cd4;
+  color: #ffe29a;
 }
 
 .fun-detail .fun-hours span {
-  color: #f4dce9;
+  color: #f8e8b3;
 }
 
 /* Creation and editing modals keep alternate actions comfortably tappable. */
