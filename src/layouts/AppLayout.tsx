@@ -19,7 +19,7 @@ export function AppLayout() {
   const isDetail = location.pathname !== sectionHome;
 
   const sectionShell = inFood ? 'food-shell' : inFilms ? 'film-shell' : inCook ? 'cook-shell' : inFun ? 'fun-shell' : inDates ? 'dates-shell' : '';
-  const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : undefined;
+  const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : inDates && isAdmin ? '/when-dates/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
   return <main className={`app-shell ${sectionShell}`}>

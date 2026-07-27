@@ -19,6 +19,7 @@ const FunCatalogManager = lazy(() => import('../features/why-fun/FunCatalogManag
 const SettingsPage = lazy(() => import('../features/special-dates/SettingsPage').then(({ SettingsPage }) => ({ default: SettingsPage })));
 const WhenDatesPage = lazy(() => import('../features/when-dates/WhenDatesPage').then(({ WhenDatesPage }) => ({ default: WhenDatesPage })));
 const WhenDateDetailPage = lazy(() => import('../features/when-dates/WhenDateDetailPage').then(({ WhenDateDetailPage }) => ({ default: WhenDateDetailPage })));
+const WhenDatesSettingsPage = lazy(() => import('../features/when-dates/WhenDatesSettingsPage').then(({ WhenDatesSettingsPage }) => ({ default: WhenDatesSettingsPage })));
 
 function LoadingPage() {
   return <main className="login-shell" aria-busy="true"><p>Cargando…</p></main>;
@@ -55,6 +56,12 @@ function SettingsAdmin() {
     : <Navigate to="/" replace />;
 }
 
+function WhenDatesSettingsAdmin() {
+  return session.get()?.role === 'ADMIN'
+    ? <Suspense fallback={<LoadingPage />}><WhenDatesSettingsPage /></Suspense>
+    : <Navigate to="/" replace />;
+}
+
 export function AppRoutes() {
   return <BrowserRouter><Routes>
     <Route path="/login" element={<LoginPage />} />
@@ -73,6 +80,7 @@ export function AppRoutes() {
       <Route path="why-fun/:id" element={<Suspense fallback={<LoadingPage />}><FunVenueDetailPage /></Suspense>} />
       <Route path="why-fun/categories" element={<FunAdmin />} />
       <Route path="when-dates" element={<Suspense fallback={<LoadingPage />}><WhenDatesPage /></Suspense>} />
+      <Route path="when-dates/settings" element={<WhenDatesSettingsAdmin />} />
       <Route path="when-dates/:specialDateId/:date" element={<Suspense fallback={<LoadingPage />}><WhenDateDetailPage /></Suspense>} />
       <Route path="settings" element={<SettingsAdmin />} />
     </Route>
