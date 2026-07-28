@@ -13,5 +13,6 @@ import './styles/catalog-controls.css';
 import './styles/special-dates.css';
 import './styles/catalog-experience.css';
 import './styles/when-dates.css';
+import './styles/experience-hero.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

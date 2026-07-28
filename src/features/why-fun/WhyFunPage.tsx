@@ -3,6 +3,7 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import type { FunCategory } from "../../types/domain";
 import { FunVenueCard } from "./FunVenueCard";
 import { ActivityForm } from "./ActivityForm";
@@ -133,14 +134,13 @@ export function WhyFunPage() {
 
   return (
     <>
-      <section className="fun-hero">
-        <div>
-          <p className="eyebrow">WHYFUN · SALIDAS PARA REPETIR</p>
-          <h1>¿Qué salida<br />repetimos <em>hoy?</em></h1>
-          <p>Guarden actividades y registren cada salida con una fecha, fotos y opiniones compartidas.</p>
-        </div>
-        <div className="fun-hero-art" aria-hidden="true">🎲<span>✦</span><b>🕹️</b></div>
-      </section>
+      <ExperienceHero
+        className="fun-hero"
+        eyebrow="WHYFUN · SALIDAS PARA REPETIR"
+        title={<>¿Qué salida<br />repetimos <em>hoy?</em></>}
+        description="Guarden actividades y registren cada salida con una fecha, fotos y opiniones compartidas."
+        art={<>🎲<span>✦</span><b>🕹️</b></>}
+      />
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton eyebrow="Nueva actividad" icon="🎯" label="Agregar actividad" onClick={() => setCreating(true)} />
       </nav>

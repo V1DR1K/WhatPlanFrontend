@@ -6,6 +6,7 @@ import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { useCatalogPageSize } from "../../lib/settings";
@@ -236,23 +237,13 @@ export function WhichFilmPage() {
   const filtered = Boolean(genre || platformId || searchTerm || sort);
   return (
     <>
-      <section className="film-hero">
-        <div>
-          <p className="eyebrow">NUESTRA SALA PERSONAL</p>
-          <h1>
-            ¿Qué vamos a<br />
-            <em>mirar</em> hoy?
-          </h1>
-          <p>
-            Una colección para las películas que todavía esperan y las que ya se
-            quedaron con nosotros. 🍿
-          </p>
-        </div>
-        <div className="film-hero-art" aria-hidden="true">
-          🎬<span>✨</span>
-          <b>🍿</b>
-        </div>
-      </section>
+      <ExperienceHero
+        className="film-hero"
+        eyebrow="NUESTRA SALA PERSONAL"
+        title={<>¿Qué vamos a<br /><em>mirar</em> hoy?</>}
+        description="Una colección para las películas que todavía esperan y las que ya se quedaron con nosotros. 🍿"
+        art={<>🎬<span>✨</span><b>🍿</b></>}
+      />
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva película"

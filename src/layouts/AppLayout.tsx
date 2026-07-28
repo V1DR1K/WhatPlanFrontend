@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
@@ -14,6 +15,9 @@ export function AppLayout() {
   const inCook = location.pathname.startsWith('/how-cook');
   const inFun = location.pathname.startsWith('/why-fun');
   const inDates = location.pathname.startsWith('/when-dates');
+  useLayoutEffect(() => {
+    if (['/films', '/how-cook', '/why-fun', '/when-dates'].includes(location.pathname)) window.scrollTo(0, 0);
+  }, [location.pathname]);
   const sectionHome = inFood ? '/food' : inFilms ? '/films' : inCook ? '/how-cook' : inFun ? '/why-fun' : '/when-dates';
   const mobileBackTarget = location.pathname === sectionHome ? '/' : sectionHome;
   const isDetail = location.pathname !== sectionHome;

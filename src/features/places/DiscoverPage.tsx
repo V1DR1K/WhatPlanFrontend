@@ -3,6 +3,7 @@ import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { Button } from "../../components/ui/Button";
 import type { PlaceStatus } from "../../types/domain";
 import { getCategories } from "../categories/categories";
@@ -221,20 +222,13 @@ export function DiscoverPage() {
   const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
   return (
     <>
-      <section className="hero">
-        <div>
-          <p className="eyebrow">TU MAPA DEL HAMBRE</p>
-          <h1>
-            ¿Qué vamos a<br />
-            <em> probar</em> hoy?
-          </h1>
-          <p>Tu ranking personal de lugares que sí dan ganas de volver.</p>
-        </div>
-        <div className="hero-art">
-          🍜<span>✦</span>
-          <b>🍗</b>
-        </div>
-      </section>
+      <ExperienceHero
+        className="hero"
+        eyebrow="TU MAPA DEL HAMBRE"
+        title={<>¿Qué vamos a<br /><em> probar</em> hoy?</>}
+        description="Tu ranking personal de lugares que sí dan ganas de volver."
+        art={<>🍜<span>✦</span><b>🍗</b></>}
+      />
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nuevo lugar"

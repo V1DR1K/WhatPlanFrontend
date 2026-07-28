@@ -384,37 +384,12 @@
   padding-top: 22px;
 }
 .home-recipes__hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 18px;
   min-height: 200px;
   margin-top: 20px;
   padding: 28px 32px;
-  overflow: hidden;
   border: 1px solid #4c5930;
   border-radius: 20px;
   background: linear-gradient(125deg, #222a18, #191d16);
-}
-.home-recipes__hero h1 {
-  margin: 0;
-  font: 700 clamp(39px, 7vw, 61px)/0.9 "Fraunces";
-  letter-spacing: -2px;
-}
-.home-recipes__hero h1 em {
-  color: var(--lime);
-}
-.home-recipes__hero p:not(.eyebrow) {
-  max-width: 490px;
-  margin: 16px 0 0;
-  color: #d0d3c4;
-  line-height: 1.45;
-}
-.home-recipes__hero > span {
-  font-size: clamp(76px, 13vw, 130px);
-  filter: drop-shadow(6px 8px 0 #10140b);
-  transform: rotate(-5deg);
 }
 .home-recipe-section {
   margin-top: 8px;
@@ -744,19 +719,6 @@
     padding-right: 9px;
   }
 
-  .home-recipes__hero {
-    min-height: 175px;
-    padding: 24px 20px;
-  }
-  .home-recipes__hero h1 {
-    font-size: 40px;
-  }
-  .home-recipes__hero > span {
-    font-size: 80px;
-  }
-  .home-recipes__hero p:not(.eyebrow) {
-    font-size: 13px;
-  }
   .home-recipe-grid {
     grid-template-columns: 1fr;
   }

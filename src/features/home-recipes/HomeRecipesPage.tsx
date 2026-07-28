@@ -5,6 +5,7 @@ import { mediaUrl } from "../../lib/api";
 import type { Home, Recipe } from "../../types/domain";
 import { RecipeForm } from "./RecipeForm";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
+import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { useCatalogPageSize } from "../../lib/settings";
@@ -136,14 +137,13 @@ export function HomeRecipesPage() {
 
   return (
     <section className="home-recipes">
-      <section className="home-recipes__hero">
-        <div>
-          <p className="eyebrow">WHOCOOK · RECETAS PARA REPETIR</p>
-          <h1>¿Qué <em>cocinamos</em> hoy?</h1>
-          <p>Guarden una receta una vez y registren cada cocinada con sus propios recuerdos.</p>
-        </div>
-        <span aria-hidden="true">🍳</span>
-      </section>
+      <ExperienceHero
+        className="home-recipes__hero"
+        eyebrow="WHOCOOK · RECETAS PARA REPETIR"
+        title={<>¿Qué <em>cocinamos</em> hoy?</>}
+        description="Guarden una receta una vez y registren cada cocinada con sus propios recuerdos."
+        art="🍳"
+      />
       <nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva receta"
