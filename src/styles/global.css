@@ -1410,17 +1410,17 @@ a {
 }
 .module-card--fun {
   background:
-    radial-gradient(circle at 90% 12%, #ffe29a 0 4%, transparent 27%),
+    radial-gradient(circle at 90% 12%, var(--fun-highlight) 0 4%, transparent 27%),
     linear-gradient(135deg, #33270d, #211c10 68%);
   box-shadow: 7px 7px 0 #8a6418;
 }
 .module-card--fun:hover,
 .module-card--fun:focus-visible {
-  border-color: #ffd166;
+  border-color: var(--fun-accent);
   box-shadow: 10px 12px 0 #8a6418;
 }
 .module-card--fun h2 span {
-  color: #ffe29a;
+  color: var(--fun-highlight);
 }
 .module-card--dates {
   background:
