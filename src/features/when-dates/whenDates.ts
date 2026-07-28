@@ -1,11 +1,11 @@
 import { api } from '../../lib/api';
-import type { Slice, WhenDateOccurrence, WhenDateEntry } from '../../types/domain';
+import type { Slice, WhenDateOccurrence, WhenDateOccurrenceSummary } from '../../types/domain';
 
-export const getWhenDates = (month: string, specialDateId?: number, cursor?: number, size = 12) => {
-  const query = new URLSearchParams({ month, size: String(size) });
+export const getWhenDates = (specialDateId?: number, cursor?: number, size = 12) => {
+  const query = new URLSearchParams({ size: String(size) });
   if (specialDateId) query.set('specialDateId', String(specialDateId));
   if (cursor !== undefined) query.set('cursor', String(cursor));
-  return api<Slice<WhenDateEntry>>(`/when-dates?${query}`);
+  return api<Slice<WhenDateOccurrenceSummary>>(`/when-dates?${query}`);
 };
 export const getWhenDateOccurrence = (specialDateId: number, date: string) => api<WhenDateOccurrence>(`/when-dates/special-dates/${specialDateId}/occurrences/${date}`);
 export const saveWhenDateComment = (specialDateId: number, date: string, comment: string) => api<WhenDateOccurrence>(`/when-dates/special-dates/${specialDateId}/occurrences/${date}/comments/me`, { method: 'PUT', body: JSON.stringify({ comment }) });
