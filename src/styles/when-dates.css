@@ -4,7 +4,6 @@
 .when-dates-hero h1, .when-date-detail h1 { margin:7px 0 12px; font:600 clamp(42px,6vw,70px)/.91 "Fraunces"; letter-spacing:-3px; overflow-wrap:anywhere; }
 .when-dates-hero h1 em { color:var(--section-accent); font-style:normal; }
 .when-dates-hero p:not(.eyebrow) { max-width: 570px; margin: 0; color: #f2d5e6; font-size: 16px; }
-.when-dates-hero__meta { margin-top:12px !important; color:color-mix(in srgb,var(--section-accent) 65%,var(--cream)) !important; font:500 11px "DM Mono"; letter-spacing:.5px; }
 .when-dates-hero-art { position:relative; justify-self:center; color:var(--section-accent); font-size:clamp(82px,15vw,170px); line-height:1; filter:drop-shadow(7px 7px 0 var(--section-shadow)); transform:rotate(-8deg); }
 .when-dates-hero-art span { position:absolute; top:-12px; right:-24px; color:var(--cream); font-size:.35em; }.when-dates-hero-art b { position:absolute; right:-24px; bottom:-10px; font-size:.3em; transform:rotate(20deg); }
 .when-dates-controls { display:grid; gap:14px; margin:28px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:13px 0; }

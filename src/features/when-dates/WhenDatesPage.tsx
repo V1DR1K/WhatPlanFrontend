@@ -1,10 +1,8 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
 import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
-import { buttonClassName } from '../../components/ui/Button';
-import { mediaUrl, session } from '../../lib/api';
+import { mediaUrl } from '../../lib/api';
 import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
 import { getWhenDates } from './whenDates';
@@ -23,13 +21,11 @@ export function WhenDatesPage() {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
   const results = entries.data?.pages.flatMap((page) => page.content) ?? [];
-  const isAdmin = session.get()?.role === 'ADMIN';
   return <section className="when-dates-page">
     <header className="when-dates-hero">
-      <div><p className="eyebrow">WHENDATES · RECUERDOS COMPARTIDOS</p><h1>¿Qué <em>recordamos</em><br />hoy?</h1><p>Reunimos las visitas, vistas, cocinadas y salidas que coincidieron con sus fechas importantes.</p><p className="when-dates-hero__meta">Fechas únicas, anuales o mensuales para volver a celebrar.</p></div>
+      <div><p className="eyebrow">WHENDATES · RECUERDOS COMPARTIDOS</p><h1>¿Qué <em>recordamos</em><br />hoy?</h1><p>Reunimos las visitas, vistas, cocinadas y salidas que coincidieron con sus fechas importantes.</p></div>
       <div className="when-dates-hero-art" aria-hidden="true">💝<span>✦</span><b>📅</b></div>
     </header>
-    {isAdmin && <nav className="quick-nav quick-nav-action"><Link className={buttonClassName('secondary')} to="/when-dates/settings"><span className="button__icon" aria-hidden="true">⚙️</span><span className="button__label">Gestionar fechas importantes</span></Link></nav>}
     <section className="when-dates-controls" aria-label="Filtrar recuerdos">
       <div className="catalog-search-sort">
         <label className="catalog-search-sort__field"><span>Fecha importante</span><select value={specialDateId ?? ''} onChange={(event) => setSpecialDateId(event.target.value ? Number(event.target.value) : undefined)}><option value="">Todas las fechas</option>{specialDates.data?.map((date) => <option key={date.id} value={date.id}>{date.label}</option>)}</select></label>
