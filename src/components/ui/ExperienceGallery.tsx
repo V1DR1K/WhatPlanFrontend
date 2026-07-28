@@ -48,7 +48,7 @@ function useFinePointer() {
 
 type ExperienceGalleryProps = {
   accentLabel: string;
-  afterStage?: ReactNode;
+  afterActions?: ReactNode;
   coverPending?: boolean;
   coverPhotoId?: number;
   emptyIcon: string;
@@ -59,7 +59,7 @@ type ExperienceGalleryProps = {
   photos: ExperiencePhoto[];
 };
 
-export function ExperienceGallery({ accentLabel, afterStage, coverPending = false, coverPhotoId, emptyIcon, name, onDelete, onSetCover, onUpload, photos }: ExperienceGalleryProps) {
+export function ExperienceGallery({ accentLabel, afterActions, coverPending = false, coverPhotoId, emptyIcon, name, onDelete, onSetCover, onUpload, photos }: ExperienceGalleryProps) {
   const coverIndex = Math.max(0, photos.findIndex((photo) => photo.id === coverPhotoId));
   const [selected, setSelected] = useState(coverIndex);
   const [hovered, setHovered] = useState(false);
@@ -142,12 +142,12 @@ export function ExperienceGallery({ accentLabel, afterStage, coverPending = fals
       <Button icon="›" type="button" variant="secondary" onClick={() => move("next")} aria-label="Ver foto siguiente" title="Ver foto siguiente">Siguiente</Button>
     </div>}
     <div className="experience-gallery__dots" role={photos.length > 1 ? "tablist" : undefined} aria-label={photos.length > 1 ? "Elegir foto" : undefined}>{photos.length > 1 && photos.map((value, index) => <button key={value.id} type="button" role="tab" aria-selected={selected === index} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} />)}</div>
-    {afterStage}
     <div className="experience-gallery__actions">
       {onUpload && <div className="experience-gallery__upload"><PhotoPicker key={pickerKey} multiple maxFiles={experiencePhotoSlots(photos.length)} disabled={uploading} onChange={setPendingPhotos} onPreparingChange={setPreparingPhotos} selectLabel="Agregar fotos" />{pendingPhotos.length > 0 && <Button type="button" variant="secondary" disabled={uploading || preparingPhotos} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos..." : `Subir ${pendingPhotos.length} ${pendingPhotos.length === 1 ? "foto" : "fotos"}`}</Button>}</div>}
       {onSetCover && <div className="experience-gallery__cover-slot">{photo ? photo.id === coverPhotoId ? <span>⭐ Foto de portada</span> : <Button icon="⭐" variant="secondary" type="button" disabled={coverPending} onClick={() => onSetCover(photo)}>Usar de portada</Button> : null}</div>}
       {photo && onDelete && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}
     </div>
+    {afterActions}
     <p className="experience-gallery__meta">{accentLabel} · {photos.length}/{MAX_EXPERIENCE_PHOTOS} fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
     {uploadError && <p className="form-error">{uploadError}</p>}
     {lightbox && photo && <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Foto ampliada de ${name}`} onMouseDown={() => setLightbox(false)}><Button className="photo-lightbox-close" icon="✕" type="button" variant="icon" onMouseDown={(event) => event.stopPropagation()} onClick={() => setLightbox(false)} aria-label="Cerrar foto ampliada" title="Cerrar foto ampliada" /><img src={mediaUrl(photo.url)} alt={`Foto ampliada ${selected + 1} de ${name}`} onMouseDown={(event) => event.stopPropagation()} />{photos.length > 1 && <div className="photo-lightbox__controls" onMouseDown={(event) => event.stopPropagation()}><Button icon="‹" type="button" variant="secondary" onClick={() => move("previous")}>Anterior</Button><Button icon="›" type="button" variant="secondary" onClick={() => move("next")}>Siguiente</Button></div>}</div>}
