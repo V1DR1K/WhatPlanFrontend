@@ -274,10 +274,6 @@
   margin: 0;
 }
 
-.photo-lightbox__controls .button--secondary {
-  background: var(--panel);
-}
-
 .round--back {
   display: none;
 }

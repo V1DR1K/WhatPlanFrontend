@@ -5,10 +5,9 @@
 .experience-gallery__empty { display:grid; block-size:100%; place-content:center; gap:8px; color:var(--muted); text-align:center; }
 .experience-gallery__empty span { font-size: 64px; }
 .experience-gallery__empty p, .experience-gallery__meta { margin: 0; font: 500 11px "DM Mono", ui-monospace, monospace; letter-spacing: .4px; }
-.experience-gallery__arrow { position: absolute; top: calc(50% - 22px); width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: #121112d9; color: var(--cream); font-size: 20px; }
-.experience-gallery__arrow--previous { left: 12px; }
-.experience-gallery__arrow--next { right: 12px; }
 .experience-gallery__count { position: absolute; right: 12px; bottom: 12px; padding: 5px 8px; border-radius: 7px; background: #121112dd; color: var(--cream); font: 500 11px "DM Mono", ui-monospace, monospace; }
+.experience-gallery__navigation { display:flex; justify-content:center; gap:9px; }
+.experience-gallery__navigation .button { min-width:160px; }
 .experience-gallery__dots { display:flex; min-block-size:24px; justify-content:center; gap:8px; }
 .experience-gallery__dots button { width:44px; height:24px; min-height:24px; padding:0; border:0; background:transparent; }
 .experience-gallery__dots button::after { content:""; display:block; width:16px; height:16px; margin:auto; border:1px solid var(--muted); border-radius:50%; }
@@ -22,5 +21,4 @@
 .experience-gallery__delete { width: auto; }
 .experience-detail > .muted { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-inline: auto; text-align: center; line-height: 1.5; }
 .photo-lightbox__controls { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); display: flex; gap: 9px; }
-.photo-lightbox__controls .button--secondary { background: #1c1a1c; }
-@media (max-width:540px) { .experience-gallery { --gallery-stage-block-size:clamp(240px,68vw,360px); } .experience-gallery__actions > * { flex:1 1 100%; } .experience-gallery__meta { min-block-size:2lh; } }
+@media (max-width:540px) { .experience-gallery { --gallery-stage-block-size:clamp(240px,68vw,360px); } .experience-gallery__navigation .button { flex:1 1 0; min-width:0; } .experience-gallery__actions > * { flex:1 1 100%; } .experience-gallery__meta { min-block-size:2lh; } }
