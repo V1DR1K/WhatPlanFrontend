@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mediaUrl } from "../../lib/api";
 import type { ExperiencePhoto } from "../../types/domain";
 import { Button } from "./Button";
@@ -31,8 +31,25 @@ function useReducedMotion() {
   return reduced;
 }
 
+function useFinePointer() {
+  const [finePointer, setFinePointer] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setFinePointer(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return finePointer;
+}
+
 type ExperienceGalleryProps = {
   accentLabel: string;
+  afterStage?: ReactNode;
+  coverPending?: boolean;
   coverPhotoId?: number;
   emptyIcon: string;
   name: string;
@@ -42,7 +59,7 @@ type ExperienceGalleryProps = {
   photos: ExperiencePhoto[];
 };
 
-export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, onDelete, onSetCover, onUpload, photos }: ExperienceGalleryProps) {
+export function ExperienceGallery({ accentLabel, afterStage, coverPending = false, coverPhotoId, emptyIcon, name, onDelete, onSetCover, onUpload, photos }: ExperienceGalleryProps) {
   const coverIndex = Math.max(0, photos.findIndex((photo) => photo.id === coverPhotoId));
   const [selected, setSelected] = useState(coverIndex);
   const [hovered, setHovered] = useState(false);
@@ -54,18 +71,19 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
   const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
   const [pickerKey, setPickerKey] = useState(0);
   const [uploadError, setUploadError] = useState<string>();
-  const touchStart = useRef<number | undefined>(undefined);
+  const touchStart = useRef<{ x: number; y: number } | undefined>(undefined);
   const reducedMotion = useReducedMotion();
+  const finePointer = useFinePointer();
   const photo = photos[selected];
-  const paused = hovered || focused || manualPaused || reducedMotion || photos.length < 2;
+  const paused = hovered || focused || manualPaused || reducedMotion || !finePointer || photos.length < 2;
 
   useEffect(() => {
     setSelected((current) => Math.min(current, Math.max(photos.length - 1, 0)));
   }, [photos.length]);
 
   useEffect(() => {
-    if (coverPhotoId && selected >= photos.length) setSelected(coverIndex);
-  }, [coverIndex, coverPhotoId, photos.length, selected]);
+    if (coverPhotoId) setSelected(coverIndex);
+  }, [coverIndex, coverPhotoId]);
 
   useEffect(() => {
     if (paused) return;
@@ -75,13 +93,18 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
 
   useEffect(() => {
     if (!lightbox) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setLightbox(false);
       if (event.key === "ArrowRight") setSelected((current) => nextPhotoIndex(current, photos.length));
       if (event.key === "ArrowLeft") setSelected((current) => previousPhotoIndex(current, photos.length));
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [lightbox, photos.length]);
 
   const move = (direction: "next" | "previous") => {
@@ -110,18 +133,19 @@ export function ExperienceGallery({ accentLabel, coverPhotoId, emptyIcon, name, 
   };
 
   return <section className="experience-gallery" aria-label={`Galería de ${name}`} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} onFocusCapture={() => setFocused(true)} onBlurCapture={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); }}>
-    <div className="experience-gallery__stage" onTouchStart={(event) => { touchStart.current = event.changedTouches[0]?.clientX; }} onTouchEnd={(event) => { const start = touchStart.current; const end = event.changedTouches[0]?.clientX; touchStart.current = undefined; if (start === undefined || end === undefined || Math.abs(start - end) < 36) return; move(start > end ? "next" : "previous"); }}>
-      {photo ? <button className="experience-gallery__image-button" type="button" onClick={() => { setManualPaused(true); setLightbox(true); }} aria-label={`Ampliar foto ${selected + 1} de ${photos.length} de ${name}`}><img src={mediaUrl(photo.url)} alt={`Foto ${selected + 1} de ${name}`} /></button> : <div className="experience-gallery__empty" aria-label="Sin fotos todavía"><span aria-hidden="true">{emptyIcon}</span><p>Esta experiencia todavía no tiene fotos.</p></div>}
+    <div className="experience-gallery__stage" onTouchStart={(event) => { const touch = event.changedTouches[0]; if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY }; }} onTouchEnd={(event) => { const start = touchStart.current; const touch = event.changedTouches[0]; touchStart.current = undefined; if (!start || !touch) return; const dx = touch.clientX - start.x; const dy = touch.clientY - start.y; if (Math.abs(dx) < 36 || Math.abs(dx) <= Math.abs(dy)) return; move(dx < 0 ? "next" : "previous"); }}>
+      {photo ? <button className="experience-gallery__image-button" type="button" onClick={() => { setManualPaused(true); setLightbox(true); }} aria-label={`Ampliar foto ${selected + 1} de ${photos.length} de ${name}`}><img src={mediaUrl(photo.url)} alt={`Foto ${selected + 1} de ${name}`} width={photo.width} height={photo.height} /></button> : <div className="experience-gallery__empty" aria-label="Sin fotos todavía"><span aria-hidden="true">{emptyIcon}</span><p>Esta experiencia todavía no tiene fotos.</p></div>}
       {photos.length > 1 && <>
         <Button className="experience-gallery__arrow experience-gallery__arrow--previous" icon="◀️" type="button" variant="icon" onClick={() => move("previous")} aria-label="Ver foto anterior" title="Ver foto anterior" />
         <Button className="experience-gallery__arrow experience-gallery__arrow--next" icon="▶️" type="button" variant="icon" onClick={() => move("next")} aria-label="Ver foto siguiente" title="Ver foto siguiente" />
       </>}
       {photo && <span className="experience-gallery__count">{selected + 1} / {photos.length}</span>}
     </div>
-    {photos.length > 1 && <div className="experience-gallery__dots" role="tablist" aria-label="Elegir foto">{photos.map((value, index) => <button key={value.id} type="button" role="tab" aria-selected={selected === index} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} />)}</div>}
+    <div className="experience-gallery__dots" role={photos.length > 1 ? "tablist" : undefined} aria-label={photos.length > 1 ? "Elegir foto" : undefined}>{photos.length > 1 && photos.map((value, index) => <button key={value.id} type="button" role="tab" aria-selected={selected === index} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} />)}</div>
+    {afterStage}
     <div className="experience-gallery__actions">
       {onUpload && <div className="experience-gallery__upload"><PhotoPicker key={pickerKey} multiple maxFiles={experiencePhotoSlots(photos.length)} disabled={uploading} onChange={setPendingPhotos} onPreparingChange={setPreparingPhotos} selectLabel="Agregar fotos" />{pendingPhotos.length > 0 && <Button type="button" variant="secondary" disabled={uploading || preparingPhotos} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos..." : `Subir ${pendingPhotos.length} ${pendingPhotos.length === 1 ? "foto" : "fotos"}`}</Button>}</div>}
-      {photo && onSetCover && photo.id !== coverPhotoId && <Button icon="⭐" variant="secondary" type="button" onClick={() => onSetCover(photo)}>Usar de portada</Button>}
+      {onSetCover && <div className="experience-gallery__cover-slot">{photo ? photo.id === coverPhotoId ? <span>⭐ Foto de portada</span> : <Button icon="⭐" variant="secondary" type="button" disabled={coverPending} onClick={() => onSetCover(photo)}>Usar de portada</Button> : null}</div>}
       {photo && onDelete && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}
     </div>
     <p className="experience-gallery__meta">{accentLabel} · {photos.length}/{MAX_EXPERIENCE_PHOTOS} fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>

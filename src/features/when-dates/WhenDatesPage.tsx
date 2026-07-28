@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
 import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
-import { mediaUrl } from '../../lib/api';
+import { buttonClassName } from '../../components/ui/Button';
+import { mediaUrl, session } from '../../lib/api';
 import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
 import { getWhenDates } from './whenDates';
@@ -25,11 +26,13 @@ export function WhenDatesPage() {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
   const results = entries.data?.pages.flatMap((page) => page.content) ?? [];
+  const isAdmin = session.get()?.role === 'ADMIN';
   return <section className="when-dates-page">
     <header className="when-dates-hero">
-      <div><p className="eyebrow">RECUERDOS COMPARTIDOS</p><h1>when<span>dates</span></h1><p>Vuelvan a las experiencias que coincidieron con sus fechas importantes.</p></div>
-      <div aria-hidden="true">💝</div>
+      <div><p className="eyebrow">WHENDATES · RECUERDOS COMPARTIDOS</p><h1>¿Qué <em>recordamos</em><br />hoy?</h1><p>Reunimos las visitas, vistas, cocinadas y salidas que coincidieron con sus fechas importantes.</p><p className="when-dates-hero__meta">Fechas únicas, anuales o mensuales para volver a celebrar.</p></div>
+      <div className="when-dates-hero-art" aria-hidden="true">💝<span>✦</span><b>📅</b></div>
     </header>
+    {isAdmin && <nav className="quick-nav quick-nav-action"><Link className={buttonClassName('secondary')} to="/when-dates/settings"><span className="button__icon" aria-hidden="true">⚙️</span><span className="button__label">Gestionar fechas importantes</span></Link></nav>}
     <section className="when-dates-controls" aria-label="Filtrar recuerdos">
       <div className="catalog-search-sort">
         <label className="catalog-search-sort__field"><span>Mes</span><input type="month" value={month} onChange={(event) => setMonth(event.target.value)} /></label>
@@ -46,5 +49,6 @@ export function WhenDatesPage() {
 
 function WhenDateCard({ entry, specialDateId }: { entry: Awaited<ReturnType<typeof getWhenDates>>['content'][number]; specialDateId?: number }) {
   const specialDate = entry.specialDates.find((value) => value.id === specialDateId) ?? entry.specialDates[0];
-  return <CatalogMediaCard ariaLabel={`Ver recuerdo de ${entry.title}`} theme="dates" orientation="portrait" to={`/when-dates/${specialDate.id}/${entry.date}`} image={entry.imageUrl ? <img className="catalog-media-card__image" src={mediaUrl(entry.imageUrl)} alt={`Foto de ${entry.title}`} loading="lazy" decoding="async" /> : <span className="when-dates-card__empty" aria-hidden="true">{sectionIcon[entry.section]}</span>} badge={displayDate(entry.date)} eyebrow={sectionLabel[entry.section]} title={entry.title} chips={entry.specialDates.map((value) => <span key={value.id}>{value.label}</span>)} footer={<><span>{entry.detail || 'Experiencia compartida'}</span><span>Ver recuerdo →</span></>} />;
+  const imageUrl = entry.occurrenceCoverUrls[specialDate.id] ?? entry.imageUrl;
+  return <CatalogMediaCard ariaLabel={`Ver recuerdo de ${entry.title}`} theme="dates" orientation="portrait" to={`/when-dates/${specialDate.id}/${entry.date}`} image={imageUrl ? <img className="catalog-media-card__image" src={mediaUrl(imageUrl)} alt={`Foto de ${entry.title}`} loading="lazy" decoding="async" /> : <span className="when-dates-card__empty" aria-hidden="true">{sectionIcon[entry.section]}</span>} badge={displayDate(entry.date)} eyebrow={sectionLabel[entry.section]} title={entry.title} chips={entry.specialDates.map((value) => <span key={value.id}>{value.label}</span>)} footer={<><span>{entry.detail || 'Experiencia compartida'}</span><span>Ver recuerdo →</span></>} />;
 }

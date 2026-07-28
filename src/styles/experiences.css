@@ -1,23 +1,26 @@
-.experience-gallery { display: grid; gap: 12px; }
-.experience-gallery__stage { position: relative; min-height: 240px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--section-accent) 45%, var(--line)); border-radius: 17px; background: #0e0d0e; }
-.experience-gallery__image-button { width: 100%; height: min(62vw, 520px); min-height: 240px; padding: 0; border: 0; background: #0e0d0e; }
+.experience-gallery { --gallery-stage-block-size:clamp(240px,62vw,520px); display:grid; gap:12px; }
+.experience-gallery__stage { position:relative; block-size:var(--gallery-stage-block-size); overflow:hidden; border:1px solid color-mix(in srgb,var(--section-accent) 45%,var(--line)); border-radius:17px; background:#0e0d0e; touch-action:pan-y; }
+.experience-gallery__image-button { width:100%; block-size:100%; padding:0; border:0; background:#0e0d0e; }
 .experience-gallery__image-button img { width: 100%; height: 100%; object-fit: contain; }
-.experience-gallery__empty { display: grid; min-height: 240px; place-content: center; gap: 8px; color: var(--muted); text-align: center; }
+.experience-gallery__empty { display:grid; block-size:100%; place-content:center; gap:8px; color:var(--muted); text-align:center; }
 .experience-gallery__empty span { font-size: 64px; }
 .experience-gallery__empty p, .experience-gallery__meta { margin: 0; font: 500 11px "DM Mono", ui-monospace, monospace; letter-spacing: .4px; }
 .experience-gallery__arrow { position: absolute; top: calc(50% - 22px); width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 50%; background: #121112d9; color: var(--cream); font-size: 20px; }
 .experience-gallery__arrow--previous { left: 12px; }
 .experience-gallery__arrow--next { right: 12px; }
 .experience-gallery__count { position: absolute; right: 12px; bottom: 12px; padding: 5px 8px; border-radius: 7px; background: #121112dd; color: var(--cream); font: 500 11px "DM Mono", ui-monospace, monospace; }
-.experience-gallery__dots { display: flex; justify-content: center; gap: 8px; }
-.experience-gallery__dots button { width: 16px; height: 16px; min-height: 16px; padding: 0; border: 1px solid var(--muted); border-radius: 50%; background: transparent; }
-.experience-gallery__dots button.is-selected { border-color: var(--section-accent); background: var(--section-accent); }
+.experience-gallery__dots { display:flex; min-block-size:24px; justify-content:center; gap:8px; }
+.experience-gallery__dots button { width:44px; height:24px; min-height:24px; padding:0; border:0; background:transparent; }
+.experience-gallery__dots button::after { content:""; display:block; width:16px; height:16px; margin:auto; border:1px solid var(--muted); border-radius:50%; }
+.experience-gallery__dots button.is-selected::after { border-color:var(--section-accent); background:var(--section-accent); }
 .experience-gallery__actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .experience-gallery__actions .button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; margin: 0; }
 .experience-gallery__upload { display: grid; gap: 9px; }
 .experience-gallery__upload .photo-picker { margin: 0; }
+.experience-gallery__cover-slot { display:flex; min-height:44px; align-items:center; justify-content:center; }
+.experience-gallery__cover-slot > span { display:flex; width:100%; min-height:44px; align-items:center; justify-content:center; border:1px solid color-mix(in srgb,var(--section-accent) 42%,var(--line)); border-radius:12px; background:color-mix(in srgb,var(--section-accent) 9%,var(--panel)); color:var(--section-accent); font-size:13px; font-weight:800; }
 .experience-gallery__delete { width: auto; }
 .experience-detail > .muted { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-inline: auto; text-align: center; line-height: 1.5; }
 .photo-lightbox__controls { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); display: flex; gap: 9px; }
 .photo-lightbox__controls .button--secondary { background: #1c1a1c; }
-@media (max-width: 540px) { .experience-gallery__image-button { height: 68vw; min-height: 220px; } .experience-gallery__actions > * { flex: 1 1 100%; } }
+@media (max-width:540px) { .experience-gallery { --gallery-stage-block-size:clamp(240px,68vw,360px); } .experience-gallery__actions > * { flex:1 1 100%; } .experience-gallery__meta { min-block-size:2lh; } }

@@ -25,6 +25,7 @@
 .photo-picker + .tiny { display: block; }
 .photo-field > span { display: block; font: inherit; }
 .photo-picker__select { position: relative; justify-self: start; margin: 0; }
+.photo-picker__select:focus-within { outline: 2px solid var(--section-accent); outline-offset: 3px; }
 .photo-picker__select input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .photo-picker__previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .photo-picker__preview { display: grid; gap: 7px; margin: 0; padding: 9px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }

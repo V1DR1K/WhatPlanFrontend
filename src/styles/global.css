@@ -2471,11 +2471,11 @@ a {
   align-items: center;
   min-height: 270px;
   overflow: hidden;
-  border: 1px solid #8a6418;
+  border: 1px solid var(--section-shadow);
   border-radius: 24px;
   padding: 36px 6% 25px;
   background:
-    radial-gradient(circle at 85% 50%, #ffd16635, transparent 27%),
+    radial-gradient(circle at 85% 50%, color-mix(in srgb, var(--section-accent) 21%, transparent), transparent 27%),
     linear-gradient(115deg, #33270d, #211c10);
 }
 .fun-hero::after {
@@ -2495,20 +2495,20 @@ a {
   letter-spacing: -3px;
 }
 .fun-hero h1 em {
-  color: #ffd166;
+  color: var(--section-accent);
 }
 .fun-hero p:not(.eyebrow) {
   max-width: 510px;
-  color: #ffe29a;
+  color: var(--fun-highlight);
   font-size: 16px;
 }
 .fun-hero-art {
   position: relative;
   justify-self: center;
-  color: #ffe29a;
+  color: var(--fun-highlight);
   font-size: clamp(94px, 14vw, 170px);
   line-height: 1;
-  filter: drop-shadow(7px 7px 0 #8a6418);
+  filter: drop-shadow(7px 7px 0 var(--section-shadow));
   transform: rotate(-8deg);
   animation: floaty 5.5s ease-in-out infinite;
 }
@@ -2547,11 +2547,11 @@ a {
   overflow: visible;
 }
 .fun-filter .chips button {
-  background: #ffd16613;
+  background: color-mix(in srgb, var(--section-accent) 8%, transparent);
 }
 .fun-filter .chips button.selected {
-  border-color: #ffd166;
-  background: #ffd16622;
+  border-color: var(--section-accent);
+  background: color-mix(in srgb, var(--section-accent) 13%, transparent);
 }
 .fun-filter-dialog {
   margin-top: 20px;
@@ -2572,7 +2572,7 @@ a {
   border-radius: 17px;
 }
 .fun-card-link:focus-visible {
-  outline: 2px solid #ffd166;
+  outline: 2px solid var(--section-accent);
   outline-offset: 3px;
 }
 .fun-card {
@@ -2588,7 +2588,7 @@ a {
 .fun-card-link:hover .fun-card,
 .fun-card-link:focus-visible .fun-card {
   transform: translateY(-4px);
-  border-color: #ffd166;
+  border-color: var(--section-accent);
 }
 .fun-card__photo {
   position: relative;
