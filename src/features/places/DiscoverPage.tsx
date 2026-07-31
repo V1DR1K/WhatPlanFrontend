@@ -5,6 +5,9 @@ import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { Button } from "../../components/ui/Button";
+import { SectionShell } from "../../components/ui/SectionShell";
+import { AsyncState } from "../../components/ui/AsyncState";
+import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import type { PlaceStatus } from "../../types/domain";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags } from "./highlightTags";
@@ -164,7 +167,7 @@ function PlaceSection({
         <strong>Mostrando {list.length} lugar{list.length === 1 ? "" : "es"}</strong>
       </div>
       {query.isError ? (
-        <p className="form-error">{query.error.message}</p>
+        <AsyncState error onRetry={() => query.refetch()} />
       ) : list.length ? (
         <div className="place-grid">
           {list.map((p) => (
@@ -221,7 +224,7 @@ export function DiscoverPage() {
   }, [category, highlightTagId, searchTerm, setSearchParams, sort]);
   const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
   return (
-    <>
+    <SectionShell className="catalog-experience" section="food">
       <ExperienceHero
         className="hero"
         eyebrow="TU MAPA DEL HAMBRE"
@@ -253,7 +256,7 @@ export function DiscoverPage() {
             </select>
           </label>
         </div>
-        <FoodFilterChips
+        <CatalogFilterChips
           label="Categorías"
           allLabel="🍽️ Todos"
           options={(categories.data ?? []).map((category) => ({
@@ -261,9 +264,9 @@ export function DiscoverPage() {
             label: `${category.icon} ${category.name}`,
           }))}
           value={category}
-          onChange={setCategory}
+          onChange={(value) => setCategory(typeof value === "number" ? value : undefined)}
         />
-        <FoodFilterChips
+        <CatalogFilterChips
           label="¿Por qué se destaca?"
           allLabel="Todos"
           options={(tags.data ?? []).map((tag) => ({
@@ -271,7 +274,7 @@ export function DiscoverPage() {
             label: `${tag.emoji} ${tag.name}`,
           }))}
           value={highlightTagId}
-          onChange={setHighlightTagId}
+          onChange={(value) => setHighlightTagId(typeof value === "number" ? value : undefined)}
         />
       </section>
       <PlaceSection
@@ -300,6 +303,6 @@ export function DiscoverPage() {
       />
       <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
-    </>
+    </SectionShell>
   );
 }

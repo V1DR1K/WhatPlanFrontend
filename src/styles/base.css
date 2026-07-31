@@ -22,6 +22,7 @@
 body { margin: 0; min-width: 320px; background: var(--bg); }
 #root { min-height: 100vh; isolation: isolate; overflow-x: clip; }
 button, input, textarea, select { font: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--section-focus, var(--violet)); outline-offset: 3px; }
 button { cursor: pointer; }
 a { color: inherit; }
 
@@ -43,3 +44,22 @@ a { color: inherit; }
 .form-error { color: #ff9e90; font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) { .heart-rain { display: none; } }
+
+/* Shared experience rhythm. Individual modules provide content, never a new layout dialect. */
+.section-shell { --section-focus: var(--violet); }
+.catalog-experience { display: grid; gap: 28px; }
+.catalog-experience > .experience-hero { margin-bottom: 0; }
+.catalog-experience__create,
+.catalog-experience > .quick-nav-action { margin: 0; }
+.catalog-experience > :is(.food-controls, .film-controls, .home-recipe-controls, .fun-controls) { margin-top: 0; }
+.async-state { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--section-accent) 8%, var(--panel)); color: var(--cream); line-height: 1.45; }
+.async-state--loading { color: var(--muted); }
+.async-state--empty { text-align: center; }
+.async-state--empty p { margin: 0; }
+.async-state--error { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-color: color-mix(in srgb, #ff9e90 62%, var(--line)); }
+.async-state--error p { margin: 0; }
+
+@media (max-width: 540px) {
+  .catalog-experience { gap: 22px; }
+  .async-state--error { align-items: stretch; flex-direction: column; }
+}

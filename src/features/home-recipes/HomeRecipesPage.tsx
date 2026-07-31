@@ -8,6 +8,7 @@ import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { getRecipes } from "./homeRecipes";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
@@ -136,7 +137,7 @@ export function HomeRecipesPage() {
   }, [home, searchTerm, setSearchParams, sort]);
 
   return (
-    <section className="home-recipes">
+    <SectionShell className="home-recipes catalog-experience" section="cook">
       <ExperienceHero
         className="home-recipes__hero"
         eyebrow="WHOCOOK · RECETAS PARA REPETIR"
@@ -179,6 +180,6 @@ export function HomeRecipesPage() {
         <RecipeSection query={doneRecipes} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <RecipeForm onClose={() => setCreating(false)} />}
-    </section>
+    </SectionShell>
   );
 }

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
 import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
 import { ExperienceHero } from '../../components/ui/ExperienceHero';
+import { SectionShell } from '../../components/ui/SectionShell';
+import { AsyncState } from '../../components/ui/AsyncState';
 import { mediaUrl } from '../../lib/api';
 import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
@@ -22,7 +24,7 @@ export function WhenDatesPage() {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
   const results = entries.data?.pages.flatMap((page) => page.content) ?? [];
-  return <section className="when-dates-page">
+  return <SectionShell className="when-dates-page" section="dates">
     <ExperienceHero
       className="when-dates-hero"
       eyebrow="WHENDATES · RECUERDOS COMPARTIDOS"
@@ -36,11 +38,11 @@ export function WhenDatesPage() {
       </div>
     </section>
     {entries.isLoading && <p className="muted">Buscando recuerdos…</p>}
-    {entries.isError && <p className="form-error">{entries.error.message}</p>}
+    {entries.isError && <AsyncState error onRetry={() => entries.refetch()} />}
     {!entries.isLoading && !entries.isError && !results.length && <p className="empty-state">Todavía no hay recuerdos para estas fechas.</p>}
     <div className="when-dates-grid">{results.map((occurrence) => <WhenDateCard occurrence={occurrence} key={`${occurrence.specialDate.id}:${occurrence.occurredOn}`} />)}</div>
     {entries.hasNextPage && <CatalogMoreButton loading={entries.isFetchingNextPage} onClick={() => entries.fetchNextPage()} />}
-  </section>;
+  </SectionShell>;
 }
 
 function WhenDateCard({ occurrence }: { occurrence: Awaited<ReturnType<typeof getWhenDates>>['content'][number] }) {

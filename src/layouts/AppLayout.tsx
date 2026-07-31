@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
 import { Button, buttonClassName } from '../components/ui/Button';
+import { sectionThemeStyle, type SectionId } from '../lib/sectionTheme';
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -22,11 +23,12 @@ export function AppLayout() {
   const mobileBackTarget = location.pathname === sectionHome ? '/' : sectionHome;
   const isDetail = location.pathname !== sectionHome;
 
-  const sectionShell = inFood ? 'food-shell' : inFilms ? 'film-shell' : inCook ? 'cook-shell' : inFun ? 'fun-shell' : inDates ? 'dates-shell' : '';
+  const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : undefined;
+  const sectionShell = section ? `${section}-shell` : '';
   const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : inDates && isAdmin ? '/when-dates/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
-  return <main className={`app-shell ${sectionShell}`}>
+  return <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section as SectionId) : undefined}>
     <header className="app-header">
       <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
       <div className="header-actions">

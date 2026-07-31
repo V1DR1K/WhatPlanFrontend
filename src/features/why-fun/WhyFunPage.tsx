@@ -9,6 +9,7 @@ import { FunVenueCard } from "./FunVenueCard";
 import { ActivityForm } from "./ActivityForm";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { getActivities, getFunCategories } from "./whyFun";
 import {
@@ -133,7 +134,7 @@ export function WhyFunPage() {
   }, [categoryId, searchTerm, setSearchParams, sort, subcategoryId]);
 
   return (
-    <>
+    <SectionShell className="catalog-experience" section="fun">
       <ExperienceHero
         className="fun-hero"
         eyebrow="WHYFUN · SALIDAS PARA REPETIR"
@@ -169,6 +170,6 @@ export function WhyFunPage() {
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <ActivityForm onClose={() => setCreating(false)} />}
-    </>
+    </SectionShell>
   );
 }

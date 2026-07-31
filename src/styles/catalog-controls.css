@@ -51,6 +51,29 @@
   line-height: 1.4;
 }
 
+.catalog-filter {
+  display: grid;
+  gap: 8px;
+  padding: 14px 0 0;
+}
+
+.catalog-filter > span {
+  color: var(--muted);
+  font: 500 11px "DM Mono", ui-monospace, monospace;
+  letter-spacing: 0.8px;
+}
+
+.catalog-filter .chips { margin: 0; }
+
+.catalog-filter__more {
+  min-height: 40px;
+  border-color: color-mix(in srgb, var(--section-accent) 45%, var(--line));
+  background: color-mix(in srgb, var(--section-accent) 8%, var(--panel));
+  color: var(--section-accent);
+}
+
+.catalog-filter__dialog { margin-top: 16px !important; }
+
 .home-recipe-controls {
   display: grid;
   gap: 14px;

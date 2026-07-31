@@ -25,7 +25,7 @@ export function Button({
           {icon}
         </span>
       )}
-      {variant === "icon" ? null : <span className="button__label">{children}</span>}
+      {children !== undefined && <span className="button__label">{children}</span>}
     </button>
   );
 }

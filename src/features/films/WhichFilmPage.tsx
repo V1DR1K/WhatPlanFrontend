@@ -9,6 +9,9 @@ import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { SectionShell } from "../../components/ui/SectionShell";
+import { AsyncState } from "../../components/ui/AsyncState";
+import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import { useCatalogPageSize } from "../../lib/settings";
 import {
   catalogSortFromQuery,
@@ -162,7 +165,7 @@ function FilmSection({
         <strong>Mostrando {films.length} película{films.length === 1 ? "" : "s"}</strong>
       </div>
       {query.isError ? (
-        <p className="form-error">{query.error.message}</p>
+        <AsyncState error onRetry={() => query.refetch()} />
       ) : films.length ? (
         <div className="film-grid">
           {films.map((film) => (
@@ -236,7 +239,7 @@ export function WhichFilmPage() {
     : [];
   const filtered = Boolean(genre || platformId || searchTerm || sort);
   return (
-    <>
+    <SectionShell className="catalog-experience" section="film">
       <ExperienceHero
         className="film-hero"
         eyebrow="NUESTRA SALA PERSONAL"
@@ -268,14 +271,14 @@ export function WhichFilmPage() {
             </select>
           </label>
         </div>
-        <FilterChips
+        <CatalogFilterChips
           label="Géneros"
           allLabel="Todos"
           options={filterGenres}
           value={genre || undefined}
           onChange={(value) => setGenre((value as string) ?? "")}
         />
-        <FilterChips
+        <CatalogFilterChips
           label="Plataformas"
           allLabel="Todas"
           options={(platforms.data ?? []).map((platform) => ({
@@ -310,6 +313,6 @@ export function WhichFilmPage() {
         </>
       )}
       {showForm && <FilmForm onClose={() => setShowForm(false)} />}
-    </>
+    </SectionShell>
   );
 }
