@@ -41,6 +41,6 @@ export function AppLayout() {
         <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
       </div>
     </header>
-    <Outlet />
+    <div className="page-stage" key={location.pathname}><Outlet /></div>
   </main>;
 }

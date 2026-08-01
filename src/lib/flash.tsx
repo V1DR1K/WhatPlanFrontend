@@ -31,5 +31,5 @@ export function FlashNotice() {
   );
 
   if (!notice) return null;
-  return <div className={`flash-notice flash-notice--${notice.tone}`} role="status">{notice.message}</div>;
+  return <div className={`flash-notice flash-notice--${notice.tone}`} key={notice.id} role="status">{notice.message}</div>;
 }
