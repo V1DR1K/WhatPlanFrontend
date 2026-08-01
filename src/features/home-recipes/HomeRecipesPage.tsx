@@ -9,6 +9,7 @@ import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { getRecipes } from "./homeRecipes";
@@ -91,7 +92,7 @@ function RecipeSection({
   const recipes = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="home-recipe-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {recipes.length} recetas</strong></div>
-    {query.isError ? <p className="form-error">{query.error.message}</p> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : !query.isLoading && <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
+    {query.isError ? <p className="form-error">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -177,7 +178,7 @@ export function HomeRecipesPage() {
           <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
         </div>
       </section>
-      {pendingRecipes.isLoading && doneRecipes.isLoading ? <p className="muted" aria-busy="true">Cargando recetas…</p> : <>
+      {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
         <RecipeSection query={pendingRecipes} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} />
         <RecipeSection query={doneRecipes} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} />
       </>}

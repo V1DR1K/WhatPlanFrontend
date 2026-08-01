@@ -10,6 +10,7 @@ import { FunVenueCard } from "./FunVenueCard";
 import { ActivityForm } from "./ActivityForm";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { getActivities, getFunCategories } from "./whyFun";
@@ -79,7 +80,7 @@ function ActivitySection({
   const activities = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="fun-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {activities.length} actividades</strong></div>
-    {query.isError ? <p className="form-error">{query.error.message}</p> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : !query.isLoading && <p className="empty-state">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
+    {query.isError ? <p className="form-error">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -167,7 +168,7 @@ export function WhyFunPage() {
         {categoryId && <FilterChips label="Subcategorías" options={subcategories} selected={subcategoryId} onSelect={setSubcategoryId} />}
       </section>
       {categories.isError && <p className="form-error">No pudimos cargar las categorías.</p>}
-      {pendingActivities.isLoading && doneActivities.isLoading ? <p className="muted" aria-busy="true">Cargando actividades…</p> : <>
+      {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
         <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />
       </>}

@@ -17,6 +17,7 @@ import { ActivityVisitForm } from "./ActivityVisitForm";
 import { deleteActivity, deleteActivityPhoto, getActivity, getActivityVisits, setActivityCover, uploadActivityPhoto } from "./whyFun";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const dateLabel = (value?: string) =>
   value
@@ -95,7 +96,7 @@ export function FunVenueDetailPage() {
   if (!validId || activity.isError || (!activity.isLoading && !activity.data)) {
     return <section className="fun-detail"><p className="form-error">No pudimos abrir esta actividad.</p></section>;
   }
-  if (activity.isLoading) return <p className="muted" aria-busy="true">Cargando actividad…</p>;
+  if (activity.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const value = activity.data!;
   const profilePhoto = value.profilePhoto?.url ?? value.profilePhoto?.thumbnailUrl;

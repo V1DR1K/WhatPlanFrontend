@@ -16,6 +16,7 @@ import { RecipeForm } from "./RecipeForm";
 import { deleteRecipe, getCookings, getRecipe } from "./homeRecipes";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" })
@@ -72,7 +73,7 @@ export function HomeRecipeDetailPage() {
   if (!validId || recipe.isError || (!recipe.isLoading && !recipe.data)) {
     return <section className="home-recipe-detail"><p className="form-error">No pudimos abrir esta receta.</p></section>;
   }
-  if (recipe.isLoading) return <p className="muted" aria-busy="true">Cargando receta…</p>;
+  if (recipe.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const value = recipe.data!;
   const profilePhoto = value.photoUrl ?? value.thumbnailUrl;

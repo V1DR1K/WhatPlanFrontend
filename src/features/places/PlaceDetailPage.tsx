@@ -20,6 +20,7 @@ import { PlaceReviewForm } from "./PlaceReviewForm";
 import { deletePlace, getPlace } from "./places";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", {
@@ -110,7 +111,7 @@ export function PlaceDetailPage() {
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
     return <section className="detail"><p className="form-error">No pudimos cargar este lugar.</p></section>;
   }
-  if (place.isLoading) return <p className="muted" aria-busy="true">Cargando lugar…</p>;
+  if (place.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const venue = place.data!;
   const visitList = visits.data ?? [];
@@ -203,7 +204,7 @@ export function PlaceDetailPage() {
             </label>
             {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
-          {visit.isLoading && <p className="muted" aria-busy="true">Cargando visita…</p>}
+          {visit.isLoading && <LoadingSkeleton variant="list" />}
           {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
         </section>
       )}

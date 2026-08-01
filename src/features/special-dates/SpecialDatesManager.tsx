@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { showNotice } from '../../lib/flash';
 import type { SpecialDate, SpecialDateRecurrence } from '../../types/domain';
 import { specialDateDisplay, specialDateRecurrenceLabel } from './SpecialDateLabels';
@@ -56,7 +57,7 @@ export function SpecialDatesManager() {
       <div className="special-dates-settings__toolbar">
         <Button icon="➕" type="button" onClick={startCreate}>Agregar fecha especial</Button>
       </div>
-      {specialDates.isLoading && <p className="muted" aria-busy="true">Cargando fechas especiales…</p>}
+      {specialDates.isLoading && <LoadingSkeleton variant="list" />}
       {specialDates.isError && <p className="form-error" role="alert">{specialDates.error.message}</p>}
       {!specialDates.isLoading && !specialDates.isError && (
         specialDates.data?.length ? <ul className="special-dates-settings__list">

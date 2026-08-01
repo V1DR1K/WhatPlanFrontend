@@ -6,6 +6,7 @@ import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
 import { ExperienceHero } from '../../components/ui/ExperienceHero';
 import { SectionShell } from '../../components/ui/SectionShell';
 import { AsyncState } from '../../components/ui/AsyncState';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { mediaUrl } from '../../lib/api';
 import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
@@ -39,7 +40,7 @@ export function WhenDatesPage() {
         <label className="catalog-search-sort__field"><span>Fecha importante</span><select value={specialDateId ?? ''} onChange={(event) => setSpecialDateId(event.target.value ? Number(event.target.value) : undefined)}><option value="">Todas las fechas</option>{specialDates.data?.map((date) => <option key={date.id} value={date.id}>{date.label}</option>)}</select></label>
       </div>
     </section>
-    {entries.isLoading && <p className="muted">Buscando recuerdos…</p>}
+    {entries.isLoading && <LoadingSkeleton variant="catalog" />}
     {entries.isError && <AsyncState error onRetry={() => entries.refetch()} />}
     {!entries.isLoading && !entries.isError && !results.length && <p className="empty-state">Todavía no hay recuerdos para estas fechas.</p>}
     <div className="when-dates-grid">{results.map((occurrence) => <WhenDateCard occurrence={occurrence} key={`${occurrence.specialDate.id}:${occurrence.occurredOn}`} />)}</div>

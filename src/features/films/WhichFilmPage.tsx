@@ -10,6 +10,7 @@ import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
@@ -167,6 +168,8 @@ function FilmSection({
       </div>
       {query.isError ? (
         <AsyncState error onRetry={() => query.refetch()} />
+      ) : query.isLoading ? (
+        <LoadingSkeleton variant="catalog" />
       ) : films.length ? (
         <div className="film-grid">
           {films.map((film) => (
@@ -295,7 +298,7 @@ export function WhichFilmPage() {
       </section>
       {(platforms.isError || genreOptions.isError) && <p className="form-error">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
       {pendingFilms.isLoading && watchedFilms.isLoading ? (
-        <p aria-busy="true" className="muted">Cargando la sala…</p>
+        <LoadingSkeleton variant="catalog" />
       ) : (
         <>
           <FilmSection

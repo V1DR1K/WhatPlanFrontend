@@ -7,5 +7,5 @@ export function useIncrementalLimit(pageSize: number, resetKey: string) {
 }
 
 export function CatalogMoreButton({ loading = false, onClick }: { loading?: boolean; onClick: () => void }) {
-  return <button className="catalog-section-more" disabled={loading} onClick={onClick} type="button">{loading ? 'Cargando…' : '✨ Ver más'}</button>;
+  return <button className="catalog-section-more" disabled={loading} onClick={onClick} type="button">{loading ? 'Buscando más…' : '✨ Ver más'}</button>;
 }

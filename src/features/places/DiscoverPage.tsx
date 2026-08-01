@@ -18,6 +18,7 @@ import { getArchivedPlaces, getPlaces, restorePlace } from "./places";
 import { showNotice } from "../../lib/flash";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useCatalogPageSize } from "../../lib/settings";
 import {
   catalogSortFromQuery,
@@ -169,6 +170,8 @@ function PlaceSection({
       </div>
       {query.isError ? (
         <AsyncState error onRetry={() => query.refetch()} />
+      ) : query.isLoading ? (
+        <LoadingSkeleton variant="catalog" />
       ) : list.length ? (
         <div className="place-grid">
           {list.map((p) => (
@@ -303,7 +306,7 @@ export function DiscoverPage() {
         hasFilter={hasFilter}
         pageSize={pageSize}
       />
-      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <p className="muted">Cargando archivados…</p>}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
+      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
     </SectionShell>
   );

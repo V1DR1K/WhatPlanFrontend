@@ -15,5 +15,6 @@ import './styles/catalog-experience.css';
 import './styles/when-dates.css';
 import './styles/experience-hero.css';
 import './styles/motion.css';
+import './styles/loading.css';
 
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

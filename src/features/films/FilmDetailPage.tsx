@@ -18,6 +18,7 @@ import { deleteFilm, deleteFilmView, getFilm, getTmdbRecommendations } from "./f
 import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const viewedLabel = (date?: string) =>
   date
@@ -89,7 +90,7 @@ export function FilmDetailPage() {
     (!filmQuery.isLoading && !filmQuery.data)
   )
     return <section className="film-detail"><p className="form-error">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
-  if (filmQuery.isLoading) return <p>Cargando película…</p>;
+  if (filmQuery.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const film = filmQuery.data!;
   const selectedView = views.find((view) => view.id === selectedViewId);

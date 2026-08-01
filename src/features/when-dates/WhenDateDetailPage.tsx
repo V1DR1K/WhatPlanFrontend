@@ -11,6 +11,7 @@ import { session } from '../../lib/api';
 import { showNotice } from '../../lib/flash';
 import type { ExperiencePhoto, WhenDateComment } from '../../types/domain';
 import { deleteWhenDateComment, deleteWhenDatePhoto, getWhenDateOccurrence, saveWhenDateComment, setWhenDateCover, uploadWhenDatePhoto } from './whenDates';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 
 const displayDate = (date: string) => date.split('-').reverse().join('/');
 
@@ -26,7 +27,7 @@ export function WhenDateDetailPage() {
   const cover = useMutation({ mutationFn: ({ occurrenceId, photoId }: { occurrenceId: number; photoId: number }) => setWhenDateCover(occurrenceId, photoId), onSuccess: async (occurrence) => { qc.setQueryData(['when-date', specialDateId, date], occurrence); await qc.invalidateQueries({ queryKey: ['when-dates'] }); showNotice('Actualizamos la portada del recuerdo.'); } });
   const removePhoto = useMutation({ mutationFn: (photoId: number) => deleteWhenDatePhoto(photoId), onSuccess: async () => { await refresh(); setDeletingPhoto(undefined); showNotice('Quitamos la foto.'); } });
   if (!valid || detail.isError || (!detail.isLoading && !detail.data)) return <section className="when-dates-page"><p className="form-error">No pudimos abrir este recuerdo.</p></section>;
-  if (detail.isLoading) return <p>Cargando recuerdo…</p>;
+  if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
   const value = detail.data!; const ownComment = value.comments.find((comment) => comment.author === session.get()?.username); const sourcePhotos = value.entries.flatMap((entry) => entry.sourcePhotos.map((photo) => ({ ...photo, title: entry.title })));
   return <section className="when-date-detail">
     <Link className="when-date-detail__back" to="/when-dates">← Volver a WhenDates</Link>
