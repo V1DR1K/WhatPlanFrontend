@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
@@ -84,6 +85,7 @@ function ActivitySection({
 }
 
 export function WhyFunPage() {
+  useInAppBackGuard("/");
   const [searchParams, setSearchParams] = useSearchParams();
   const [categoryId, setCategoryId] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),

@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { useDeferredValue, useEffect, useState } from "react";
 import { mediaUrl } from "../../lib/api";
 import type { Home, Recipe } from "../../types/domain";
@@ -96,6 +97,7 @@ function RecipeSection({
 }
 
 export function HomeRecipesPage() {
+  useInAppBackGuard("/");
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [creating, setCreating] = useState(false);

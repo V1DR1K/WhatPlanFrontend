@@ -303,8 +303,9 @@
     display: none;
   }
 
-  .round--back {
-    display: grid;
+  .round--back,
+  .round--back--detail {
+    display: none;
   }
 
   .place-grid,

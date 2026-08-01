@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { Button } from "../../components/ui/Button";
@@ -32,6 +33,7 @@ export function FunVenueDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
+  useInAppBackGuard("/why-fun");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editingVisit, setEditingVisit] = useState<ActivityVisit | null | undefined>();

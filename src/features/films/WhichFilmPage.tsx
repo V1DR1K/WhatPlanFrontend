@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
@@ -181,6 +182,7 @@ function FilmSection({
 }
 
 export function WhichFilmPage() {
+  useInAppBackGuard("/");
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
@@ -39,6 +40,7 @@ export function PlaceDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
+  useInAppBackGuard("/food");
   const qc = useQueryClient();
   const [editingPlace, setEditingPlace] = useState(false);
   const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>();

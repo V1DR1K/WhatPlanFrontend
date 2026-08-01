@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useInAppBackGuard } from '../../lib/backGuard';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
 import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';
 import { ExperienceHero } from '../../components/ui/ExperienceHero';
@@ -14,6 +15,7 @@ const displayDate = (date: string) => date.split('-').reverse().join('/');
 const recurrenceLabel: Record<string, string> = { ONCE: 'Única', ANNUAL: 'Anual', MONTHLY: 'Mensual' };
 
 export function WhenDatesPage() {
+  useInAppBackGuard('/');
   const [specialDateId, setSpecialDateId] = useState<number>();
   const pageSize = useCatalogPageSize();
   const specialDates = useQuery({ queryKey: ['special-dates'], queryFn: getSpecialDates });

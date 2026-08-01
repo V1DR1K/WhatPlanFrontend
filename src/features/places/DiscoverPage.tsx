@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
@@ -182,6 +183,7 @@ function PlaceSection({
   );
 }
 export function DiscoverPage() {
+  useInAppBackGuard("/");
   const [searchParams, setSearchParams] = useSearchParams();
   const [category, setCategory] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),

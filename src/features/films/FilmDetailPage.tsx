@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -31,6 +32,7 @@ export function FilmDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
+  useInAppBackGuard("/films");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [addingView, setAddingView] = useState(false);

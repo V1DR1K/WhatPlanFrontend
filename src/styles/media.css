@@ -446,10 +446,6 @@
     display: none;
   }
 
-  .round--back {
-    display: grid;
-  }
-
 }
 
 @media (max-width: 540px) {

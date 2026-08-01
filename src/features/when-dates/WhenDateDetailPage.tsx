@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { useInAppBackGuard } from '../../lib/backGuard';
 import { AdaptivePhoto } from '../../components/ui/AdaptivePhoto';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
@@ -14,6 +15,7 @@ import { deleteWhenDateComment, deleteWhenDatePhoto, getWhenDateOccurrence, save
 const displayDate = (date: string) => date.split('-').reverse().join('/');
 
 export function WhenDateDetailPage() {
+  useInAppBackGuard('/when-dates');
   const specialDateId = Number(useParams().specialDateId); const date = useParams().date ?? ''; const valid = Number.isInteger(specialDateId) && specialDateId > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date);
   const qc = useQueryClient(); const [commenting, setCommenting] = useState<WhenDateComment | null>(); const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
   const detail = useQuery({ queryKey: ['when-date', specialDateId, date], queryFn: () => getWhenDateOccurrence(specialDateId, date), enabled: valid });
