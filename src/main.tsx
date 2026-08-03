@@ -17,4 +17,10 @@ import './styles/experience-hero.css';
 import './styles/motion.css';
 import './styles/loading.css';
 
+// A release can remove a lazily loaded, hash-named chunk while a tab is open.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  window.location.reload();
+});
+
 createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

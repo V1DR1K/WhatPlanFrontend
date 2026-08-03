@@ -9,6 +9,7 @@
 /* Navigation reveals the next planning space without hiding content if CSS fails. */
 .page-stage {
   animation: page-arrive var(--motion-overlay) var(--motion-arrive) both;
+  padding: 1em;
 }
 
 @keyframes page-arrive {
