@@ -484,7 +484,7 @@ a {
   overflow-y: auto;
   /* Keep the scrollbar from covering form controls, including overlay scrollbars. */
   scrollbar-gutter: stable;
-  padding: 0 14px 16px 0;
+  padding: 0 14px 16px 16px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
@@ -1191,14 +1191,6 @@ a {
   }
 }
 @media (max-width: 540px) {
-  .modal-backdrop {
-    padding: 16px;
-  }
-  .modal {
-    width: 100%;
-    padding: 24px 18px;
-    max-height: calc(100svh - 32px);
-  }
   .settings-grid > section {
     padding: 16px;
   }
@@ -2243,9 +2235,6 @@ a {
   object-fit: cover;
 }
 @media (max-width: 540px) {
-  .modal {
-    padding-inline: 14px;
-  }
   .modal form,
   .modal .form-columns,
   .modal label {

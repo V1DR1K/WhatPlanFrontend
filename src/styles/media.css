@@ -229,20 +229,20 @@
 
 @media (max-width: 540px) {
   .modal-backdrop {
-    display: block;
-    overflow-x: clip;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 12px;
   }
 
   .modal {
     --modal-content-max-height: calc(100svh - 76px);
     width: 100%;
+    max-height: calc(100svh - 24px);
     padding: 28px 22px;
     margin: 0 auto;
   }
 
   .modal__content {
+    min-height: 0;
     max-height: var(--modal-content-max-height);
   }
 
