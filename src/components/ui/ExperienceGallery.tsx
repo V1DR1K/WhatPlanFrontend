@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mediaUrl } from "../../lib/api";
+import { useDocumentScrollLock } from "../../lib/useDocumentScrollLock";
 import type { ExperiencePhoto } from "../../types/domain";
 import { Button } from "./Button";
 import { PhotoPicker } from "./PhotoPicker";
@@ -76,6 +77,7 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
   const finePointer = useFinePointer();
   const photo = photos[selected];
   const paused = hovered || focused || manualPaused || reducedMotion || !finePointer || photos.length < 2;
+  useDocumentScrollLock(lightbox);
 
   useEffect(() => {
     setSelected((current) => Math.min(current, Math.max(photos.length - 1, 0)));
@@ -93,8 +95,6 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
 
   useEffect(() => {
     if (!lightbox) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setLightbox(false);
       if (event.key === "ArrowRight") setSelected((current) => nextPhotoIndex(current, photos.length));
@@ -103,7 +103,6 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
     };
   }, [lightbox, photos.length]);
 

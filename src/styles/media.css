@@ -229,14 +229,22 @@
 
 @media (max-width: 540px) {
   .modal-backdrop {
+    --modal-inset-top: max(12px, env(safe-area-inset-top));
+    --modal-inset-right: max(12px, env(safe-area-inset-right));
+    --modal-inset-bottom: max(12px, env(safe-area-inset-bottom));
+    --modal-inset-left: max(12px, env(safe-area-inset-left));
     overflow: hidden;
-    padding: 12px;
+    padding:
+      var(--modal-inset-top)
+      var(--modal-inset-right)
+      var(--modal-inset-bottom)
+      var(--modal-inset-left);
   }
 
   .modal {
-    --modal-content-max-height: calc(100svh - 76px);
+    --modal-content-max-height: calc(100dvh - var(--modal-inset-top) - var(--modal-inset-bottom) - 52px);
     width: 100%;
-    max-height: calc(100svh - 24px);
+    max-height: calc(100dvh - var(--modal-inset-top) - var(--modal-inset-bottom));
     padding: 28px 22px;
     margin: 0 auto;
   }
