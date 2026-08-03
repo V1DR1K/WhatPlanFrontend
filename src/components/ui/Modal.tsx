@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type PropsWithChildren, type SyntheticEvent } from 'react';
+import { useContext, useEffect, useRef, useState, type PropsWithChildren, type SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { SectionThemeContext, sectionThemeStyle } from '../../lib/sectionTheme';
 import { useDocumentScrollLock } from '../../lib/useDocumentScrollLock';
 import { Button } from './Button';
 
@@ -15,6 +16,7 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
   const requestCloseRef = useRef<() => void>(() => undefined);
   const [dirty, setDirty] = useState(false);
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  const section = useContext(SectionThemeContext);
   useDocumentScrollLock(true);
 
   const requestClose = () => {
@@ -65,7 +67,7 @@ export function Modal({ children, onClose, confirmDiscard = false, pending = fal
     };
   }, []);
 
-  return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={requestClose}>
+  return createPortal(<div className={`modal-backdrop${section ? ` ${section}-shell` : ''}`} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={requestClose}>
     <section className="modal" ref={dialog} role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       <Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" />
       <div className="modal__content">{children}</div>

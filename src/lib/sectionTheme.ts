@@ -1,6 +1,9 @@
+import { createContext } from "react";
 import type { CSSProperties } from "react";
 
 export type SectionId = "food" | "film" | "cook" | "fun" | "dates";
+
+export const SectionThemeContext = createContext<SectionId | undefined>(undefined);
 
 export type SectionTheme = {
   accent: string;

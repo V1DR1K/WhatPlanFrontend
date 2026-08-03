@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react
 import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
 import { Button, buttonClassName } from '../components/ui/Button';
-import { sectionThemeStyle, type SectionId } from '../lib/sectionTheme';
+import { SectionThemeContext, sectionThemeStyle } from '../lib/sectionTheme';
 
 function backTarget(pathname: string) {
   if (pathname === '/' || pathname === '/settings') return '/';
@@ -58,19 +58,21 @@ export function AppLayout() {
   const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : inDates && isAdmin ? '/when-dates/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
-  return <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section as SectionId) : undefined}>
-    <header className="app-header">
-      <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
-      <div className="header-actions">
-        {(inFood || inFilms || inCook || inFun || inDates) && <>
-          <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
-          <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
-        </>}
-        {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
-        {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
-        <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
-      </div>
-    </header>
-    <div className="page-stage" key={location.pathname}><Outlet /></div>
-  </main>;
+  return <SectionThemeContext value={section}>
+    <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section) : undefined}>
+      <header className="app-header">
+        <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
+        <div className="header-actions">
+          {(inFood || inFilms || inCook || inFun || inDates) && <>
+            <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
+            <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
+          </>}
+          {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
+          {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
+          <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
+        </div>
+      </header>
+      <div className="page-stage" key={location.pathname}><Outlet /></div>
+    </main>
+  </SectionThemeContext>;
 }

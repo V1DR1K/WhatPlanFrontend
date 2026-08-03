@@ -16,9 +16,6 @@
   --section-contrast: var(--wf-contrast);
   --section-shadow: var(--wf-shadow);
 }
-.film-shell { --section-accent: #b8adff; --section-contrast: #291f43; --section-shadow: #4f427e; }
-.cook-shell { --section-accent: var(--lime); --section-contrast: #26351d; --section-shadow: #394321; }
-.fun-shell { --section-accent:var(--fun-accent); --section-contrast:#342500; --section-shadow:#8a6418; }
 
 @media (max-width: 540px) {
   .picks-dashboard { padding-right: 10px; }
