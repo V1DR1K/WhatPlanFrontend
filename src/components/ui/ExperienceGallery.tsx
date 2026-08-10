@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { mediaUrl } from "../../lib/api";
 import { useDocumentScrollLock } from "../../lib/useDocumentScrollLock";
 import type { ExperiencePhoto } from "../../types/domain";
@@ -149,6 +150,6 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
     {afterActions}
     <p className="experience-gallery__meta">{accentLabel} · {photos.length}/{MAX_EXPERIENCE_PHOTOS} fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
     {uploadError && <p className="form-error">{uploadError}</p>}
-    {lightbox && photo && <div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Foto ampliada de ${name}`} onMouseDown={() => setLightbox(false)}><Button className="photo-lightbox-close" icon="✕" type="button" variant="icon" onMouseDown={(event) => event.stopPropagation()} onClick={() => setLightbox(false)} aria-label="Cerrar foto ampliada" title="Cerrar foto ampliada" /><img src={mediaUrl(photo.url)} alt={`Foto ampliada ${selected + 1} de ${name}`} onMouseDown={(event) => event.stopPropagation()} />{photos.length > 1 && <div className="photo-lightbox__controls" onMouseDown={(event) => event.stopPropagation()}><Button icon="‹" type="button" variant="secondary" onClick={() => move("previous")}>Anterior</Button><Button icon="›" type="button" variant="secondary" onClick={() => move("next")}>Siguiente</Button></div>}</div>}
+    {lightbox && photo && createPortal(<div className="photo-lightbox" role="dialog" aria-modal="true" aria-label={`Foto ampliada de ${name}`} onMouseDown={() => setLightbox(false)}><Button className="photo-lightbox-close" icon="✕" type="button" variant="icon" onMouseDown={(event) => event.stopPropagation()} onClick={() => setLightbox(false)} aria-label="Cerrar foto ampliada" title="Cerrar foto ampliada" /><img src={mediaUrl(photo.url)} alt={`Foto ampliada ${selected + 1} de ${name}`} onMouseDown={(event) => event.stopPropagation()} />{photos.length > 1 && <div className="photo-lightbox__controls" onMouseDown={(event) => event.stopPropagation()}><Button icon="‹" type="button" variant="secondary" onClick={() => move("previous")}>Anterior</Button><Button icon="›" type="button" variant="secondary" onClick={() => move("next")}>Siguiente</Button></div>}</div>, document.body)}
   </section>;
 }

@@ -1,4 +1,5 @@
 import { useState, type CSSProperties, type MouseEventHandler } from "react";
+import { createPortal } from "react-dom";
 import { mediaUrl } from "../../lib/api";
 import { Button } from "./Button";
 
@@ -104,7 +105,7 @@ export function AdaptivePhoto({
       >
         <ResponsiveImage className="adaptive-photo__image" alt={alt} fullSrc={resolvedFullSrc} height={height} loading="eager" mode="full" thumbnailSrc={thumbnailSrc} width={width} />
       </button>
-      {expanded && (
+      {expanded && createPortal(
         <div
           aria-label={alt}
           aria-modal="true"
@@ -129,7 +130,8 @@ export function AdaptivePhoto({
             onClick={(event) => event.stopPropagation()}
             thumbnailSrc={thumbnailSrc}
           />
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
