@@ -102,7 +102,7 @@
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--lime);
+  outline: 2px solid var(--section-focus, var(--violet));
   outline-offset: 3px;
 }
 
@@ -289,6 +289,9 @@
   }
 
   .entity-detail-header .detail-actions {
+    width: min(100%, 22rem);
+    max-inline-size: 100%;
+    justify-self: center;
     margin: 8px 0 max(32px, env(safe-area-inset-bottom));
   }
 
