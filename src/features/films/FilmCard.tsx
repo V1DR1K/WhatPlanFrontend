@@ -54,7 +54,7 @@ export function FilmCard({ film }: { film: Film }) {
       orientation={orientation}
       theme="film"
       title={title}
-      to={`/films/${film.id}${location.search}`}
+      to={`/app/films/${film.id}${location.search}`}
     >
       {rating !== undefined && (
         <div className="catalog-media-card__rating" aria-label={`Promedio de opiniones actuales: ${rating.toFixed(1)} de 5 estrellas`}>

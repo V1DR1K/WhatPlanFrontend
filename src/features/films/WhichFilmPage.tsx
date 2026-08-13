@@ -185,7 +185,7 @@ function FilmSection({
 }
 
 export function WhichFilmPage() {
-  useInAppBackGuard("/");
+  useInAppBackGuard("/app");
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [genre, setGenre] = useState(() => searchParams.get("genre") ?? "");

@@ -16,6 +16,7 @@ import './styles/when-dates.css';
 import './styles/experience-hero.css';
 import './styles/motion.css';
 import './styles/loading.css';
+import './styles/landing.css';
 
 // A release can remove a lazily loaded, hash-named chunk while a tab is open.
 window.addEventListener('vite:preloadError', (event) => {

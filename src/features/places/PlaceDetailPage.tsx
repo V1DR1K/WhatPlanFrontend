@@ -41,7 +41,7 @@ export function PlaceDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  useInAppBackGuard("/food");
+  useInAppBackGuard("/app/food");
   const qc = useQueryClient();
   const [editingPlace, setEditingPlace] = useState(false);
   const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>();
@@ -72,7 +72,7 @@ export function PlaceDetailPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["places"] });
       showNotice("Movimos el lugar a archivados.");
-      navigate("/food");
+      navigate("/app/food");
     },
   });
   const uploadPhotos = useMutation({

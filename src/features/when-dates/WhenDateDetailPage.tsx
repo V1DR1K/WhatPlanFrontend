@@ -16,7 +16,7 @@ import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 const displayDate = (date: string) => date.split('-').reverse().join('/');
 
 export function WhenDateDetailPage() {
-  useInAppBackGuard('/when-dates');
+  useInAppBackGuard('/app/when-dates');
   const specialDateId = Number(useParams().specialDateId); const date = useParams().date ?? ''; const valid = Number.isInteger(specialDateId) && specialDateId > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date);
   const qc = useQueryClient(); const [commenting, setCommenting] = useState<WhenDateComment | null>(); const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
   const detail = useQuery({ queryKey: ['when-date', specialDateId, date], queryFn: () => getWhenDateOccurrence(specialDateId, date), enabled: valid });
@@ -30,7 +30,7 @@ export function WhenDateDetailPage() {
   if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
   const value = detail.data!; const ownComment = value.comments.find((comment) => comment.author === session.get()?.username); const sourcePhotos = value.entries.flatMap((entry) => entry.sourcePhotos.map((photo) => ({ ...photo, title: entry.title })));
   return <section className="when-date-detail">
-    <Link className="when-date-detail__back" to="/when-dates">← Volver a WhenDates</Link>
+    <Link className="when-date-detail__back" to="/app/when-dates">← Volver a WhenDates</Link>
     <header className="when-date-detail__header"><p className="eyebrow">FECHA IMPORTANTE</p><h1>{value.specialDate.label}</h1><p>{displayDate(value.occurredOn)} · {value.specialDate.recurrence === 'ONCE' ? 'Única' : value.specialDate.recurrence === 'ANNUAL' ? 'Anual' : 'Mensual'}</p></header>
     <ExperienceGallery accentLabel="RECUERDOS AGREGADOS" coverPending={cover.isPending} emptyIcon="💝" name={value.specialDate.label} photos={value.photos} coverPhotoId={value.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={value.id ? (photo) => cover.mutate({ occurrenceId: value.id!, photoId: photo.id }) : undefined} onDelete={setDeletingPhoto} afterActions={<section className="when-date-source-photos"><div className="section-title"><div><p className="eyebrow">RECOPILADO</p><h2>Fotos de las experiencias</h2></div><strong>{sourcePhotos.length}</strong></div>{sourcePhotos.length ? <div className="when-date-source-photos__grid">{sourcePhotos.map((photo) => <div key={photo.id}><AdaptivePhoto alt={`Foto de ${photo.title}`} context="dates" fullSrc={photo.url} thumbnailSrc={photo.thumbnailUrl || photo.url} width={photo.width} height={photo.height} /><span>{photo.title}</span></div>)}</div> : <p className="empty-state">Las experiencias recopiladas todavía no tienen fotos.</p>}</section>} />
     {cover.error && <p className="form-error">{cover.error.message}</p>}

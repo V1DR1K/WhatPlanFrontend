@@ -23,7 +23,7 @@ export function PlaceCard({ place }: { place: Place }) {
       orientation={orientation}
       theme="food"
       title={place.name}
-      to={`/food/places/${place.id}`}
+      to={`/app/food/places/${place.id}`}
     >
       {pending ? <p className="catalog-media-card__note">{place.address || "Guardado para la próxima salida"}{place.sourceUrl && " · Tiene link de referencia"}</p> : <div className="catalog-media-card__rating"><span>✨ Experiencia</span><StarRating label="Experiencia promedio" value={Math.round(place.rating)} /></div>}
     </CatalogMediaCard>

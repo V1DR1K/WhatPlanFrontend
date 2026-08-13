@@ -20,7 +20,7 @@ export function FunVenueCard({ activity }: { activity: Activity }) {
       orientation={getPhotoOrientation(photo?.width, photo?.height)}
       theme="fun"
       title={activity.name}
-      to={`/why-fun/${activity.id}`}
+      to={`/app/why-fun/${activity.id}`}
     >
       <p className="catalog-media-card__note">📍 {activity.address || "Dirección por definir"}</p>
     </CatalogMediaCard>

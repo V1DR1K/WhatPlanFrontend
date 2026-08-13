@@ -21,6 +21,6 @@ export function CatalogRecipeCard({ recipe }: { recipe: Recipe }) {
     orientation={getPhotoOrientation(width, height)}
     theme="cook"
     title={recipe.name}
-    to={`/how-cook/${recipe.id}`}
+    to={`/app/how-cook/${recipe.id}`}
   />;
 }

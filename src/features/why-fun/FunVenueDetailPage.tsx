@@ -34,7 +34,7 @@ export function FunVenueDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  useInAppBackGuard("/why-fun");
+  useInAppBackGuard("/app/why-fun");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editingVisit, setEditingVisit] = useState<ActivityVisit | null | undefined>();
@@ -58,7 +58,7 @@ export function FunVenueDetailPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["activities"] });
       showNotice("Eliminamos la actividad y su historial.");
-      navigate("/why-fun");
+      navigate("/app/why-fun");
     },
   });
   const uploadPhotos = useMutation({

@@ -86,7 +86,7 @@ function ActivitySection({
 }
 
 export function WhyFunPage() {
-  useInAppBackGuard("/");
+  useInAppBackGuard("/app");
   const [searchParams, setSearchParams] = useSearchParams();
   const [categoryId, setCategoryId] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),

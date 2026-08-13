@@ -16,7 +16,7 @@ const displayDate = (date: string) => date.split('-').reverse().join('/');
 const recurrenceLabel: Record<string, string> = { ONCE: 'Única', ANNUAL: 'Anual', MONTHLY: 'Mensual' };
 
 export function WhenDatesPage() {
-  useInAppBackGuard('/');
+  useInAppBackGuard('/app');
   const [specialDateId, setSpecialDateId] = useState<number>();
   const pageSize = useCatalogPageSize();
   const specialDates = useQuery({ queryKey: ['special-dates'], queryFn: getSpecialDates });
@@ -50,5 +50,5 @@ export function WhenDatesPage() {
 
 function WhenDateCard({ occurrence }: { occurrence: Awaited<ReturnType<typeof getWhenDates>>['content'][number] }) {
   const { specialDate } = occurrence; const countLabel = occurrence.experienceCount === 0 ? 'Sin experiencias vinculadas' : `${occurrence.experienceCount} ${occurrence.experienceCount === 1 ? 'experiencia vinculada' : 'experiencias vinculadas'}`;
-  return <CatalogMediaCard ariaLabel={`Ver recuerdo de ${specialDate.label}`} theme="dates" orientation="portrait" to={`/when-dates/${specialDate.id}/${occurrence.occurredOn}`} image={occurrence.imageUrl ? <img className="catalog-media-card__image" src={mediaUrl(occurrence.imageUrl)} alt={`Portada de ${specialDate.label}`} loading="lazy" decoding="async" /> : <span className="when-dates-card__empty" aria-hidden="true">💝</span>} badge={displayDate(occurrence.occurredOn)} eyebrow="FECHA IMPORTANTE" title={specialDate.label} chips={[<span key={specialDate.id}>{recurrenceLabel[specialDate.recurrence]}</span>]} footer={<><span>{countLabel}</span><span>Ver recuerdo →</span></>} />;
+  return <CatalogMediaCard ariaLabel={`Ver recuerdo de ${specialDate.label}`} theme="dates" orientation="portrait" to={`/app/when-dates/${specialDate.id}/${occurrence.occurredOn}`} image={occurrence.imageUrl ? <img className="catalog-media-card__image" src={mediaUrl(occurrence.imageUrl)} alt={`Portada de ${specialDate.label}`} loading="lazy" decoding="async" /> : <span className="when-dates-card__empty" aria-hidden="true">💝</span>} badge={displayDate(occurrence.occurredOn)} eyebrow="FECHA IMPORTANTE" title={specialDate.label} chips={[<span key={specialDate.id}>{recurrenceLabel[specialDate.recurrence]}</span>]} footer={<><span>{countLabel}</span><span>Ver recuerdo →</span></>} />;
 }

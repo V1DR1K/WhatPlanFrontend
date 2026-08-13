@@ -6,13 +6,13 @@ import { Button, buttonClassName } from '../components/ui/Button';
 import { SectionThemeContext, sectionThemeStyle } from '../lib/sectionTheme';
 
 function backTarget(pathname: string) {
-  if (pathname === '/' || pathname === '/settings') return '/';
-  if (pathname.startsWith('/food/')) return '/food';
-  if (pathname.startsWith('/films/')) return '/films';
-  if (pathname.startsWith('/how-cook/')) return '/how-cook';
-  if (pathname.startsWith('/why-fun/')) return '/why-fun';
-  if (pathname.startsWith('/when-dates/')) return '/when-dates';
-  return '/';
+  if (pathname === '/app' || pathname === '/app/settings') return '/app';
+  if (pathname.startsWith('/app/food/')) return '/app/food';
+  if (pathname.startsWith('/app/films/')) return '/app/films';
+  if (pathname.startsWith('/app/how-cook/')) return '/app/how-cook';
+  if (pathname.startsWith('/app/why-fun/')) return '/app/why-fun';
+  if (pathname.startsWith('/app/when-dates/')) return '/app/when-dates';
+  return '/app';
 }
 
 export function AppLayout() {
@@ -24,11 +24,11 @@ export function AppLayout() {
   const user = session.get();
   const isAdmin = user?.role === 'ADMIN';
   const canManageSection = isAdmin || user?.username === 'avril';
-  const inFood = location.pathname.startsWith('/food');
-  const inFilms = location.pathname.startsWith('/films');
-  const inCook = location.pathname.startsWith('/how-cook');
-  const inFun = location.pathname.startsWith('/why-fun');
-  const inDates = location.pathname.startsWith('/when-dates');
+  const inFood = location.pathname.startsWith('/app/food');
+  const inFilms = location.pathname.startsWith('/app/films');
+  const inCook = location.pathname.startsWith('/app/how-cook');
+  const inFun = location.pathname.startsWith('/app/why-fun');
+  const inDates = location.pathname.startsWith('/app/when-dates');
   useLayoutEffect(() => {
     const origin = previousPathname.current;
     const parent = origin ? backTarget(origin) : undefined;
@@ -51,24 +51,24 @@ export function AppLayout() {
     };
   }, [location.hash, location.pathname, navigate, navigationType]);
   const currentBackTarget = backTarget(location.pathname);
-  const isDetail = currentBackTarget !== '/';
+  const isDetail = currentBackTarget !== '/app';
 
   const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : undefined;
   const sectionShell = section ? `${section}-shell` : '';
-  const sectionSettingsLink = inFood ? '/food/categories' : inFilms ? '/films/platforms' : inFun ? '/why-fun/categories' : inDates && isAdmin ? '/when-dates/settings' : undefined;
+  const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates && isAdmin ? '/app/when-dates/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
   return <SectionThemeContext value={section}>
     <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section) : undefined}>
       <header className="app-header">
-        <Link className="brand" to="/" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
+        <Link className="brand" to="/app" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
         <div className="header-actions">
           {(inFood || inFilms || inCook || inFun || inDates) && <>
-            <Link className={buttonClassName('icon', 'round round--section-home')} to="/" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
+            <Link className={buttonClassName('icon', 'round round--section-home')} to="/app" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
             <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
           </>}
           {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
-          {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
+          {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
           <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
         </div>
       </header>

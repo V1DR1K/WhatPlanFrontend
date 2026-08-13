@@ -34,7 +34,7 @@ export function HomeRecipeDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  useInAppBackGuard("/how-cook");
+  useInAppBackGuard("/app/how-cook");
   const qc = useQueryClient();
   const [editingRecipe, setEditingRecipe] = useState(false);
   const [editingCooking, setEditingCooking] = useState<Cooking | null | undefined>();
@@ -61,7 +61,7 @@ export function HomeRecipeDetailPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["recipes"] });
       showNotice("Eliminamos la receta.");
-      navigate("/how-cook");
+      navigate("/app/how-cook");
     },
   });
 

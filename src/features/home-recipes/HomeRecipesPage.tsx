@@ -32,7 +32,7 @@ function LegacyRecipeCard({ recipe }: { recipe: Recipe }) {
       ? { label: `${recipe.cookingCount} ${recipe.cookingCount === 1 ? "cocinada registrada" : "cocinadas registradas"}`, value: `🍳 ${recipe.cookingCount}` }
       : { label: "Pendiente de cocinar", value: "⌛ Pendiente" };
   return (
-    <Link className="home-recipe-card-link" to={`/how-cook/${recipe.id}`}>
+    <Link className="home-recipe-card-link" to={`/app/how-cook/${recipe.id}`}>
       <article className="home-recipe-card">
         {photo ? <img className="home-recipe-card__image" src={mediaUrl(photo)} alt={`Foto de ${recipe.name}`} loading="lazy" /> : <div className="home-recipe-card__empty">🍲</div>}
         <div className="home-recipe-card__body">
@@ -98,7 +98,7 @@ function RecipeSection({
 }
 
 export function HomeRecipesPage() {
-  useInAppBackGuard("/");
+  useInAppBackGuard("/app");
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [creating, setCreating] = useState(false);

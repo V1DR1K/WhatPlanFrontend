@@ -186,7 +186,7 @@ function PlaceSection({
   );
 }
 export function DiscoverPage() {
-  useInAppBackGuard("/");
+  useInAppBackGuard("/app");
   const [searchParams, setSearchParams] = useSearchParams();
   const [category, setCategory] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),

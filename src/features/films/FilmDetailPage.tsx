@@ -33,7 +33,7 @@ export function FilmDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
-  useInAppBackGuard("/films");
+  useInAppBackGuard("/app/films");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [addingView, setAddingView] = useState(false);
@@ -62,7 +62,7 @@ export function FilmDetailPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["films"] });
       showNotice("Eliminamos la película y su historial.");
-      navigate("/films");
+      navigate("/app/films");
     },
   });
   const removeView = useMutation({

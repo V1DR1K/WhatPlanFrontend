@@ -4,6 +4,7 @@ import { session } from '../lib/api';
 import { LoginPage } from '../features/auth/LoginPage';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { AuthenticatedApp } from '../layouts/AuthenticatedApp';
+import { LandingPage } from '../features/landing/LandingPage';
 
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then(({ DashboardPage }) => ({ default: DashboardPage })));
 const DiscoverPage = lazy(() => import('../features/places/DiscoverPage').then(({ DiscoverPage }) => ({ default: DiscoverPage })));
@@ -28,46 +29,55 @@ function Protected() {
   return session.get() ? <AuthenticatedApp /> : <Navigate to="/login" replace />;
 }
 
+function LegacyAppRedirect() {
+  const location = window.location;
+  const target = location.pathname === '/food/home'
+    ? '/app/how-cook'
+    : `/app${location.pathname}`;
+  return <Navigate to={`${target}${location.search}${location.hash}`} replace />;
+}
+
 function Admin() {
   const user = session.get();
   return user?.role === 'ADMIN' || user?.username === 'avril'
     ? <Suspense fallback={routeFallback}><CategoryManager /></Suspense>
-    : <Navigate to="/" replace />;
+    : <Navigate to="/app" replace />;
 }
 
 function PlatformAdmin() {
   const user = session.get();
   return user?.role === 'ADMIN' || user?.username === 'avril'
     ? <Suspense fallback={routeFallback}><PlatformManager /></Suspense>
-    : <Navigate to="/" replace />;
+    : <Navigate to="/app" replace />;
 }
 
 function FunAdmin() {
   const user = session.get();
   return user?.role === 'ADMIN' || user?.username === 'avril'
     ? <Suspense fallback={routeFallback}><FunCatalogManager /></Suspense>
-    : <Navigate to="/" replace />;
+    : <Navigate to="/app" replace />;
 }
 
 function SettingsAdmin() {
   return session.get()?.role === 'ADMIN'
     ? <Suspense fallback={routeFallback}><SettingsPage /></Suspense>
-    : <Navigate to="/" replace />;
+    : <Navigate to="/app" replace />;
 }
 
 function WhenDatesSettingsAdmin() {
   return session.get()?.role === 'ADMIN'
     ? <Suspense fallback={routeFallback}><WhenDatesSettingsPage /></Suspense>
-    : <Navigate to="/" replace />;
+    : <Navigate to="/app" replace />;
 }
 
 export function AppRoutes() {
   return <BrowserRouter><Routes>
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
-    <Route element={<Protected />}>
+    <Route path="/app" element={<Protected />}>
       <Route index element={<Suspense fallback={routeFallback}><DashboardPage /></Suspense>} />
       <Route path="food" element={<Suspense fallback={routeFallback}><DiscoverPage /></Suspense>} />
-      <Route path="food/home" element={<Navigate to="/how-cook" replace />} />
+      <Route path="food/home" element={<Navigate to="/app/how-cook" replace />} />
       <Route path="food/places/:id" element={<Suspense fallback={routeFallback}><PlaceDetailPage /></Suspense>} />
       <Route path="food/categories" element={<Admin />} />
       <Route path="films" element={<Suspense fallback={routeFallback}><WhichFilmPage /></Suspense>} />
@@ -82,7 +92,14 @@ export function AppRoutes() {
       <Route path="when-dates/settings" element={<WhenDatesSettingsAdmin />} />
       <Route path="when-dates/:specialDateId/:date" element={<Suspense fallback={routeFallback}><WhenDateDetailPage /></Suspense>} />
       <Route path="settings" element={<SettingsAdmin />} />
+      <Route path="*" element={<Navigate to="/app" replace />} />
     </Route>
+    <Route path="food/*" element={<LegacyAppRedirect />} />
+    <Route path="films/*" element={<LegacyAppRedirect />} />
+    <Route path="how-cook/*" element={<LegacyAppRedirect />} />
+    <Route path="why-fun/*" element={<LegacyAppRedirect />} />
+    <Route path="when-dates/*" element={<LegacyAppRedirect />} />
+    <Route path="settings" element={<LegacyAppRedirect />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes></BrowserRouter>;
 }
