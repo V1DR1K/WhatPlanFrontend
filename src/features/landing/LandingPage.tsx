@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 type StoryState = { active: number; progress: number };
@@ -142,6 +142,7 @@ export function LandingPage() {
             <h3>{chapter.title}</h3>
             <p>{chapter.description}</p>
             <span className="landing-chapter__action">{chapter.action} <b aria-hidden="true">→</b></span>
+            <div className="landing-chapter__mobile-demo"><DemoWindow active={index} progress={0.5} /></div>
           </article>)}
         </div>
         <div className="landing-stage-wrap">
@@ -185,11 +186,11 @@ function DemoWindow({ active, progress }: { active: number; progress: number }) 
   </div>;
 }
 
-function DemoScene({ active, className, children }: { active: boolean; className: string; children: React.ReactNode }) {
+function DemoScene({ active, className, children }: { active: boolean; className: string; children: ReactNode }) {
   return <div className={`demo-scene ${className}${active ? ' is-visible' : ''}`} aria-hidden={!active}>{children}</div>;
 }
 
-function DemoHero({ eyebrow, title, description, art }: { eyebrow: string; title: string; description: string; art: React.ReactNode }) {
+function DemoHero({ eyebrow, title, description, art }: { eyebrow: string; title: string; description: string; art: ReactNode }) {
   return <div className="demo-experience-hero"><div><small>{eyebrow}</small><h3>{title}</h3><p>{description}</p></div><strong aria-hidden="true">{art}</strong></div>;
 }
 
