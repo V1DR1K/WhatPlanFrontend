@@ -3,7 +3,7 @@ import type { Session } from '../types/domain';
 export type CentralTokenResponse = {
   token?: string;
   accessToken?: string;
-  refreshToken: string;
+  refreshToken?: string;
   username?: string;
   role?: 'USER' | 'ADMIN';
   user?: { username?: string; mustChangePassword?: boolean; role?: 'USER' | 'ADMIN' };
@@ -53,7 +53,19 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
       ...init.headers,
     },
   });
-  if (response.status === 401) {
+  if (response.status === 401 && retry && !['/auth/login', '/auth/refresh', '/auth/logout'].includes(path)) {
+    const refreshToken = session.get()?.refreshToken;
+    if (refreshToken) {
+      const refreshed = await fetch(apiUrl('/auth/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      if (refreshed.ok) {
+        session.set(normalizeSession(await refreshed.json() as CentralTokenResponse));
+        return api<T>(path, init, false);
+      }
+    }
     session.clear();
     if (window.location.pathname !== '/login') window.location.assign('/login');
     throw new Error('Tu sesión venció. Ingresá de nuevo para continuar.');
