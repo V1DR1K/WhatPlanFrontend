@@ -13,6 +13,7 @@ export function ItemCard({
 }) {
   const photoUrl = item.photoUrl ?? item.thumbnailUrl;
 
+  const reviews = item.reviews?.length ? item.reviews : [{ author: item.author, comment: item.comment, taste: item.taste, price: item.price }];
   return (
     <article className="item-card">
       {photoUrl && (
@@ -28,7 +29,7 @@ export function ItemCard({
         <div className="item-card-heading">
           <div>
             <h3>{item.name}</h3>
-            <p className="byline">Reseña de {item.author}</p>
+            <p className="byline">{reviews.length} {reviews.length === 1 ? 'reseña' : 'reseñas'} compartidas</p>
           </div>
           {canEdit && (
             <button
@@ -40,15 +41,14 @@ export function ItemCard({
             </button>
           )}
         </div>
-        {item.comment && <p>{item.comment}</p>}
-        <div className="item-scores">
-          <span>
-            Sabor <StarRating label="Sabor" value={item.taste} />
-          </span>
-          <span>
-            Precio <StarRating label="Precio" value={item.price} />
-          </span>
-        </div>
+        {reviews.map(review => <div className="item-review" key={review.author}>
+          <p className="byline">Reseña de {review.author}</p>
+          {review.comment && <p>{review.comment}</p>}
+          <div className="item-scores">
+            <span>Sabor <StarRating label={`Sabor de ${review.author}`} value={review.taste} /></span>
+            <span>Precio <StarRating label={`Precio de ${review.author}`} value={review.price} /></span>
+          </div>
+        </div>)}
       </div>
     </article>
   );

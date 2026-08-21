@@ -24,7 +24,7 @@ export function FilmDetailPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [selectedReviewDate, setSelectedReviewDate] = useState('');
   const filmQuery = useQuery({ queryKey: ['film', id], queryFn: () => getFilm(id), enabled: validId });
-  const reviewDates = [...new Set((filmQuery.data?.reviews ?? []).map(review => review.watchedOn).filter((date): date is string => Boolean(date)))];
+  const reviewDates = [...new Set([...(filmQuery.data?.views ?? []).map(view => view.watchedOn), ...(filmQuery.data?.reviews ?? []).map(review => review.watchedOn).filter((date): date is string => Boolean(date))])];
   useEffect(() => { if (reviewDates.length && !reviewDates.includes(selectedReviewDate)) setSelectedReviewDate(reviewDates[0]); }, [reviewDates, selectedReviewDate]);
   const remove = useMutation({ mutationFn: () => deleteFilm(id), onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['films'] }); navigate('/films'); } });
 
@@ -39,12 +39,12 @@ export function FilmDetailPage() {
   return <section className="film-detail">
     <Link to="/films">← Volver a WhichFilm</Link>
     <div className="film-detail__head">
-      <div className="film-detail__poster">{film.posterUrl ? <img src={mediaUrl(film.posterUrl)} alt={`Póster de ${film.title}`} /> : <span>🍿</span>}</div>
+       <div className="film-detail__poster">{(film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl) ? <img src={mediaUrl(film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl!)} alt={`Póster de ${film.title}`} /> : <span>🍿</span>}</div>
       <div>
         <p className="eyebrow">{viewedLabel(film.lastWatchedOn)} · {film.platform ? `${film.platform.icon} ${film.platform.name}` : 'PLATAFORMA PENDIENTE'}</p>
         <h1>{film.title}</h1>
-        <div className="genre-pills genre-pills--detail">{film.genres.map(genre => <span key={genre}>{genre}</span>)}</div>
-        <p className="film-synopsis">{film.synopsis || 'Todavía no guardamos una reseña de esta película.'}</p>
+         <div className="genre-pills genre-pills--detail">{(film.genres.length ? film.genres : film.tmdb?.genres ?? []).map(genre => <span key={genre}>{genre}</span>)}</div>
+         <p className="film-synopsis">{film.synopsis || film.tmdb?.synopsis || 'Todavía no guardamos una reseña de esta película.'}</p>
       </div>
       <div className="detail-actions">
         <button className="secondary-button" onClick={() => setEditing(true)}>✎ Editar ficha</button>

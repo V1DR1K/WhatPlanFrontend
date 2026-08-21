@@ -1082,7 +1082,7 @@ a {
 .fun-hero-art b { position:absolute; right:-24px; bottom:-10px; font-size:.3em; transform:rotate(20deg); }
 .add-fun-button { display:flex; align-items:center; gap:11px; padding:10px 13px 10px 10px; border:1px solid #ff9ed3; border-radius:14px; background:linear-gradient(135deg,#ff8bca,#e46cab); color:#351528; text-align:left; font-weight:800; box-shadow:4px 4px 0 #7c376b; transition:transform .2s,box-shadow .2s; }
 .add-fun-button:hover { transform:translate(2px,2px); box-shadow:2px 2px 0 #7c376b; }
-.add-fun-button>span:first-child { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#fff2fa; font-size:23px; line-height:1; }
+.add-fun-button>span:first-child { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; background:#ff6fbe; color:#fff; font-size:23px; line-height:1; }
 .add-fun-button small { display:block; font:500 9px "DM Mono"; letter-spacing:1px; opacity:.76; }
 .add-fun-button>b { margin-left:4px; font-size:22px; }
 .fun-controls { display:grid; gap:14px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:13px 0; }

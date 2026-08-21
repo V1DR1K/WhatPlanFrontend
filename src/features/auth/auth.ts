@@ -1,1 +1,9 @@
-import { api,session } from '../../lib/api'; import type { Session } from '../../types/domain'; export const login=(username:string,password:string)=>api<Session>('/auth/login',{method:'POST',body:JSON.stringify({username,password})}).then(value=>{session.set(value);return value}); export const logout=()=>session.clear();
+import { api, normalizeSession, session, type CentralTokenResponse } from '../../lib/api';
+
+export const login = (username: string, password: string) => api<CentralTokenResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }).then(value => {
+  const valueSession = normalizeSession(value);
+  session.set(valueSession);
+  return valueSession;
+});
+
+export const logout = () => session.clear();
