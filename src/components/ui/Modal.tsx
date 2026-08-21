@@ -1,1 +1,79 @@
-import type { PropsWithChildren } from 'react'; export function Modal({children,onClose}:PropsWithChildren<{onClose:()=>void}>){return <div className="modal-backdrop" role="presentation" onMouseDown={onClose}><section className="modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}><button className="close" onClick={onClose} aria-label="Cerrar">×</button>{children}</section></div>}
+import { useContext, useEffect, useRef, useState, type PropsWithChildren, type SyntheticEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { SectionThemeContext, sectionThemeStyle } from '../../lib/sectionTheme';
+import { useDocumentScrollLock } from '../../lib/useDocumentScrollLock';
+import { Button } from './Button';
+
+type ModalProps = {
+  onClose: () => void;
+  confirmDiscard?: boolean;
+  pending?: boolean;
+};
+
+export function Modal({ children, onClose, confirmDiscard = false, pending = false }: PropsWithChildren<ModalProps>) {
+  const dialog = useRef<HTMLElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const requestCloseRef = useRef<() => void>(() => undefined);
+  const [dirty, setDirty] = useState(false);
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  const section = useContext(SectionThemeContext);
+  useDocumentScrollLock(true);
+
+  const requestClose = () => {
+    if (pending) return;
+    const shouldConfirmDiscard = confirmDiscard || Boolean(dialog.current?.querySelector('form'));
+    if (shouldConfirmDiscard && dirty) {
+      setConfirmingDiscard(true);
+      return;
+    }
+    onClose();
+  };
+  requestCloseRef.current = requestClose;
+
+  const markDirty = (event: SyntheticEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('form')) return;
+    if (event.type === 'click') {
+      const button = target.closest('button');
+      if (!button || button.type === 'submit') return;
+    }
+    setDirty(true);
+  };
+
+  useEffect(() => {
+    previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        requestCloseRef.current();
+      }
+      if (event.key !== 'Tab' || !dialog.current) return;
+      const focusable = [...dialog.current.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      previousFocus.current?.focus();
+    };
+  }, []);
+
+  return createPortal(<div className={`modal-backdrop${section ? ` ${section}-shell` : ''}`} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={requestClose}>
+    <section className="modal" ref={dialog} role="dialog" aria-modal="true" onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
+      <Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" />
+      <div className="modal__content">{children}</div>
+      {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">
+        <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><div className="modal-discard__actions"><Button variant="secondary" icon="✏️" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="🗑️" type="button" onClick={onClose}>Descartar</Button></div></div>
+      </div>}
+    </section>
+  </div>, document.body);
+}

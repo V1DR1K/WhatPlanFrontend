@@ -1,3 +1,27 @@
-import { StrictMode } from 'react'; import { createRoot } from 'react-dom/client'; import { QueryClient,QueryClientProvider } from '@tanstack/react-query'; import { AppRoutes } from './routes/AppRoutes'; import { HeartRain } from './components/HeartRain'; import './styles/global.css'; import './styles/interactions.css'; import './styles/action-buttons.css'; import './styles/touch.css'; import './styles/item-scores.css';
-document.addEventListener('gesturestart',event=>event.preventDefault(),{passive:false}); document.addEventListener('gesturechange',event=>event.preventDefault(),{passive:false}); document.addEventListener('touchmove',event=>{if(event.touches.length>1)event.preventDefault()},{passive:false}); document.addEventListener('focusin',event=>{const input=event.target; if(input instanceof HTMLInputElement&&!['file','date','time','datetime-local','checkbox','radio','range','color','button','submit'].includes(input.type)) input.select()});
-const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:30_000,retry:1}}}); createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain/><QueryClientProvider client={queryClient}><AppRoutes/></QueryClientProvider></StrictMode>);
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { AppRoutes } from './routes/AppRoutes';
+import { HeartRain } from './components/HeartRain';
+import './styles/base.css';
+import './styles/global.css';
+import './styles/interactions.css';
+import './styles/touch.css';
+import './styles/media.css';
+import './styles/experiences.css';
+import './styles/action-buttons.css';
+import './styles/catalog-controls.css';
+import './styles/special-dates.css';
+import './styles/catalog-experience.css';
+import './styles/when-dates.css';
+import './styles/experience-hero.css';
+import './styles/motion.css';
+import './styles/loading.css';
+import './styles/landing.css';
+
+// A release can remove a lazily loaded, hash-named chunk while a tab is open.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  window.location.reload();
+});
+
+createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);

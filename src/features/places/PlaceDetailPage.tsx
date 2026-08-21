@@ -1,168 +1,290 @@
-import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getPlace } from "./places";
-import { getItemDates, getItems } from "../items/items";
-import { ItemCard } from "../items/ItemCard";
-import { ItemForm } from "../items/ItemForm";
-import { PlaceForm } from "./PlaceForm";
-import { StarRating } from "../../components/ui/StarRating";
+import { useInAppBackGuard } from "../../lib/backGuard";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
-import { mediaUrl, session } from "../../lib/api";
-import type { Item } from "../../types/domain";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
+import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
+import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
+import { session } from "../../lib/api";
+import { showNotice } from "../../lib/flash";
+import type { ExperiencePhoto, PlaceReview, PlaceVisit, PlaceVisitReview, PlaceVisitSummary, SpecialDate } from "../../types/domain";
+import { deleteVisitPhoto, getVisit, getVisits, setVisitCover, uploadVisitPhoto } from "../items/items";
+import { VisitForm } from "../items/VisitForm";
+import { VisitReviewForm } from "../items/VisitReviewForm";
+import { PlaceForm } from "./PlaceForm";
+import { PlaceReviewForm } from "./PlaceReviewForm";
+import { deletePlace, getPlace } from "./places";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
-const mapsSearch = (address?: string) =>
-  address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address}, Rosario, Santa Fe, Argentina`)}`
-    : undefined;
-const reviewLabels: {
-  key: "location" | "heating" | "bathrooms" | "exterior" | "seating" | "service" | "ambiance";
-  label: string;
-}[] = [
-  { key: "location", label: "Ubicación" },
-  { key: "heating", label: "Calefacción" },
-  { key: "bathrooms", label: "Baños" },
-  { key: "exterior", label: "Exterior" },
-  { key: "seating", label: "Asientos" },
-  { key: "service", label: "Atención" },
-  { key: "ambiance", label: "Ambiente" },
-];
-const score = (value: number | undefined) =>
-  typeof value === "number" && Number.isFinite(value) ? value.toFixed(1) : "—";
-const visitDateLabel = (date: string) =>
+const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", {
     day: "2-digit",
     month: "long",
     year: "numeric",
   }).format(new Date(`${date}T12:00:00`));
+const mapsSearch = (address?: string | null) =>
+  address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    : undefined;
+const visitMetrics = [
+  ["taste", "Sabor"],
+  ["price", "Precio"],
+] as const;
 
 export function PlaceDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
-  const [editingItem, setEditingItem] = useState<Item | null | undefined>();
+  const navigate = useNavigate();
+  useInAppBackGuard("/app/food");
+  const qc = useQueryClient();
   const [editingPlace, setEditingPlace] = useState(false);
-  const [selectedVisitDate, setSelectedVisitDate] = useState("");
-  const place = useQuery({
-    queryKey: ["place", id],
-    queryFn: () => getPlace(id),
-    enabled: validId,
+  const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>();
+  const [selectedVisitId, setSelectedVisitId] = useState<number>();
+  const [reviewing, setReviewing] = useState<PlaceVisitReview | null>();
+  const [reviewingPlace, setReviewingPlace] = useState(false);
+  const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const place = useQuery({ queryKey: ["place", id], queryFn: () => getPlace(id), enabled: validId });
+  const visits = useQuery({ queryKey: ["visits", id], queryFn: () => getVisits(id), enabled: validId });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
+  const visit = useQuery({
+    queryKey: ["visit", selectedVisitId],
+    queryFn: () => getVisit(selectedVisitId!),
+    enabled: Boolean(selectedVisitId),
   });
-  const itemDates = useQuery({
-    queryKey: ["item-dates", id],
-    queryFn: () => getItemDates(id),
-    enabled: validId && place.isSuccess,
+  const invalidate = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ["places"] }),
+      qc.invalidateQueries({ queryKey: ["place", id] }),
+      qc.invalidateQueries({ queryKey: ["visits", id] }),
+      ...(selectedVisitId
+        ? [qc.invalidateQueries({ queryKey: ["visit", selectedVisitId] })]
+        : []),
+    ]);
+  const removePlace = useMutation({
+    mutationFn: () => deletePlace(id),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["places"] });
+      showNotice("Movimos el lugar a archivados.");
+      navigate("/app/food");
+    },
   });
-  const visitDates = itemDates.data ?? [];
+  const uploadPhotos = useMutation({
+    mutationFn: async (files: File[]) => {
+      if (!selectedVisitId) return;
+      for (const file of files) await uploadVisitPhoto(selectedVisitId, file);
+    },
+    onSuccess: async () => {
+      await invalidate();
+      showNotice("Agregamos las fotos a esta visita.");
+    },
+  });
+  const setCover = useMutation({
+    mutationFn: (photoId: number) => setVisitCover(selectedVisitId!, photoId),
+    onSuccess: async () => {
+      await invalidate();
+      showNotice("Actualizamos la portada de la visita.");
+    },
+  });
+  const removePhoto = useMutation({
+    mutationFn: (photoId: number) => deleteVisitPhoto(photoId),
+    onSuccess: async () => {
+      await invalidate();
+      showNotice("Quitamos la foto.");
+      setDeletingPhoto(undefined);
+    },
+  });
+
   useEffect(() => {
-    if (visitDates.length && !visitDates.includes(selectedVisitDate)) {
-      setSelectedVisitDate(visitDates[0]);
+    const list = visits.data ?? [];
+    if (list.length && !list.some((value) => value.id === selectedVisitId)) {
+      setSelectedVisitId(list[0].id);
     }
-  }, [selectedVisitDate, visitDates]);
-  const items = useQuery({
-    queryKey: ["items", id, selectedVisitDate],
-    queryFn: () => getItems(id, selectedVisitDate),
-    enabled: validId && place.isSuccess && Boolean(selectedVisitDate),
-  });
+  }, [selectedVisitId, visits.data]);
 
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
-    return <p className="form-error">No pudimos cargar ese lugar. Volvé al mapa e intentá de nuevo.</p>;
+    return <section className="detail"><p className="form-error">No pudimos cargar este lugar.</p></section>;
   }
-  if (place.isLoading) return <p>Cargando lugar…</p>;
+  if (place.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const venue = place.data!;
-  const username = session.get()?.username;
-  const pending = venue.status === "PENDING";
+  const visitList = visits.data ?? [];
+  const specialDateList = specialDates.data ?? [];
+  const current = visit.data;
   const mapsUrl = venue.mapsUrl || mapsSearch(venue.address);
-  const coverPhoto = venue.photoUrl || venue.thumbnailUrl;
-  const coverPhotoSrc = coverPhoto ? mediaUrl(coverPhoto) : undefined;
-  const itemList = items.data?.content ?? [];
-  const itemsByAuthor = Object.entries(
-    itemList.reduce<Record<string, Item[]>>((groups, item) => {
-      (groups[item.author] ??= []).push(item);
-      return groups;
-    }, {}),
-  );
-  const selectedDateIndex = visitDates.indexOf(selectedVisitDate);
-  const visitNumber = visitDates.length - selectedDateIndex;
+  const photoWidth = venue.photoWidth ?? undefined;
+  const photoHeight = venue.photoHeight ?? undefined;
+  const venueOwnReview = venue.reviews.find((review) => review.author === session.get()?.username);
+  const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
 
   return (
     <section className="detail">
-      <Link to="/food">← Volver al mapa</Link>
-      <div className="detail-heading">
-        <div className="place-cover">
-          {coverPhotoSrc ? (
-            <AdaptivePhoto alt={`Foto de ${venue.name}`} context="place" height={venue.photoHeight} src={coverPhotoSrc} width={venue.photoWidth} />
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{ label: "Borrar lugar", onClick: () => setConfirmingDelete(true) }}
+            primary={{ icon: venue.category.icon, label: "Registrar visita", onClick: () => setEditingVisit(null) }}
+            secondary={{ label: "Editar lugar", onClick: () => setEditingPlace(true) }}
+          />
+        }
+        className="place-detail__head"
+        eyebrow={`LUGAR COMPARTIDO · ${venue.category.name}`}
+        media={
+          <div className="place-cover">
+          {venue.photoUrl || venue.thumbnailUrl ? (
+            <AdaptivePhoto
+              alt={`Foto de ${venue.name}`}
+              context="place"
+              fullSrc={venue.photoUrl ?? undefined}
+              height={photoHeight}
+              thumbnailSrc={venue.thumbnailUrl ?? undefined}
+              width={photoWidth}
+            />
           ) : (
-            <span className="place-cover-empty">{venue.category.icon}</span>
+            <div className="place-cover-empty" aria-label="Lugar sin foto">{venue.category.icon}</div>
           )}
-        </div>
-        <div>
-          <p className="eyebrow">{pending ? "PENDIENTE · " : ""}{venue.category.name}</p>
-          <h1>{venue.name}</h1>
-          {!!venue.tags?.length && <div className="place-tags place-tags--detail">{venue.tags.map((tag) => <span key={tag.id}>{tag.emoji} {tag.name}</span>)}</div>}
+          </div>
+        }
+        metadata={
+          <>
           <p>
             {mapsUrl ? (
-              <a className="address-link" href={mapsUrl} target="_blank" rel="noreferrer">📍 {venue.address || "Abrir en Google Maps"} ↗</a>
-            ) : venue.address}
-            {!pending && ` · ${score(venue.rating)} ★ · ${venue.itemCount} ítems`}
+              <a className="address-link" href={mapsUrl} target="_blank" rel="noreferrer">
+                📍 {venue.address || "Abrir ubicación"} ↗
+              </a>
+            ) : venue.address || "Sin dirección"}
           </p>
-          {venue.sourceUrl && <a className="source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver link de referencia</a>}
-        </div>
-        <div className="detail-actions">
-          <button className="secondary-button" onClick={() => setEditingPlace(true)}>{venue.author === username ? "✎ Editar lugar" : "★ Calificar lugar"}</button>
-          <button className="main-button" onClick={() => setEditingItem(null)}>{pending ? "Ya fui, agregar ítem" : "Agregar ítem"}</button>
-        </div>
-      </div>
-      {!pending && (
-        <section className="watch-counter" aria-label="Contador de visitas">
-          <div><p className="eyebrow">CONTADOR COMPARTIDO</p><h2>{visitDates.length === 0 ? "Todavía no fueron" : `${visitDates.length} ${visitDates.length === 1 ? "vez" : "veces"}`}</h2><p>Última visita: {visitDates[0] ? visitDateLabel(visitDates[0]) : "pendiente"}</p></div>
-          <div><button className="counter-add food-counter-add" onClick={() => setEditingItem(null)}>Fuimos de nuevo 🍽️</button></div>
-        </section>
-      )}
-      {!pending && (
-        <section className="rating-breakdown" aria-label="Promedios globales">
-          <div><span>😋 Sabor</span><strong>{score(venue.tasteAverage)}</strong><StarRating label="Promedio de sabor" value={Math.round(venue.tasteAverage || 0)} /></div>
-          <div><span>💸 Precio</span><strong>{score(venue.priceAverage)}</strong><StarRating label="Promedio de precio" value={Math.round(venue.priceAverage || 0)} /></div>
-          <div><span>📍 Lugar</span><strong>{score(venue.venueAverage)}</strong><StarRating label="Promedio del lugar" value={Math.round(venue.venueAverage || 0)} /></div>
-        </section>
-      )}
-      <section className="reviews-section">
-        <h2>Reseñas del lugar</h2>
-        <div className="review-columns">
-          {venue.reviews.map((review) => (
-            <article className="place-review" key={review.author}>
-              <div className="place-review__heading"><h3>{review.author === username ? "Tu calificación" : `Calificación de ${review.author}`}</h3>{review.author === username && <button className="icon-edit" type="button" aria-label="Editar reseña" onClick={() => setEditingPlace(true)}>✎</button>}</div>
-              {review.comment && <p>{review.comment}</p>}
-              <div>{reviewLabels.map(({ key, label }) => <span key={key}>{label}<StarRating label={label} value={review[key]} /></span>)}</div>
-            </article>
-          ))}
-          {!venue.reviews.length && <p className="empty-state">Todavía no hay calificaciones del lugar.</p>}
+          {venue.sourceUrl && <a className="source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
+          {venue.acceptsReservations && <p className="place-reservation-status">📅 Acepta reservas</p>}
+          <p className="byline">Agregado por {venue.author}</p>
+          </>
+        }
+        title={venue.name}
+      />
+      <section className="rating-breakdown rating-breakdown--food" aria-label="Promedios del lugar">
+        <div className="rating-breakdown__experience"><span>✨ Experiencia total</span><RatingStars label="Experiencia total" value={venue.rating} /><small>Promedio de sabor, precio y espacio/atención.</small></div>
+        <div className="rating-breakdown__metrics">
+          <div><span>😋 Sabor</span><RatingStars label="Sabor" value={venue.tasteAverage} /></div>
+          <div><span>💳 Precio</span><RatingStars label="Precio" value={venue.priceAverage} /></div>
+          <div><span>🏠 Espacio y atención</span><RatingStars label="Espacio y atención" value={venue.venueAverage} /></div>
         </div>
       </section>
-      <h2>{pending ? "Cuando vayas, contanos qué pediste" : "Lo que pedimos"}</h2>
-      {!!visitDates.length && (
-        <div className="item-date-pager" aria-label="Navegar visitas por fecha">
-          <button type="button" className="date-chevron" aria-label="Ver visita más reciente" disabled={selectedDateIndex <= 0} onClick={() => setSelectedVisitDate(visitDates[selectedDateIndex - 1])}>‹</button>
-          <label>Visita #{visitNumber}
-            <select value={selectedVisitDate} onChange={(event) => setSelectedVisitDate(event.target.value)}>
-              {visitDates.map((date, index) => <option key={date} value={date}>Visita #{visitDates.length - index} · {visitDateLabel(date)}</option>)}
-            </select>
-          </label>
-          <button type="button" className="date-chevron" aria-label="Ver visita anterior" disabled={selectedDateIndex < 0 || selectedDateIndex >= visitDates.length - 1} onClick={() => setSelectedVisitDate(visitDates[selectedDateIndex + 1])}>›</button>
+      <section className="reviews-section place-venue-reviews">
+        <div className="section-title">
+          <div><p className="eyebrow">EL LUGAR</p><h2>Espacio y atención</h2></div>
+          <Button icon={venueOwnReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button>
         </div>
+        {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
+      </section>
+      <section className="watch-counter">
+        <div className="watch-counter__content">
+          <p className="eyebrow">HISTORIAL DE VISITAS</p>
+          <h2>{visitList.length ? `${visitList.length} visita${visitList.length === 1 ? "" : "s"}` : "Todavía no fueron"}</h2>
+          <p>{visitList[0] ? `Última: ${dateLabel(visitList[0].visitedOn)}` : "Registren una fecha al ir."}</p>
+        </div>
+      </section>
+      {visitList.length > 0 && (
+        <section className="reviews-section">
+          <div className="section-title">
+            <div><p className="eyebrow">DETALLE DE VISITA</p><h2>La experiencia</h2></div>
+            <strong>{visitList.length} fechas</strong>
+          </div>
+          <div className="item-date-pager">
+            <label>
+              Elegir visita
+              <select value={selectedVisitId ?? ""} onChange={(event) => setSelectedVisitId(Number(event.target.value))}>
+                {visitList.map((entry) => <option key={entry.id} value={entry.id}>{dateLabel(entry.visitedOn)}{specialDateOptionSuffix(entry.visitedOn, specialDateList)} · registrada por {entry.createdBy}</option>)}
+              </select>
+            </label>
+            {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
+          </div>
+          {visit.isLoading && <LoadingSkeleton variant="list" />}
+          {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
+        </section>
       )}
-      {items.isError && <p className="form-error">No pudimos cargar los ítems todavía. Podés seguir usando el detalle e intentarlo de nuevo.</p>}
-      <div className="author-item-groups">
-        {itemsByAuthor.map(([author, authorItems]) => (
-          <section key={author}>
-            <h3>{author === username ? "Tus ítems" : `Ítems de ${author}`}</h3>
-            <div className="item-list">{authorItems.map((item) => <ItemCard key={item.id} item={item} canEdit={item.author === username} onEdit={setEditingItem} />)}</div>
-          </section>
-        ))}
-        {!items.isLoading && !itemList.length && !!selectedVisitDate && <p className="empty-state">No hay ítems cargados para esta visita.</p>}
-      </div>
-      {editingItem !== undefined && <ItemForm placeId={id} item={editingItem ?? undefined} onClose={() => { setEditingItem(undefined); setSelectedVisitDate(""); }} />}
+      {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
       {editingPlace && <PlaceForm place={venue} onClose={() => setEditingPlace(false)} />}
+      {reviewingPlace && <PlaceReviewForm place={venue} review={venue.reviews.find((review) => review.author === session.get()?.username)} onClose={() => setReviewingPlace(false)} />}
+      {editingVisit !== undefined && <VisitForm placeId={venue.id} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} onDeleted={() => setSelectedVisitId(undefined)} />}
+      {reviewing !== undefined && current && <VisitReviewForm placeId={venue.id} visit={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}
+      {confirmingDelete && <ConfirmDialog title="¿Borrar este lugar?" message={removePlace.error ? removePlace.error.message : "Se archivará el lugar y se conservarán sus visitas."} confirmLabel="Borrar lugar" pending={removePlace.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => removePlace.mutate()} />}
+      {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de la visita." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(deletingPhoto.id)} />}
     </section>
   );
+}
+
+function VisitExperience({
+  visit,
+  specialDates,
+  ownReview,
+  onReview,
+  onUpload,
+  onDeletePhoto,
+  onSetCover,
+}: {
+  visit: PlaceVisit;
+  specialDates: SpecialDate[];
+  ownReview: boolean;
+  onReview: () => void;
+  onUpload: (files: File[]) => Promise<unknown>;
+  onDeletePhoto: (photo: ExperiencePhoto) => void;
+  onSetCover: (photo: ExperiencePhoto) => void;
+}) {
+  return (
+    <div className="experience-detail">
+      <p className="muted">Visita del {dateLabel(visit.visitedOn)}<SpecialDateLabels date={visit.visitedOn} specialDates={specialDates} />. Registrada por {visit.createdBy}; última edición de {visit.updatedBy}.</p>
+      <ExperienceGallery accentLabel="VISITA" emptyIcon="🍽️" name={`la visita del ${dateLabel(visit.visitedOn)}`} photos={visit.photos} coverPhotoId={visit.coverPhoto?.id} onUpload={async (files) => { await onUpload(files); }} onDelete={onDeletePhoto} onSetCover={onSetCover} />
+      <div className="section-title section-title--compact">
+        <div><p className="eyebrow">RESEÑAS</p><h2>Cómo estuvo</h2></div>
+        <strong>{visit.reviews.length}</strong>
+      </div>
+      {visit.reviews.length ? (
+        <div className="review-columns">
+          {visit.reviews.map((review) => (
+            <article className="place-review" key={review.id}>
+              <div className="place-review__heading">
+                <h3>Reseña de {review.author}</h3>
+              </div>
+              <div className="place-review__rating">
+                <StarRating label={`Puntuación de ${review.author}`} value={review.overall} />
+                <span>{review.overall}/5</span>
+              </div>
+              <p>{review.comment || "Sin comentario."}</p>
+              <div className="place-review__metrics">
+                {visitMetrics.map(([key, label]) => (
+                  <span key={key}>
+                    <b>{label}</b>
+                    <strong>{scoreLabel(review[key])}</strong>
+                  </span>
+                ))}
+              </div>
+              <small>Creada por {review.author} · editada por {review.updatedBy}</small>
+            </article>
+          ))}
+        </div>
+      ) : <p className="empty-state">Todavía no hay reseñas para esta visita.</p>}
+      <div className="experience-review-action">
+        <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>
+          {ownReview ? "Editar reseña" : "Agregar reseña"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function VenueReview({ review }: { review: PlaceReview }) {
+  const metrics = [
+    ["location", "Ubicación"], ["heating", "Calefacción"], ["bathrooms", "Baños"], ["exterior", "Exterior"], ["seating", "Asientos"], ["service", "Atención"], ["ambiance", "Ambiente"],
+  ] as const;
+  return <article className="place-review"><div className="place-review__heading"><h3>Opinión de {review.author}</h3></div>{review.comment && <p>{review.comment}</p>}<div className="place-review__metrics">{metrics.map(([key, label]) => <span key={key}><b>{label}</b><strong>{scoreLabel(review[key])}</strong></span>)}</div></article>;
+}
+
+function scoreLabel(value?: number) {
+  return value === undefined || value === null ? "—" : `${value}/5`;
 }

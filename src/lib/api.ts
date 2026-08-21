@@ -26,12 +26,18 @@ const BASE = import.meta.env.VITE_API_URL ?? '/api';
 
 export const apiUrl = (path: string) => `${BASE}${path}`;
 export const mediaUrl = (path: string) =>
-  path.startsWith('data:') || /^https?:\/\//.test(path) ? path : apiUrl(path);
+  path.startsWith('data:') || path.startsWith('/api/') || /^https?:\/\//.test(path) ? path : apiUrl(path);
 
 export const session = {
   get: (): Session | null => {
     const raw = localStorage.getItem('wherefood.session');
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as Session;
+    } catch {
+      localStorage.removeItem('wherefood.session');
+      return null;
+    }
   },
   set: (value: Session) => localStorage.setItem('wherefood.session', JSON.stringify(value)),
   clear: () => localStorage.removeItem('wherefood.session'),
@@ -47,24 +53,10 @@ export async function api<T>(path: string, init: RequestInit = {}, retry = true)
       ...init.headers,
     },
   });
-  if (response.status === 401 && retry && !['/auth/login', '/auth/refresh', '/auth/logout'].includes(path)) {
-    const refreshToken = session.get()?.refreshToken;
-    if (refreshToken) {
-      const refreshed = await fetch(apiUrl('/auth/refresh'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (refreshed.ok) {
-        session.set(normalizeSession(await refreshed.json() as CentralTokenResponse));
-        return api<T>(path, init, false);
-      }
-      session.clear();
-      window.location.assign('/login');
-    } else {
-      session.clear();
-      window.location.assign('/login');
-    }
+  if (response.status === 401) {
+    session.clear();
+    if (window.location.pathname !== '/login') window.location.assign('/login');
+    throw new Error('Tu sesión venció. Ingresá de nuevo para continuar.');
   }
   if (!response.ok) {
     throw new Error((await response.json().catch(() => null))?.detail ?? 'No se pudo completar la acción');

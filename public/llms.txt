@@ -1,0 +1,14 @@
+# WhatPlan
+
+> Aplicación personal para elegir lugares, recetas, películas y planes para compartir.
+
+## Uso
+
+WhatPlan requiere una sesión autenticada. La información mostrada pertenece a sus usuarios y no debe tratarse como contenido público.
+
+## Secciones
+
+- Lugares para comer y sus reseñas.
+- Recetas para cocinar en casa.
+- Películas, plataformas y reseñas.
+- Planes y lugares para salir.

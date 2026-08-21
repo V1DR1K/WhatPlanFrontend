@@ -1,0 +1,86 @@
+.hero { --experience-hero-description: #c6bec0; }
+.film-hero { --experience-hero-description: var(--muted); }
+.home-recipes__hero { --experience-hero-description: #d0d3c4; }
+.fun-hero { --experience-hero-description: var(--fun-highlight); }
+.when-dates-hero { --experience-hero-description: #f2d5e6; }
+
+.experience-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  overflow: hidden;
+}
+.experience-hero > * {
+  position: relative;
+  z-index: 1;
+}
+.experience-hero__content { min-width: 0; }
+.experience-hero .experience-hero__content > h1 {
+  margin: 7px 0 12px;
+  font: 700 clamp(42px, 6vw, 70px)/0.91 "Fraunces";
+  letter-spacing: -3px;
+  overflow-wrap: anywhere;
+}
+.experience-hero .experience-hero__content > h1 em {
+  color: var(--section-accent);
+  font-style: italic;
+}
+.experience-hero .experience-hero__content > .experience-hero__description {
+  max-width: 510px;
+  margin: 0;
+  color: var(--experience-hero-description, var(--muted));
+  font-size: 16px;
+  line-height: 1.5;
+}
+.experience-hero__art {
+  position: relative;
+  justify-self: center;
+  color: var(--section-accent);
+  font-size: clamp(94px, 14vw, 170px);
+  line-height: 1;
+  filter: drop-shadow(7px 7px 0 var(--section-shadow));
+  transform: rotate(-8deg);
+  animation: floaty 5.5s ease-in-out infinite;
+}
+.experience-hero__art span {
+  position: absolute;
+  top: -12px;
+  right: -24px;
+  color: var(--cream);
+  font-size: 0.35em;
+}
+.experience-hero__art b {
+  position: absolute;
+  right: -24px;
+  bottom: -10px;
+  font-size: 0.3em;
+  transform: rotate(20deg);
+}
+
+@media (max-width: 540px) {
+  .experience-hero {
+    grid-template-columns: minmax(0, 1fr) 94px;
+    min-height: 210px;
+    margin-top: 20px;
+    padding: 30px 22px;
+    overflow: clip;
+  }
+  .experience-hero .experience-hero__content > h1 {
+    font-size: 45px;
+    letter-spacing: -2px;
+  }
+  .experience-hero__art {
+    justify-self: end;
+    font-size: 82px;
+    transform: rotate(-4deg);
+  }
+  .experience-hero__art span,
+  .experience-hero__art b { right: 0; }
+  .home-recipes { padding-top: 0; }
+  .when-dates-page {
+    width: 100%;
+    margin-top: 0;
+  }
+}

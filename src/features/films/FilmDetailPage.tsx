@@ -1,74 +1,501 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { SegmentedLevel } from '../../components/ui/SegmentedLevel';
-import { StarRating } from '../../components/ui/StarRating';
-import { mediaUrl, session } from '../../lib/api';
-import type { FilmReview } from '../../types/domain';
-import { FilmForm } from './FilmForm';
-import { FilmReviewForm } from './FilmReviewForm';
-import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { deleteFilm, getFilm } from './films';
-import { filmReviewMetrics, metricLevel } from './reviewMetrics';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useInAppBackGuard } from "../../lib/backGuard";
+import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
+import { StarRating } from "../../components/ui/StarRating";
+import { RatingStars } from "../../components/ui/RatingStars";
+import { mediaUrl, session } from "../../lib/api";
+import { showNotice } from "../../lib/flash";
+import type { FilmReview, FilmView } from "../../types/domain";
+import { FilmForm } from "./FilmForm";
+import { FilmReviewForm } from "./FilmReviewForm";
+import { FilmViewForm } from "./FilmViewForm";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { Button } from "../../components/ui/Button";
+import { deleteFilm, deleteFilmView, getFilm, getTmdbRecommendations } from "./films";
+import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
+import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
+import { getSpecialDates } from "../special-dates/specialDates";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
-const viewedLabel = (date?: string) => date ? `VISTA ${date.split('-').reverse().join('/')}` : 'PARA VER';
+const viewedLabel = (date?: string) =>
+  date
+    ? `VISTA ${date.split("-").reverse().join("/")}`
+    : "PARA VER";
+const average = (values: number[]) =>
+  values.length
+    ? values.reduce((total, value) => total + value, 0) / values.length
+    : undefined;
 
 export function FilmDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
+  useInAppBackGuard("/app/films");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
-  const [editingReview, setEditingReview] = useState<FilmReview>();
+  const [addingView, setAddingView] = useState(false);
+  const [editingView, setEditingView] = useState<FilmView>();
+  const [reviewing, setReviewing] = useState<{
+    view: FilmView;
+    review?: FilmReview;
+  }>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [selectedReviewDate, setSelectedReviewDate] = useState('');
-  const filmQuery = useQuery({ queryKey: ['film', id], queryFn: () => getFilm(id), enabled: validId });
-  const reviewDates = [...new Set([...(filmQuery.data?.views ?? []).map(view => view.watchedOn), ...(filmQuery.data?.reviews ?? []).map(review => review.watchedOn).filter((date): date is string => Boolean(date))])];
-  useEffect(() => { if (reviewDates.length && !reviewDates.includes(selectedReviewDate)) setSelectedReviewDate(reviewDates[0]); }, [reviewDates, selectedReviewDate]);
-  const remove = useMutation({ mutationFn: () => deleteFilm(id), onSuccess: async () => { await qc.invalidateQueries({ queryKey: ['films'] }); navigate('/films'); } });
+  const [confirmingDeleteView, setConfirmingDeleteView] = useState<FilmView>();
+  const [selectedViewId, setSelectedViewId] = useState<number>();
+  const filmQuery = useQuery({
+    queryKey: ["film", id],
+    queryFn: () => getFilm(id),
+    enabled: validId,
+  });
+  const tmdbId = filmQuery.data?.tmdbId;
+  const recommendationsQuery = useQuery({
+    queryKey: ["tmdb-recommendations", tmdbId],
+    queryFn: () => tmdbId === undefined ? Promise.resolve([]) : getTmdbRecommendations(tmdbId),
+    enabled: tmdbId !== undefined,
+  });
+  const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
+  const remove = useMutation({
+    mutationFn: () => deleteFilm(id),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["films"] });
+      showNotice("Eliminamos la película y su historial.");
+      navigate("/app/films");
+    },
+  });
+  const removeView = useMutation({
+    mutationFn: (view: FilmView) => deleteFilmView(id, view.id),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["film", id] }),
+        qc.invalidateQueries({ queryKey: ["films"] }),
+      ]);
+      showNotice("Eliminamos la vista y sus reseñas asociadas.");
+      setConfirmingDeleteView(undefined);
+      setSelectedViewId(undefined);
+    },
+  });
+  const views = filmQuery.data?.views ?? [];
+  const specialDateList = specialDates.data ?? [];
+  useEffect(() => {
+    if (views.length && !views.some((view) => view.id === selectedViewId))
+      setSelectedViewId(views[0].id);
+  }, [selectedViewId, views]);
 
-  if (!validId || filmQuery.isError || (!filmQuery.isLoading && !filmQuery.data)) return <p className="form-error">No pudimos abrir esa película. Volvé a la sala e intentá otra vez.</p>;
-  if (filmQuery.isLoading) return <p>Cargando película…</p>;
+  if (
+    !validId ||
+    filmQuery.isError ||
+    (!filmQuery.isLoading && !filmQuery.data)
+  )
+    return <section className="film-detail"><p className="form-error">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
+  if (filmQuery.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const film = filmQuery.data!;
-  const selectedReviewIndex = reviewDates.indexOf(selectedReviewDate);
-  const reviewsForDate = film.reviews.filter(review => review.watchedOn === selectedReviewDate);
-  const visitNumber = reviewDates.length - selectedReviewIndex;
+  const selectedView = views.find((view) => view.id === selectedViewId);
+  const selectedViewIndex = views.findIndex(
+    (view) => view.id === selectedViewId,
+  );
+  const visitNumber =
+    selectedViewIndex < 0 ? 0 : views.length - selectedViewIndex;
+  const username = session.get()?.username;
+  const ownReview = selectedView?.reviews.find(
+    (review) => review.author === username,
+  );
+  const tmdb = film.tmdb;
+  const title = tmdb?.title ?? film.title;
+  const posterUrl = film.posterUrl ?? tmdb?.posterFullUrl ?? tmdb?.posterUrl;
+  const genres = tmdb?.genres.length ? tmdb.genres : film.genres;
+  const synopsis = tmdb?.synopsis ?? film.synopsis;
+  const releaseDate = tmdb?.releaseDate ?? film.releaseDate;
+  const cast = tmdb?.cast ?? [];
+  const visibleCast = cast.slice(0, 8);
+  const hiddenCastCount = cast.length - visibleCast.length;
+  const recommendations = recommendationsQuery.data ?? [];
+  const reviewAverage = average(film.reviews.map((review) => review.rating));
+  const metricAverage = (key: (typeof filmReviewMetrics)[number]["key"]) =>
+    average(
+      film.reviews
+        .map((review) => review.metrics?.[key])
+        .filter((value): value is number => value !== undefined),
+    );
+  const viewAction = film.watchedCount
+    ? "Registrar otra vista"
+    : "Registrar primera vista";
 
-  return <section className="film-detail">
-    <Link to="/films">← Volver a WhichFilm</Link>
-    <div className="film-detail__head">
-       <div className="film-detail__poster">{(film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl) ? <img src={mediaUrl(film.posterUrl ?? film.tmdb?.posterFullUrl ?? film.tmdb?.posterUrl!)} alt={`Póster de ${film.title}`} /> : <span>🍿</span>}</div>
-      <div>
-        <p className="eyebrow">{viewedLabel(film.lastWatchedOn)} · {film.platform ? `${film.platform.icon} ${film.platform.name}` : 'PLATAFORMA PENDIENTE'}</p>
-        <h1>{film.title}</h1>
-         <div className="genre-pills genre-pills--detail">{(film.genres.length ? film.genres : film.tmdb?.genres ?? []).map(genre => <span key={genre}>{genre}</span>)}</div>
-         <p className="film-synopsis">{film.synopsis || film.tmdb?.synopsis || 'Todavía no guardamos una reseña de esta película.'}</p>
-      </div>
-      <div className="detail-actions">
-        <button className="secondary-button" onClick={() => setEditing(true)}>✎ Editar ficha</button>
-        <button className="main-button" onClick={() => setReviewing(true)}>La vimos de nuevo 🍿</button>
-        <button className="text-button" disabled={remove.isPending} onClick={() => setConfirmingDelete(true)}>{remove.isPending ? 'Borrando…' : 'Borrar película'}</button>
-      </div>
-    </div>
-    <section className="watch-counter" aria-label="Contador de veces vistas">
-      <div><p className="eyebrow">CONTADOR COMPARTIDO</p><h2>{film.watchedCount === 0 ? 'Todavía no la vieron' : `${film.watchedCount} ${film.watchedCount === 1 ? 'vez' : 'veces'}`}</h2><p>Última vista: {viewedLabel(film.lastWatchedOn)}</p></div>
-      <div><button className="counter-add" onClick={() => setReviewing(true)}>La vimos de nuevo 🍿</button></div>
+  return (
+    <section className="film-detail">
+      <EntityDetailHeader
+        actions={
+          <EntityDetailActions
+            destructive={{
+              disabled: remove.isPending,
+              label: remove.isPending ? "Borrando película…" : "Borrar película",
+              onClick: () => setConfirmingDelete(true),
+            }}
+            primary={{ icon: "🎬", label: viewAction, onClick: () => setAddingView(true) }}
+            secondary={{ label: "Editar película", onClick: () => setEditing(true) }}
+          />
+        }
+        className="film-detail__head"
+        eyebrow={
+          <>
+            {viewedLabel(film.lastWatchedOn)} ·{" "}
+            {film.platform
+              ? `${film.platform.icon} ${film.platform.name}`
+              : "PLATAFORMA PENDIENTE"}
+          </>
+        }
+        media={
+          <div className="film-detail__poster">
+          {posterUrl ? (
+            <img src={mediaUrl(posterUrl)} alt={`Póster de ${title}`} />
+          ) : (
+            <span>🍿</span>
+          )}
+          </div>
+        }
+        metadata={
+          <>
+          {tmdb?.originalTitle && tmdb.originalTitle !== title && (
+            <p className="tmdb-original-title">{tmdb.originalTitle}</p>
+          )}
+          <div className="genre-pills genre-pills--detail">
+            {genres.map((genre) => (
+              <span key={genre}>{genre}</span>
+            ))}
+          </div>
+          </>
+        }
+        summary={
+          <p className="film-synopsis">
+            {synopsis || "Todavía no hay una sinopsis disponible."}
+          </p>
+        }
+        title={title}
+      />
+      <section className="rating-breakdown rating-breakdown--film" aria-label="Promedios de la película">
+        <div className="rating-breakdown__experience">
+          <span>🎬 Nota promedio</span>
+          <RatingStars label="Nota promedio de la película" value={reviewAverage} />
+          <small>Calculada sobre todas las reseñas cargadas.</small>
+        </div>
+        <div className="rating-breakdown__metrics">
+          {filmReviewMetrics.map((metric) => (
+            <div key={metric.key}>
+              <span>{metric.shortLabel}</span>
+              <RatingStars label={`${metric.label} promedio`} value={metricAverage(metric.key)} />
+            </div>
+          ))}
+        </div>
+      </section>
+      {tmdb && (
+        <section className="tmdb-film-info">
+          <div className="tmdb-film-stats">
+            <article>
+              <span>Estreno</span>
+              <strong>
+                {releaseDate ? releaseDate.slice(0, 4) : "Sin fecha"}
+              </strong>
+            </article>
+            <article>
+              <span>Duración</span>
+              <strong>
+                {tmdb.runtime ? `${tmdb.runtime} min` : "Sin dato"}
+              </strong>
+            </article>
+            <article>
+              <span>Dirección</span>
+              <strong>{tmdb.director ?? "Sin dato"}</strong>
+            </article>
+            <article>
+              <span>TMDB</span>
+              <strong>
+                {tmdb.voteAverage !== undefined
+                  ? `${tmdb.voteAverage.toLocaleString("es-AR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/10`
+                  : "Sin puntaje"}
+              </strong>
+              {tmdb.voteCount !== undefined && (
+                <small>{tmdb.voteCount.toLocaleString("es-AR")} votos</small>
+              )}
+            </article>
+          </div>
+          {tmdb.trailerUrl && (
+            <a
+              className="tmdb-trailer-link"
+              href={tmdb.trailerUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Ver tráiler en YouTube <span aria-hidden="true">↗</span>
+            </a>
+          )}
+          {!!cast.length && (
+            <section className="tmdb-cast">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">DESDE TMDB</p>
+                  <h2>El reparto</h2>
+                </div>
+              </div>
+              <div className="tmdb-cast-grid">
+                {visibleCast.map((member) => (
+                  <article key={`${member.name}-${member.character ?? ""}`}>
+                    {member.profileUrl ? (
+                      <img
+                        src={mediaUrl(member.profileUrl)}
+                        alt={`Foto de ${member.name}`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span aria-hidden="true">🎭</span>
+                    )}
+                    <div>
+                      <h3 title={member.name}>{member.name}</h3>
+                      <p title={member.character || "Reparto"}>{member.character || "Reparto"}</p>
+                    </div>
+                  </article>
+                ))}
+                {hiddenCastCount > 0 && <article className="tmdb-cast-grid__more" aria-label={`${hiddenCastCount} integrantes más`}><strong>+{hiddenCastCount}</strong><small>más</small></article>}
+              </div>
+            </section>
+          )}
+          {!!recommendations.length && (
+            <section className="tmdb-cast tmdb-recommendations">
+              <div className="section-title">
+                <div>
+                  <p className="eyebrow">DESDE TMDB</p>
+                  <h2>Recomendaciones</h2>
+                </div>
+              </div>
+              <div className="tmdb-cast-grid">
+                {recommendations.map((recommendation) => (
+                  <article key={recommendation.tmdbId}>
+                    {recommendation.posterUrl ? (
+                      <img
+                        src={mediaUrl(recommendation.posterUrl)}
+                        alt={`Póster de ${recommendation.title ?? 'película recomendada'}`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span aria-hidden="true">🍿</span>
+                    )}
+                    <div>
+                      <h3 title={recommendation.title}>{recommendation.title ?? 'Sin título'}</h3>
+                      <p>{recommendation.releaseDate?.slice(0, 4) ?? 'Sin fecha'}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
+          <p className="tmdb-attribution">
+            Datos e imágenes de{" "}
+            <a
+              href="https://www.themoviedb.org/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              TMDB
+            </a>
+            . This product uses the TMDB API but is not endorsed or certified by
+            TMDB.
+          </p>
+        </section>
+      )}
+      <section className="watch-counter" aria-label="Contador de veces vistas">
+        <div className="watch-counter__content">
+          <p className="eyebrow">HISTORIAL COMPARTIDO</p>
+          <h2>
+            {film.watchedCount === 0
+              ? "Todavía no la vieron"
+              : `${film.watchedCount} ${film.watchedCount === 1 ? "vez" : "veces"}`}
+          </h2>
+          <p>Última vista: {viewedLabel(film.lastWatchedOn)}</p>
+        </div>
+      </section>
+      <section className="reviews-section">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">HISTORIAL DE VISTAS</p>
+            <h2>Vistas registradas</h2>
+          </div>
+          <strong>{views.length}</strong>
+        </div>
+        {!!views.length && (
+          <div className="item-date-pager" aria-label="Navegar vistas">
+            <label>
+              Vista #{visitNumber}
+              <select
+                value={selectedViewId ?? ""}
+                onChange={(event) =>
+                  setSelectedViewId(Number(event.target.value))
+                }
+              >
+                {views.map((view, index) => (
+                  <option key={view.id} value={view.id}>
+                    Vista #{views.length - index} ·{" "}
+                      {viewedLabel(view.watchedOn)}{specialDateOptionSuffix(view.watchedOn, specialDateList)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {selectedView && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button><Button icon="🗑️" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button></div>}
+          </div>
+        )}
+        {selectedView && (
+          <>
+            <p className="muted">
+              Vista del{" "}
+                {viewedLabel(selectedView.watchedOn)}<SpecialDateLabels date={selectedView.watchedOn} specialDates={specialDateList} />.
+              Registrada por {selectedView.createdBy}; última edición de {selectedView.updatedBy}.
+            </p>
+            <div className="section-title section-title--compact">
+              <div>
+                <p className="eyebrow">RESEÑAS DE ESTA VISTA</p>
+                <h2>Qué les pareció</h2>
+              </div>
+              <strong>{selectedView.reviews.length}/2</strong>
+            </div>
+            <div className="film-review-columns">
+              {selectedView.reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  visitNumber={visitNumber}
+                />
+              ))}
+            </div>
+            <div className="experience-review-action">
+              <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>
+                {ownReview ? "Editar reseña" : "Agregar reseña"}
+              </Button>
+            </div>
+          </>
+        )}
+        {!views.length && (
+          <p className="empty-state">
+            Todavía no hay vistas. Registren la primera cuando la vean.
+          </p>
+        )}
+      </section>
+      {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
+      {addingView && (
+        <FilmViewForm
+          film={film}
+          onClose={() => setAddingView(false)}
+          onSaved={(view) => {
+            setSelectedViewId(view.id);
+            setAddingView(false);
+          }}
+        />
+      )}
+      {editingView && (
+        <FilmViewForm
+          film={film}
+          view={editingView}
+          onClose={() => setEditingView(undefined)}
+          onSaved={(view) => {
+            setSelectedViewId(view.id);
+            setEditingView(undefined);
+          }}
+        />
+      )}
+      {reviewing && (
+        <FilmReviewForm
+          film={film}
+          view={reviewing.view}
+          review={reviewing.review}
+          onClose={() => setReviewing(undefined)}
+        />
+      )}
+      {confirmingDelete && (
+        <ConfirmDialog
+          title="¿Borrar esta película?"
+          message={
+            remove.error
+              ? remove.error.message
+              : "Se eliminará de la lista junto con sus vistas y reseñas."
+          }
+          confirmLabel="Borrar película"
+          pending={remove.isPending}
+          onClose={() => setConfirmingDelete(false)}
+          onConfirm={() => remove.mutate()}
+        />
+      )}
+      {confirmingDeleteView && (
+        <ConfirmDialog
+          title="¿Borrar esta vista?"
+          message={
+            removeView.error
+              ? removeView.error.message
+              : `También se eliminarán sus ${confirmingDeleteView.reviews.length} reseña${confirmingDeleteView.reviews.length === 1 ? "" : "s"}.`
+          }
+          confirmLabel="Borrar vista"
+          pending={removeView.isPending}
+          onClose={() => setConfirmingDeleteView(undefined)}
+          onConfirm={() => removeView.mutate(confirmingDeleteView)}
+        />
+      )}
     </section>
-    <section className="reviews-section">
-      <div className="section-title"><div><p className="eyebrow">HISTORIAL DE VISTAS</p><h2>Reseñas</h2></div><strong>{film.reviews.length}</strong></div>
-      {!!reviewDates.length && <div className="item-date-pager" aria-label="Navegar reseñas por fecha"><button type="button" className="date-chevron" aria-label="Ver vista más reciente" disabled={selectedReviewIndex <= 0} onClick={() => setSelectedReviewDate(reviewDates[selectedReviewIndex - 1])}>‹</button><label>Vista #{visitNumber}<select value={selectedReviewDate} onChange={event => setSelectedReviewDate(event.target.value)}>{reviewDates.map((date, index) => <option key={date} value={date}>Vista #{reviewDates.length - index} · {viewedLabel(date)}</option>)}</select></label><button type="button" className="date-chevron" aria-label="Ver vista anterior" disabled={selectedReviewIndex < 0 || selectedReviewIndex >= reviewDates.length - 1} onClick={() => setSelectedReviewDate(reviewDates[selectedReviewIndex + 1])}>›</button></div>}
-      <div className="film-review-columns">{reviewsForDate.map(review => <ReviewCard key={review.id} review={review} visitNumber={visitNumber} own={review.author === session.get()?.username} onEdit={() => setEditingReview(review)} />)}</div>
-      {!film.reviews.length && <p className="empty-state">Todavía no hay reseñas. Registren la primera vista.</p>}
-    </section>
-    {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
-    {reviewing && <FilmReviewForm film={film} onClose={() => setReviewing(false)} />}
-    {editingReview && <FilmReviewForm film={film} review={editingReview} onClose={() => setEditingReview(undefined)} />}
-    {confirmingDelete && <ConfirmDialog title="¿Borrar esta película?" message="Se eliminará de la lista junto con sus reseñas." confirmLabel="Borrar película" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}
-  </section>;
+  );
 }
 
-function ReviewCard({ review, visitNumber, own, onEdit }: { review: FilmReview; visitNumber: number; own: boolean; onEdit: () => void }) {
-  return <article className="film-review-card"><div><span className="review-avatar">{review.author[0].toUpperCase()}</span><h3>{review.author === 'tomas' ? 'Tomás' : 'Avril'}</h3>{own && <button className="icon-edit" type="button" aria-label="Editar reseña" onClick={onEdit}>✎</button>}</div><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><div className="film-review-metrics">{filmReviewMetrics.map(metric => { const value = review.metrics?.[metric.key]; return <div key={metric.key}><span>{metric.shortLabel}</span><SegmentedLevel label={`${metric.label} de ${review.author}`} levels={metric.levels} value={value} /><small>{metricLevel(metric.levels, value)}</small></div>; })}</div><p className="film-review-comment">{review.comment || 'Sin comentario todavía.'}</p><small>Vista #{visitNumber} · {viewedLabel(review.watchedOn)}</small></article>;
+function ReviewCard({
+  review,
+  visitNumber,
+}: {
+  review: FilmReview;
+  visitNumber: number;
+}) {
+  const own = review.author === session.get()?.username;
+   const author = review.author;
+  const initial = author[0].toUpperCase();
+  const authorLabel =
+    review.author === "tomas"
+      ? "Tomás"
+      : review.author === "avril"
+        ? "Avril"
+        : author;
+  return (
+    <article className="film-review-card">
+      <div>
+        <span className="review-avatar">{initial}</span>
+        <h3>{own ? "Tu reseña" : `Reseña de ${authorLabel}`}</h3>
+      </div>
+      <div className="review-score">
+        <StarRating
+          label={`Puntuación de ${authorLabel}`}
+          value={review.rating}
+        />
+        <span>{scoreLabel(review.rating)}</span>
+      </div>
+      <div className="film-review-metrics">
+        {filmReviewMetrics.map((metric) => {
+          const value = review.metrics?.[metric.key];
+          return (
+            <div key={metric.key}>
+              <span>{metric.shortLabel}</span>
+              <SegmentedLevel
+                label={`${metric.label} de ${authorLabel}`}
+                levels={metric.levels}
+                value={value}
+              />
+              <small>{metricLevel(metric.levels, value)} · {scoreLabel(value)}</small>
+            </div>
+          );
+        })}
+      </div>
+      <p className="film-review-comment">
+        {review.comment || "Sin comentario todavía."}
+      </p>
+      {review.favoriteCharacter && <small>Personaje favorito: {review.favoriteCharacter}</small>}
+      <small>Vista #{visitNumber}</small>
+    </article>
+  );
+}
+
+function scoreLabel(value?: number) {
+  return value === undefined || value === null ? "—" : `${value}/5`;
 }
