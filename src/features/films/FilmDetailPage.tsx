@@ -487,7 +487,7 @@ function ReviewCard({
           );
         })}
       </div>
-      <p className="film-review-comment">
+      <p className="review-comment film-review-comment">
         {review.comment || "Sin comentario todavía."}
       </p>
       {review.favoriteCharacter && <small>Personaje favorito: {review.favoriteCharacter}</small>}

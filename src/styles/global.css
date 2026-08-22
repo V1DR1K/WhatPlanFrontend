@@ -504,6 +504,9 @@ a {
   resize: vertical;
   line-height: 1.45;
 }
+.review-comment {
+  white-space: pre-wrap;
+}
 .close {
   position: absolute;
   right: 8px;

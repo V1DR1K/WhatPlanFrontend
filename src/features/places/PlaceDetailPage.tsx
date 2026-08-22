@@ -255,7 +255,7 @@ function VisitExperience({
                 <StarRating label={`Puntuación de ${review.author}`} value={review.overall} />
                 <span>{review.overall}/5</span>
               </div>
-              <p>{review.comment || "Sin comentario."}</p>
+              <p className="review-comment">{review.comment || "Sin comentario."}</p>
               <div className="place-review__metrics">
                 {visitMetrics.map(([key, label]) => (
                   <span key={key}>
@@ -282,7 +282,7 @@ function VenueReview({ review }: { review: PlaceReview }) {
   const metrics = [
     ["location", "Ubicación"], ["heating", "Calefacción"], ["bathrooms", "Baños"], ["exterior", "Exterior"], ["seating", "Asientos"], ["service", "Atención"], ["ambiance", "Ambiente"],
   ] as const;
-  return <article className="place-review"><div className="place-review__heading"><h3>Opinión de {review.author}</h3></div>{review.comment && <p>{review.comment}</p>}<div className="place-review__metrics">{metrics.map(([key, label]) => <span key={key}><b>{label}</b><strong>{scoreLabel(review[key])}</strong></span>)}</div></article>;
+  return <article className="place-review"><div className="place-review__heading"><h3>Opinión de {review.author}</h3></div>{review.comment && <p className="review-comment">{review.comment}</p>}<div className="place-review__metrics">{metrics.map(([key, label]) => <span key={key}><b>{label}</b><strong>{scoreLabel(review[key])}</strong></span>)}</div></article>;
 }
 
 function scoreLabel(value?: number) {

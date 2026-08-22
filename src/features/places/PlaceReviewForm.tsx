@@ -14,7 +14,7 @@ export function PlaceReviewForm({ place, review, onClose }: { place: Place; revi
  const qc = useQueryClient();
  const [scores, setScores] = useState<Record<Metric, number | undefined>>(() => Object.fromEntries(metrics.map(([key]) => [key, review?.[key]])) as Record<Metric, number | undefined>);
  const mutation = useMutation({
-  mutationFn: (form: FormData) => savePlaceReview(place.id, { comment: String(form.get("comment")).trim() || undefined, ...scores }),
+   mutationFn: (form: FormData) => savePlaceReview(place.id, { comment: String(form.get("comment")) || undefined, ...scores }),
   onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ["place", place.id] }), qc.invalidateQueries({ queryKey: ["places"] })]); showNotice("Actualizamos la opinión del lugar."); onClose(); },
  });
   const score = (key: Metric, label: string) => <label className="score-field" key={key}>{label}<span className="place-score-input"><StarRating label={label} value={scores[key]} onChange={(value) => setScores((current) => ({ ...current, [key]: value }))} />{scores[key] !== undefined && <Button variant="tertiary" icon="✕" type="button" onClick={() => setScores((current) => ({ ...current, [key]: undefined }))}>Quitar</Button>}</span></label>;
