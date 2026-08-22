@@ -17,7 +17,7 @@ export const normalizeSession = (value: CentralTokenResponse): Session => {
   token,
   refreshToken: value.refreshToken,
   username,
-  role: value.role ?? value.user?.role ?? (username === 'avril' ? 'ADMIN' : 'USER'),
+  role: value.role ?? value.user?.role ?? 'USER',
   user: { mustChangePassword: value.user?.mustChangePassword ?? false },
   };
 };
