@@ -7,7 +7,8 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
-import { mediaUrl, session } from "../../lib/api";
+import { session } from "../../lib/api";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { showNotice } from "../../lib/flash";
 import type { Cooking, CookingReview, SpecialDate } from "../../types/domain";
 import { CookingForm } from "./CookingForm";
@@ -51,11 +52,6 @@ export function HomeRecipeDetailPage() {
   const ratingAverage = average(reviews.map((review) => review.rating));
   const complexityAverage = average(reviews.map((review) => review.complexity ?? 1));
   const tasteAverage = average(reviews.map((review) => review.taste ?? review.rating));
-  const invalidate = () => Promise.all([
-    qc.invalidateQueries({ queryKey: ["recipes"] }),
-    qc.invalidateQueries({ queryKey: ["recipe", id] }),
-    qc.invalidateQueries({ queryKey: ["cookings"] }),
-  ]);
   const removeRecipe = useMutation({
     mutationFn: () => deleteRecipe(id),
     onSuccess: async () => {
@@ -72,7 +68,7 @@ export function HomeRecipeDetailPage() {
   }, [list, selectedCookingId]);
 
   if (!validId || recipe.isError || (!recipe.isLoading && !recipe.data)) {
-    return <section className="home-recipe-detail"><p className="form-error">No pudimos abrir esta receta.</p></section>;
+    return <section className="home-recipe-detail"><p className="form-error" role="alert">No pudimos abrir esta receta.</p></section>;
   }
   if (recipe.isLoading) return <LoadingSkeleton variant="detail" />;
 
@@ -93,7 +89,7 @@ export function HomeRecipeDetailPage() {
         eyebrow="WHOCOOK · RECETA COMPARTIDA"
         media={
           <div className="home-recipe-detail__photo">
-          {profilePhoto ? <img className="home-recipe-detail__image" src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
+          {profilePhoto ? <MediaImage className="home-recipe-detail__image" src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
           </div>
         }
         metadata={

@@ -1,8 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";
-import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { Button } from "../../components/ui/Button";
@@ -20,104 +19,16 @@ import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useCatalogPageSize } from "../../lib/settings";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
   type CatalogSortValue,
 } from "../../lib/catalogSort";
-type FilterOption = { id: number; label: string };
-
 const positiveIdFromQuery = (value: string | null) => {
   const id = Number(value);
   return Number.isInteger(id) && id > 0 ? id : undefined;
 };
-function FoodFilterChips({
-  label,
-  allLabel,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  allLabel: string;
-  options: FilterOption[];
-  value?: number;
-  onChange: (value?: number) => void;
-}) {
-  const [showMore, setShowMore] = useState(false);
-  const selected = (option?: FilterOption) =>
-    option ? option.id === value : !value;
-  const choose = (option?: FilterOption) => {
-    onChange(option?.id);
-    setShowMore(false);
-  };
-  return (
-    <section
-      className="food-filter"
-      aria-label={`Filtrar por ${label.toLowerCase()}`}
-    >
-      <span>{label}</span>
-      <div className="chips">
-          <button
-            aria-pressed={selected()}
-            className={selected() ? "selected" : ""}
-            onClick={() => choose()}
-            type="button"
-        >
-          {allLabel}
-        </button>
-        {options.slice(0, 5).map((option) => (
-          <button
-            aria-pressed={selected(option)}
-            key={option.id}
-            className={selected(option) ? "selected" : ""}
-            onClick={() => choose(option)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        ))}
-        {options.length > 5 && (
-          <button
-            className="food-filter-more"
-            onClick={() => setShowMore(true)}
-            aria-label={`Ver más ${label.toLowerCase()}`}
-            type="button"
-          >
-            •••
-          </button>
-        )}
-      </div>
-      {showMore && (
-        <Modal onClose={() => setShowMore(false)}>
-          <p className="eyebrow">FILTRAR POR {label.toUpperCase()}</p>
-          <h2>Elegí una opción</h2>
-          <div className="chips food-filter-dialog">
-            <button
-              aria-pressed={selected()}
-              className={selected() ? "selected" : ""}
-              onClick={() => choose()}
-              type="button"
-            >
-              {allLabel}
-            </button>
-            {options.map((option) => (
-              <button
-                aria-pressed={selected(option)}
-                key={option.id}
-                className={selected(option) ? "selected" : ""}
-                onClick={() => choose(option)}
-                type="button"
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </Modal>
-      )}
-    </section>
-  );
-}
 function PlaceSection({
   status,
   category,
@@ -144,7 +55,7 @@ function PlaceSection({
   const query = useInfiniteQuery({
     // A changed search or sort starts a distinct infinite query at cursor zero.
     queryKey: ["places", status, category, highlightTagId, search, sort, pageSize],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getPlaces(
         category,
         pageParam,
@@ -153,6 +64,7 @@ function PlaceSection({
         search || undefined,
         sort || undefined,
         pageSize,
+        signal,
       ),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -202,7 +114,7 @@ export function DiscoverPage() {
   const [showArchived, setShowArchived] = useState(false);
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
-  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredSearch = useDebouncedValue(searchTerm);
   const qc = useQueryClient();
   const categories = useQuery({
     queryKey: ["categories"],
@@ -214,7 +126,7 @@ export function DiscoverPage() {
   });
   const suggestions = useQuery({
     queryKey: ["place-suggestions", deferredSearch],
-    queryFn: () => getPlaces(undefined, undefined, undefined, undefined, deferredSearch, undefined, 10),
+    queryFn: ({ signal }) => getPlaces(undefined, undefined, undefined, undefined, deferredSearch, undefined, 10, signal),
     enabled: Boolean(deferredSearch),
   });
   const archived = useQuery({ queryKey: ["places", "archived"], queryFn: getArchivedPlaces, enabled: showArchived });
@@ -306,7 +218,7 @@ export function DiscoverPage() {
         hasFilter={hasFilter}
         pageSize={pageSize}
       />
-      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
+      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error" role="alert">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state" role="status">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
     </SectionShell>
   );

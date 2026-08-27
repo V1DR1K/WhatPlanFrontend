@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { Modal } from "../../components/ui/Modal";
@@ -13,6 +13,7 @@ import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { getActivities, getFunCategories } from "./whyFun";
 import {
   catalogSortFromQuery,
@@ -49,7 +50,7 @@ function useActivityPages({
 }) {
   return useInfiniteQuery({
     queryKey: ["activities", visited, categoryId, subcategoryId, search, sort, pageSize],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getActivities({
         categoryId,
         subcategoryId,
@@ -58,6 +59,7 @@ function useActivityPages({
         sort: sort || undefined,
         cursor: pageParam,
         size: pageSize,
+        signal,
       }),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -80,7 +82,7 @@ function ActivitySection({
   const activities = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="fun-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {activities.length} actividades</strong></div>
-    {query.isError ? <p className="form-error">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
+    {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state" role="status">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -101,7 +103,7 @@ export function WhyFunPage() {
   const [creating, setCreating] = useState(false);
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
-  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredSearch = useDebouncedValue(searchTerm);
   const categories = useQuery({ queryKey: ["fun-categories"], queryFn: getFunCategories });
   const pendingActivities = useActivityPages({
     categoryId,
@@ -167,7 +169,7 @@ export function WhyFunPage() {
         <FilterChips label="Categorías" options={roots} selected={categoryId} onSelect={(id) => { setCategoryId(id); setSubcategoryId(undefined); }} />
         {categoryId && <FilterChips label="Subcategorías" options={subcategories} selected={subcategoryId} onSelect={setSubcategoryId} />}
       </section>
-      {categories.isError && <p className="form-error">No pudimos cargar las categorías.</p>}
+      {categories.isError && <p className="form-error" role="alert">No pudimos cargar las categorías.</p>}
       {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
         <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />

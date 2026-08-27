@@ -177,7 +177,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
         <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
           {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
         </Button>
-        {mutation.error && <p className="form-error">{mutation.error.message}</p>}
+        {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}
       </form>
     </Modal>
   );

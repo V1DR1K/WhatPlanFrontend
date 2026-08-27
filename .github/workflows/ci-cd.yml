@@ -1,6 +1,9 @@
 name: Frontend CI/CD
 on: {push: {branches: [main]}, pull_request: {branches: [main]}}
 permissions: {contents: read, packages: write}
+concurrency:
+  group: whatplan-frontend-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -9,6 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22, cache: npm}
       - run: npm ci
+      - run: npm run lint
+      - run: npm test
       - run: npm run build
       - uses: docker/login-action@v3
         if: github.event_name == 'push'

@@ -5,7 +5,8 @@ import { useInAppBackGuard } from "../../lib/backGuard";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
-import { mediaUrl, session } from "../../lib/api";
+import { session } from "../../lib/api";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { showNotice } from "../../lib/flash";
 import type { FilmReview, FilmView } from "../../types/domain";
 import { FilmForm } from "./FilmForm";
@@ -89,7 +90,7 @@ export function FilmDetailPage() {
     filmQuery.isError ||
     (!filmQuery.isLoading && !filmQuery.data)
   )
-    return <section className="film-detail"><p className="form-error">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
+    return <section className="film-detail"><p className="form-error" role="alert">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
   if (filmQuery.isLoading) return <LoadingSkeleton variant="detail" />;
 
   const film = filmQuery.data!;
@@ -150,7 +151,7 @@ export function FilmDetailPage() {
         media={
           <div className="film-detail__poster">
           {posterUrl ? (
-            <img src={mediaUrl(posterUrl)} alt={`Póster de ${title}`} />
+            <MediaImage src={posterUrl} alt={`Póster de ${title}`} width={342} height={513} />
           ) : (
             <span>🍿</span>
           )}
@@ -243,9 +244,11 @@ export function FilmDetailPage() {
                 {visibleCast.map((member) => (
                   <article key={`${member.name}-${member.character ?? ""}`}>
                     {member.profileUrl ? (
-                      <img
-                        src={mediaUrl(member.profileUrl)}
+                      <MediaImage
+                        src={member.profileUrl}
                         alt={`Foto de ${member.name}`}
+                        width={185}
+                        height={278}
                         loading="lazy"
                       />
                     ) : (
@@ -273,9 +276,11 @@ export function FilmDetailPage() {
                 {recommendations.map((recommendation) => (
                   <article key={recommendation.tmdbId}>
                     {recommendation.posterUrl ? (
-                      <img
-                        src={mediaUrl(recommendation.posterUrl)}
+                      <MediaImage
+                        src={recommendation.posterUrl}
                         alt={`Póster de ${recommendation.title ?? 'película recomendada'}`}
+                        width={342}
+                        height={513}
                         loading="lazy"
                       />
                     ) : (

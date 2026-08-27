@@ -9,7 +9,7 @@ export const getFunCategories = () => api<FunCategory[]>('/why-fun/categories');
 export const getAllFunCategories = () => api<FunCategory[]>('/why-fun/categories/all');
 export const saveFunCategory = (input: FunCategoryInput, id?: number) => api<FunCategory>(`/why-fun/categories${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const deleteFunCategory = (id: number) => api<void>(`/why-fun/categories/${id}`, { method: 'DELETE' });
-export const getActivities = (filters: { categoryId?: number; subcategoryId?: number; search?: string; visited?: boolean; sort?: string; cursor?: number; size?: number } = {}) => {
+export const getActivities = (filters: { categoryId?: number; subcategoryId?: number; search?: string; visited?: boolean; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
  const query = new URLSearchParams();
  if (filters.categoryId) query.set('categoryId', String(filters.categoryId));
   if (filters.subcategoryId) query.set('subcategoryId', String(filters.subcategoryId));
@@ -18,7 +18,7 @@ export const getActivities = (filters: { categoryId?: number; subcategoryId?: nu
   if (filters.sort) query.set('sort', filters.sort);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
-  return api<Slice<Activity>>(`/why-fun/activities${query.size ? `?${query}` : ''}`);
+   return api<Slice<Activity>>(`/why-fun/activities${query.size ? `?${query}` : ''}`, { signal: filters.signal });
 };
 export const getActivity = (id: number) => api<Activity>(`/why-fun/activities/${id}`);
 export const saveActivity = (input: ActivityInput, id?: number) => api<Activity>(`/why-fun/activities${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });

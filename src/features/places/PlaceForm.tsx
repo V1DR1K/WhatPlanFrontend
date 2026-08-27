@@ -149,7 +149,7 @@ export function PlaceForm({
         <Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto}>
           {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
         </Button>
-        {mutation.error && <p className="form-error">{mutation.error.message}</p>}
+        {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}
       </form>
     </Modal>
   );

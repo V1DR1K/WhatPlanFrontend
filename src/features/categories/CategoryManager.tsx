@@ -101,7 +101,7 @@ export function CategoryManager() {
         <label>Nombre<input value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} required autoFocus /></label>
         <label>Ícono<input value={draft.icon} onChange={event => setDraft({ ...draft, icon: event.target.value })} required /></label>
         <Button icon="➕" disabled={categoryMutation.isPending}>{categoryMutation.isPending ? 'Guardando…' : 'Agregar rubro'}</Button>
-        {categoryMutation.error && <p className="form-error">{categoryMutation.error.message}</p>}
+        {categoryMutation.error && <p className="form-error" role="alert">{categoryMutation.error.message}</p>}
       </form>
     </Modal>}
     {creatingTag && <Modal onClose={() => setCreatingTag(false)}>
@@ -111,7 +111,7 @@ export function CategoryManager() {
         <label>Nombre<input value={tagDraft.name} onChange={event => setTagDraft({ ...tagDraft, name: event.target.value })} required autoFocus /></label>
         <label>Ícono<input value={tagDraft.emoji} onChange={event => setTagDraft({ ...tagDraft, emoji: event.target.value })} required /></label>
         <Button icon="➕" disabled={tagMutation.isPending}>{tagMutation.isPending ? 'Guardando…' : 'Agregar etiqueta'}</Button>
-        {tagMutation.error && <p className="form-error">{tagMutation.error.message}</p>}
+        {tagMutation.error && <p className="form-error" role="alert">{tagMutation.error.message}</p>}
       </form>
     </Modal>}
     {editingCategory && <Modal onClose={() => setEditingCategory(undefined)}>
@@ -121,7 +121,7 @@ export function CategoryManager() {
         <label>Nombre<input value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} required autoFocus /></label>
         <label>Ícono<input value={draft.icon} onChange={event => setDraft({ ...draft, icon: event.target.value })} required /></label>
         <Button icon="💾" disabled={categoryMutation.isPending}>{categoryMutation.isPending ? 'Guardando…' : 'Guardar cambios'}</Button>
-        {categoryMutation.error && <p className="form-error">{categoryMutation.error.message}</p>}
+        {categoryMutation.error && <p className="form-error" role="alert">{categoryMutation.error.message}</p>}
       </form>
     </Modal>}
     {editingTag && <Modal onClose={() => setEditingTag(undefined)}>
@@ -131,7 +131,7 @@ export function CategoryManager() {
         <label>Nombre<input value={tagDraft.name} onChange={event => setTagDraft({ ...tagDraft, name: event.target.value })} required autoFocus /></label>
         <label>Ícono<input value={tagDraft.emoji} onChange={event => setTagDraft({ ...tagDraft, emoji: event.target.value })} required /></label>
         <Button icon="💾" disabled={tagMutation.isPending}>{tagMutation.isPending ? 'Guardando…' : 'Guardar cambios'}</Button>
-        {tagMutation.error && <p className="form-error">{tagMutation.error.message}</p>}
+        {tagMutation.error && <p className="form-error" role="alert">{tagMutation.error.message}</p>}
       </form>
     </Modal>}
     {deletingCategory && <ConfirmDialog

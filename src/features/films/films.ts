@@ -3,7 +3,7 @@ import type { Film, FilmGenreOption, FilmReview, FilmView, Slice, TmdbMovie, Wat
 
 export type FilmInput = { tmdbId?: number; title?: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; watchedOn?: string; genres: string[]; platformId?: number };
 export type PlatformInput = { name: string; icon: string; active: boolean };
-export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean; search?: string; sort?: string; cursor?: number; size?: number } = {}) => {
+export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean; search?: string; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();
   if (filters.genre) query.set('genre', filters.genre);
   if (filters.platformId) query.set('platformId', String(filters.platformId));
@@ -12,10 +12,10 @@ export const getFilms = (filters: { genre?: string; platformId?: number; watched
   if (filters.sort) query.set('sort', filters.sort);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
-  return api<Slice<Film>>(`/films${query.size ? `?${query}` : ''}`);
+  return api<Slice<Film>>(`/films${query.size ? `?${query}` : ''}`, { signal: filters.signal });
 };
 export const getFilm = (id: number) => api<Film>(`/films/${id}`);
-export const searchTmdbMovies = (query: string) => api<TmdbMovie[]>(`/tmdb/movies?${new URLSearchParams({ query })}`);
+export const searchTmdbMovies = (query: string, signal?: AbortSignal) => api<TmdbMovie[]>(`/tmdb/movies?${new URLSearchParams({ query })}`, { signal });
 export const getTmdbRecommendations = (tmdbId: number) => api<TmdbMovie[]>(`/tmdb/movies/${tmdbId}/recommendations`);
 export const saveFilm = (input: FilmInput, id?: number) => api<Film>(`/films${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const uploadFilmPhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Film>(`/films/${id}/photo`, { method: 'POST', body: data }); };

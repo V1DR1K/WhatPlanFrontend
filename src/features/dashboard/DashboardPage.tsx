@@ -4,7 +4,7 @@ export function DashboardPage() {
   return <section className="picks-dashboard">
     <div className="picks-orbit" aria-hidden="true">✨ <span>🍿</span> <b>🍋</b></div>
     <p className="eyebrow">WHATPLAN · NUESTRO RINCÓN</p>
-    <h1>Hola Tomás y Avril <span>✨</span><br />¿qué van a</h1> <h1> hacer hoy?</h1>
+      <h1>Hola Tomás y Avril <span>✨</span><br />¿qué van a hacer hoy?</h1>
     <p className="intro">Un lugar para anotar y reseñar todos sus planes</p>
     <div className="module-picker">
       <Link to="/app/food" className="module-card module-card--food"><div className="module-card__emoji">🍔<span>🍜</span></div><p>DÓNDE COMEMOS</p><h2>where<span>food</span></h2><small>Guarden cada lugar y opinión</small><b>Entrar a saborear →</b></Link>

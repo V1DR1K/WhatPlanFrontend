@@ -3,7 +3,7 @@ import type { Cooking, CookingReview, Home, MealType, Recipe, RecipeIngredient, 
 
 export type RecipeInput = { name: string; sourceUrl?: string; ingredients: RecipeIngredient[]; steps: RecipeStep[] };
 export type CookingInput = { home: Home; servings: number; cookedOn: string; mealType: MealType };
-export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boolean; sort?: string; cursor?: number; size?: number } = {}) => {
+export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boolean; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();
   if (filters.search) query.set('search', filters.search);
   if (filters.home) query.set('home', filters.home);
@@ -11,7 +11,7 @@ export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boo
   if (filters.sort) query.set('sort', filters.sort);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
-  return api<Slice<Recipe>>(`/how-cook/recipes${query.size ? `?${query}` : ''}`);
+  return api<Slice<Recipe>>(`/how-cook/recipes${query.size ? `?${query}` : ''}`, { signal: filters.signal });
 };
 export const getRecipe = (id: number) => api<Recipe>(`/how-cook/recipes/${id}`);
 export const saveRecipe = (input: RecipeInput, id?: number) => api<Recipe>(`/how-cook/recipes${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });

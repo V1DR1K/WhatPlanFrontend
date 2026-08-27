@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppRoutes } from './routes/AppRoutes';
 import { HeartRain } from './components/HeartRain';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import './styles/base.css';
 import './styles/global.css';
 import './styles/interactions.css';
@@ -24,4 +25,4 @@ window.addEventListener('vite:preloadError', (event) => {
   window.location.reload();
 });
 
-createRoot(document.getElementById('root')!).render(<StrictMode><HeartRain /><AppRoutes /></StrictMode>);
+createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><HeartRain /><AppRoutes /></ErrorBoundary></StrictMode>);

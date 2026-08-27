@@ -39,21 +39,21 @@ function LegacyAppRedirect() {
 
 function Admin() {
   const user = session.get();
-  return user?.role === 'ADMIN' || user?.username === 'avril'
+  return user?.role === 'ADMIN'
     ? <Suspense fallback={routeFallback}><CategoryManager /></Suspense>
     : <Navigate to="/app" replace />;
 }
 
 function PlatformAdmin() {
   const user = session.get();
-  return user?.role === 'ADMIN' || user?.username === 'avril'
+  return user?.role === 'ADMIN'
     ? <Suspense fallback={routeFallback}><PlatformManager /></Suspense>
     : <Navigate to="/app" replace />;
 }
 
 function FunAdmin() {
   const user = session.get();
-  return user?.role === 'ADMIN' || user?.username === 'avril'
+  return user?.role === 'ADMIN'
     ? <Suspense fallback={routeFallback}><FunCatalogManager /></Suspense>
     : <Navigate to="/app" replace />;
 }

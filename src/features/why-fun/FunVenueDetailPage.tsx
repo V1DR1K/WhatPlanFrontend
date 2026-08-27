@@ -8,7 +8,8 @@ import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
-import { mediaUrl, session } from "../../lib/api";
+import { session } from "../../lib/api";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { showNotice } from "../../lib/flash";
 import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types/domain";
 import { ActivityForm } from "./ActivityForm";
@@ -94,7 +95,7 @@ export function FunVenueDetailPage() {
   }, [list, selectedVisitId]);
 
   if (!validId || activity.isError || (!activity.isLoading && !activity.data)) {
-    return <section className="fun-detail"><p className="form-error">No pudimos abrir esta actividad.</p></section>;
+    return <section className="fun-detail"><p className="form-error" role="alert">No pudimos abrir esta actividad.</p></section>;
   }
   if (activity.isLoading) return <LoadingSkeleton variant="detail" />;
 
@@ -115,7 +116,7 @@ export function FunVenueDetailPage() {
         eyebrow={`ACTIVIDAD COMPARTIDA · ${value.category.icon} ${value.category.name}`}
         media={
           <div className="fun-detail__cover">
-          {profilePhoto ? <img src={mediaUrl(profilePhoto)} alt={`Foto de ${value.name}`} /> : <span>{value.subcategory.icon}</span>}
+          {profilePhoto ? <MediaImage src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <span>{value.subcategory.icon}</span>}
           </div>
         }
         metadata={

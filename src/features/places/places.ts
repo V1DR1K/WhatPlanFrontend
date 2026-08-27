@@ -24,6 +24,7 @@ export const getPlaces = (
   search?: string,
   sort?: CatalogSort,
   size = 12,
+  signal?: AbortSignal,
 ) => {
   const query = new URLSearchParams({ size: String(size) });
   if (categoryId) query.set("categoryId", String(categoryId));
@@ -32,7 +33,7 @@ export const getPlaces = (
   if (highlightTagId) query.set("highlightTagId", String(highlightTagId));
   if (search) query.set("search", search);
   if (sort) query.set("sort", sort);
-  return api<Slice<Place>>(`/places?${query}`);
+  return api<Slice<Place>>(`/places?${query}`, { signal });
 };
 export const getPlace = (id: number) => api<Place>(`/places/${id}`);
 export const savePlace = (input: PlaceInput, id?: number) =>

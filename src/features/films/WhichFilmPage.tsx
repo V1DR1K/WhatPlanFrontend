@@ -1,11 +1,10 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { FilmCard } from "./FilmCard";
 import { FilmForm } from "./FilmForm";
 import { getFilmGenres, getFilms, getPlatforms } from "./films";
-import { Modal } from "../../components/ui/Modal";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
@@ -15,101 +14,12 @@ import { SectionShell } from "../../components/ui/SectionShell";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import { useCatalogPageSize } from "../../lib/settings";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
   type CatalogSortValue,
 } from "../../lib/catalogSort";
-
-type FilterOption = { id: string | number; label: string };
-function FilterChips({
-  label,
-  allLabel,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  allLabel: string;
-  options: FilterOption[];
-  value?: string | number;
-  onChange: (value?: string | number) => void;
-}) {
-  const [showMore, setShowMore] = useState(false);
-  const selected = (option?: FilterOption) =>
-    option ? option.id === value : !value;
-  const choose = (option?: FilterOption) => {
-    onChange(option?.id);
-    setShowMore(false);
-  };
-
-  return (
-    <section
-      className="film-filter"
-      aria-label={`Filtrar por ${label.toLowerCase()}`}
-    >
-      <span>{label}</span>
-      <div className="chips">
-          <button
-            aria-pressed={selected()}
-            className={selected() ? "selected" : ""}
-            onClick={() => choose()}
-            type="button"
-        >
-          {allLabel}
-        </button>
-        {options.slice(0, 5).map((option) => (
-          <button
-            aria-pressed={selected(option)}
-            key={option.id}
-            className={selected(option) ? "selected" : ""}
-            onClick={() => choose(option)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        ))}
-        {options.length > 5 && (
-          <button
-            className="film-filter-more"
-            onClick={() => setShowMore(true)}
-            aria-label={`Ver más ${label.toLowerCase()}`}
-            type="button"
-          >
-            •••
-          </button>
-        )}
-      </div>
-      {showMore && (
-        <Modal onClose={() => setShowMore(false)}>
-          <p className="eyebrow">FILTRAR POR {label.toUpperCase()}</p>
-          <h2>Elegí una opción</h2>
-          <div className="chips film-filter-dialog">
-            <button
-              aria-pressed={selected()}
-              className={selected() ? "selected" : ""}
-              onClick={() => choose()}
-              type="button"
-            >
-              {allLabel}
-            </button>
-            {options.map((option) => (
-              <button
-                aria-pressed={selected(option)}
-                key={option.id}
-                className={selected(option) ? "selected" : ""}
-                onClick={() => choose(option)}
-                type="button"
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </Modal>
-      )}
-    </section>
-  );
-}
 
 function useFilmPages({
   genre,
@@ -128,7 +38,7 @@ function useFilmPages({
 }) {
   return useInfiniteQuery({
     queryKey: ["films", watched, genre, platformId, search, sort, pageSize],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getFilms({
         genre,
         platformId,
@@ -137,6 +47,7 @@ function useFilmPages({
         sort: sort || undefined,
         cursor: pageParam,
         size: pageSize,
+        signal,
       }),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -199,7 +110,7 @@ export function WhichFilmPage() {
   const [showForm, setShowForm] = useState(false);
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
-  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredSearch = useDebouncedValue(searchTerm);
   const pendingFilms = useFilmPages({
     genre: genre || undefined,
     platformId,
@@ -296,7 +207,7 @@ export function WhichFilmPage() {
           }
         />
       </section>
-      {(platforms.isError || genreOptions.isError) && <p className="form-error">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
+      {(platforms.isError || genreOptions.isError) && <p className="form-error" role="alert">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
       {pendingFilms.isLoading && watchedFilms.isLoading ? (
         <LoadingSkeleton variant="catalog" />
       ) : (

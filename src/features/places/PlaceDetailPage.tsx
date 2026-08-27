@@ -109,7 +109,7 @@ export function PlaceDetailPage() {
   }, [selectedVisitId, visits.data]);
 
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
-    return <section className="detail"><p className="form-error">No pudimos cargar este lugar.</p></section>;
+    return <section className="detail"><p className="form-error" role="alert">No pudimos cargar este lugar.</p></section>;
   }
   if (place.isLoading) return <LoadingSkeleton variant="detail" />;
 

@@ -23,7 +23,7 @@ export function AppLayout() {
   const previousHistoryIndex = useRef<number | undefined>(undefined);
   const user = session.get();
   const isAdmin = user?.role === 'ADMIN';
-  const canManageSection = isAdmin || user?.username === 'avril';
+  const canManageSection = isAdmin;
   const inFood = location.pathname.startsWith('/app/food');
   const inFilms = location.pathname.startsWith('/app/films');
   const inCook = location.pathname.startsWith('/app/how-cook');

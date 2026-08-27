@@ -13,6 +13,6 @@ type AsyncStateProps = {
 export function AsyncState({ empty, error, loading, onRetry }: AsyncStateProps) {
   if (loading) return <LoadingSkeleton variant="list" />;
   if (error) return <div className="async-state async-state--error" role="alert"><p>No pudimos cargar esta parte. Revisá tu conexión e intentá de nuevo.</p>{onRetry && <Button onClick={onRetry} type="button" variant="secondary">Reintentar</Button>}</div>;
-  if (empty) return <div className="async-state async-state--empty">{empty}</div>;
+  if (empty) return <div className="async-state async-state--empty" role="status">{empty}</div>;
   return null;
 }

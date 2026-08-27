@@ -1,9 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";
-import { useDeferredValue, useEffect, useState } from "react";
-import { mediaUrl } from "../../lib/api";
-import type { Home, Recipe } from "../../types/domain";
+import { useEffect, useState } from "react";
+import type { Home } from "../../types/domain";
 import { RecipeForm } from "./RecipeForm";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
@@ -12,6 +11,7 @@ import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
+import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { getRecipes } from "./homeRecipes";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
 import {
@@ -22,29 +22,6 @@ import {
 
 function homeFromQuery(value: string | null): Home | "ALL" {
   return value === "TOMAS" || value === "AVRIL" ? value : "ALL";
-}
-
-function LegacyRecipeCard({ recipe }: { recipe: Recipe }) {
-  const photo = recipe.thumbnailUrl ?? recipe.photoUrl;
-  const kpi = recipe.rating != null
-    ? { label: `Puntuación promedio: ${recipe.rating.toFixed(1)} de 5`, value: `★ ${recipe.rating.toFixed(1)}` }
-    : recipe.cookingCount
-      ? { label: `${recipe.cookingCount} ${recipe.cookingCount === 1 ? "cocinada registrada" : "cocinadas registradas"}`, value: `🍳 ${recipe.cookingCount}` }
-      : { label: "Pendiente de cocinar", value: "⌛ Pendiente" };
-  return (
-    <Link className="home-recipe-card-link" to={`/app/how-cook/${recipe.id}`}>
-      <article className="home-recipe-card">
-        {photo ? <img className="home-recipe-card__image" src={mediaUrl(photo)} alt={`Foto de ${recipe.name}`} loading="lazy" /> : <div className="home-recipe-card__empty">🍲</div>}
-        <div className="home-recipe-card__body">
-          <div className="home-recipe-card__heading">
-            <div><p>{recipe.ingredients.length} ingredientes · {recipe.steps.length} pasos</p><h3>{recipe.name}</h3></div>
-            <b className="home-recipe-card__rating" aria-label={kpi.label}>{kpi.value}</b>
-          </div>
-          <footer className="recipe-card-actions"><small>{recipe.homes.length ? recipe.homes.map((value) => value === "TOMAS" ? "🏠 Tomás" : "🏡 Avril").join(" · ") : "Sin cocinadas"}</small><span>Ver receta →</span></footer>
-        </div>
-      </article>
-    </Link>
-  );
 }
 
 function useRecipePages({
@@ -62,7 +39,7 @@ function useRecipePages({
 }) {
   return useInfiniteQuery({
     queryKey: ["recipes", cooked, home, search, sort, pageSize],
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       getRecipes({
         cooked,
         home,
@@ -70,6 +47,7 @@ function useRecipePages({
         sort: sort || undefined,
         cursor: pageParam,
         size: pageSize,
+        signal,
       }),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -92,7 +70,7 @@ function RecipeSection({
   const recipes = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="home-recipe-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {recipes.length} recetas</strong></div>
-    {query.isError ? <p className="form-error">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
+     {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state" role="status">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -110,7 +88,7 @@ export function HomeRecipesPage() {
   );
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
-  const deferredSearch = useDeferredValue(searchTerm);
+  const deferredSearch = useDebouncedValue(searchTerm);
   const pendingRecipes = useRecipePages({
     cooked: false,
     home: home === "ALL" ? undefined : home,

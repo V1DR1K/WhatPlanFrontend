@@ -65,7 +65,7 @@ export function PlatformManager() {
       <label>Nombre<input value={platform.name} onChange={event => setPlatform({ ...platform, name: event.target.value })} required autoFocus /></label>
       <label>Ícono<input value={platform.icon} maxLength={20} onChange={event => setPlatform({ ...platform, icon: event.target.value })} required /></label>
       <Button icon="💾" disabled={savePlatformMutation.isPending}>{savePlatformMutation.isPending ? 'Guardando…' : 'Guardar plataforma'}</Button>
-      {savePlatformMutation.error && <p className="form-error">{savePlatformMutation.error.message}</p>}
+      {savePlatformMutation.error && <p className="form-error" role="alert">{savePlatformMutation.error.message}</p>}
     </form>
   </Modal> : null;
   const genreForm = editingGenre || creatingGenre ? <Modal onClose={() => { setEditingGenre(undefined); setCreatingGenre(false); setGenre(emptyGenre); }}>
@@ -75,7 +75,7 @@ export function PlatformManager() {
       <label>Nombre<input value={genre.name} onChange={event => setGenre({ ...genre, name: event.target.value })} required autoFocus /></label>
       <label>Emoji<input value={genre.emoji} maxLength={20} onChange={event => setGenre({ ...genre, emoji: event.target.value })} required /></label>
       <Button icon="💾" disabled={saveGenreMutation.isPending}>{saveGenreMutation.isPending ? 'Guardando…' : 'Guardar género'}</Button>
-      {saveGenreMutation.error && <p className="form-error">{saveGenreMutation.error.message}</p>}
+      {saveGenreMutation.error && <p className="form-error" role="alert">{saveGenreMutation.error.message}</p>}
     </form>
   </Modal> : null;
 

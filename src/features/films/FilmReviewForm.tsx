@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Modal } from '../../components/ui/Modal';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { SegmentedLevel } from '../../components/ui/SegmentedLevel';
 import { StarRating } from '../../components/ui/StarRating';
@@ -16,6 +17,7 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
   const [rating, setRating] = useState(review?.rating ?? 4);
   const [favoriteCharacter, setFavoriteCharacter] = useState(review?.favoriteCharacter ?? "");
   const [metrics, setMetrics] = useState<Record<string, number>>(() => Object.fromEntries(filmReviewMetrics.map(metric => [metric.key, review?.metrics?.[metric.key] ?? 3])));
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const mutation = useMutation({
     mutationFn: (form: FormData) => {
       const input = { rating, comment: String(form.get('comment')) || undefined, favoriteCharacter: favoriteCharacter || undefined, metrics };
@@ -29,7 +31,7 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
   });
   const remove = useMutation({ mutationFn: () => deleteFilmReview(film.id, review!.id), onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['film', film.id] }), qc.invalidateQueries({ queryKey: ['films'] })]); showNotice('Eliminamos la reseña.'); onClose(); } });
 
-  return <Modal onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
+  return <><Modal onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
     <p className="eyebrow">{review ? 'EDITAR RESEÑA' : 'RESEÑA DE LA VISTA'}</p>
     <h2>{film.tmdb?.title ?? film.title}</h2>
     <p className="muted">Vista del {dateLabel(view.watchedOn)}</p>
@@ -38,7 +40,7 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
     <fieldset className="film-metric-fields"><legend>¿Cómo fue la película?</legend>{filmReviewMetrics.map(metric => <div className="film-metric-field" key={metric.key}><div><strong>{metric.label}</strong><small>{metricLevel(metric.levels, metrics[metric.key])}</small></div><SegmentedLevel label={metric.label} levels={metric.levels} value={metrics[metric.key]} onChange={value => setMetrics(current => ({ ...current, [metric.key]: value }))} /></div>)}</fieldset>
     <label>Reseña<textarea className="review-textarea" name="comment" defaultValue={review?.comment} placeholder="¿Qué te pareció?" /></label>
     <Button icon={review ? '💾' : '💬'} disabled={mutation.isPending || remove.isPending}>{mutation.isPending ? 'Guardando…' : review ? 'Guardar reseña' : 'Agregar reseña'}</Button>
-    {review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => remove.mutate()}>Borrar reseña</Button>}
-    {(mutation.error || remove.error) && <p className="form-error">{(mutation.error || remove.error)!.message}</p>}
-  </form></Modal>;
+    {review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirmingDelete(true)}>Borrar reseña</Button>}
+    {(mutation.error || remove.error) && <p className="form-error" role="alert">{(mutation.error || remove.error)!.message}</p>}
+  </form></Modal>{confirmingDelete && review && <ConfirmDialog title="¿Borrar esta reseña?" message="La reseña se eliminará definitivamente de esta vista." confirmLabel="Borrar reseña" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}</>;
 }

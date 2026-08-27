@@ -1,7 +1,6 @@
 import { useState, type CSSProperties, type MouseEventHandler } from "react";
-import { createPortal } from "react-dom";
-import { mediaUrl } from "../../lib/api";
-import { Button } from "./Button";
+import { MediaImage } from "./MediaImage";
+import { Modal } from "./Modal";
 
 export type PhotoOrientation = "landscape" | "portrait" | "square";
 
@@ -67,7 +66,7 @@ export function ResponsiveImage({
 }: ResponsiveImageProps) {
   const src = photoSource(mode, fullSrc, thumbnailSrc);
   if (!src) return null;
-  return <img className={className} src={mediaUrl(src)} alt={alt} width={width} height={height} loading={loading} decoding="async" onClick={onClick} />;
+  return <MediaImage className={className} src={src} alt={alt} width={width} height={height} loading={loading} decoding="async" onClick={onClick} />;
 }
 
 type AdaptivePhotoProps = {
@@ -105,33 +104,21 @@ export function AdaptivePhoto({
       >
         <ResponsiveImage className="adaptive-photo__image" alt={alt} fullSrc={resolvedFullSrc} height={height} loading="eager" mode="full" thumbnailSrc={thumbnailSrc} width={width} />
       </button>
-      {expanded && createPortal(
-        <div
-          aria-label={alt}
-          aria-modal="true"
+      {expanded && (
+        <Modal
+          backdropClassName="photo-lightbox-backdrop"
           className="photo-lightbox"
-          onClick={() => setExpanded(false)}
-          role="dialog"
+          onClose={() => setExpanded(false)}
+          title={`Foto ampliada: ${alt}`}
         >
-          <Button
-            className="photo-lightbox-close"
-            icon="✕"
-            type="button"
-            variant="icon"
-            aria-label="Cerrar foto ampliada"
-            title="Cerrar foto ampliada"
-            onClick={() => setExpanded(false)}
-          />
           <ResponsiveImage
             alt={`Foto ampliada: ${alt}`}
             fullSrc={resolvedFullSrc}
             loading="eager"
             mode="full"
-            onClick={(event) => event.stopPropagation()}
             thumbnailSrc={thumbnailSrc}
           />
-        </div>,
-        document.body,
+        </Modal>
       )}
     </>
   );

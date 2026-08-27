@@ -192,7 +192,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
         <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
           {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
         </Button>
-        {mutation.error && <p className="form-error">{mutation.error.message}</p>}
+        {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}
       </form>
     </Modal>
   );

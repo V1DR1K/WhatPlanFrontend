@@ -33,7 +33,7 @@ export function ChangePasswordPage() {
     <label>Contraseña actual<input type="password" autoComplete="current-password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} required /></label>
     <label>Nueva contraseña<input type="password" autoComplete="new-password" minLength={10} value={newPassword} onChange={event => setNewPassword(event.target.value)} required /></label>
     <label>Repetir contraseña<input type="password" autoComplete="new-password" minLength={10} value={confirmation} onChange={event => setConfirmation(event.target.value)} required /></label>
-    {error && <p className="form-error">{error}</p>}
+    {error && <p className="form-error" role="alert">{error}</p>}
     <button className="main-button">Cambiar contraseña</button>
   </form></main>;
 }
