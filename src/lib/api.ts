@@ -169,6 +169,7 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
     if (init.signal?.aborted) throw init.signal.reason;
     const fresh = await refreshOnce(startedAt);
     if (fresh) return api<T>(path, init, false);
+    clearMediaCache();
     session.clear();
     if (window.location.pathname !== '/login') window.location.assign('/login');
     throw new Error('Tu sesión venció. Ingresá de nuevo para continuar.');
@@ -195,9 +196,39 @@ export async function fetchMedia(path: string, signal?: AbortSignal) {
     if (signal?.aborted) throw signal.reason;
     const fresh = await refreshOnce(startedAt);
     if (fresh) return fetchMedia(path, signal);
+    clearMediaCache();
     session.clear();
     if (typeof window !== 'undefined' && window.location.pathname !== '/login') window.location.assign('/login');
   }
   if (!response.ok) throw new Error(await parseApiError(response));
   return response.blob();
+}
+
+const MEDIA_CACHE_LIMIT = 80;
+const mediaBlobCache = new Map<string, Promise<Blob>>();
+
+export function fetchCachedMedia(path: string) {
+  const key = mediaUrl(path);
+  const cached = mediaBlobCache.get(key);
+  if (cached) {
+    mediaBlobCache.delete(key);
+    mediaBlobCache.set(key, cached);
+    return cached;
+  }
+
+  const request = fetchMedia(path).catch((reason) => {
+    if (mediaBlobCache.get(key) === request) mediaBlobCache.delete(key);
+    throw reason;
+  });
+  mediaBlobCache.set(key, request);
+  while (mediaBlobCache.size > MEDIA_CACHE_LIMIT) mediaBlobCache.delete(mediaBlobCache.keys().next().value!);
+  return request;
+}
+
+export function prefetchMedia(path: string) {
+  return fetchCachedMedia(path).then(() => undefined).catch(() => undefined);
+}
+
+export function clearMediaCache() {
+  mediaBlobCache.clear();
 }

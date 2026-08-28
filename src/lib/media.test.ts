@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchMedia, isExternalMediaUrl } from './api';
+import { clearMediaCache, fetchCachedMedia, fetchMedia, isExternalMediaUrl } from './api';
 
 const storage = new Map<string, string>();
 
 beforeEach(() => {
   storage.clear();
+  clearMediaCache();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => storage.set(key, value),
@@ -45,5 +46,15 @@ describe('authenticated media', () => {
     controller.abort();
 
     await expect(promise).rejects.toBeDefined();
+  });
+
+  it('deduplicates concurrent requests for the same media URL', async () => {
+    storage.set('wherefood.session', JSON.stringify({ token: 'access-token', username: 'tom', role: 'USER' }));
+    const request = vi.fn(async () => new Response('photo', { status: 200 }));
+    vi.stubGlobal('fetch', request);
+
+    await Promise.all([fetchCachedMedia('/api/places/1/photo'), fetchCachedMedia('/api/places/1/photo')]);
+
+    expect(request).toHaveBeenCalledOnce();
   });
 });

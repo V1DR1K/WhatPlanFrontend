@@ -1,42 +1,63 @@
-import { useEffect, useState, type ImgHTMLAttributes } from 'react';
-import { fetchMedia, isExternalMediaUrl } from '../../lib/api';
+import { useEffect, useRef, useState, type ImgHTMLAttributes } from 'react';
+import { fetchCachedMedia, isExternalMediaUrl } from '../../lib/api';
 
 type MediaImageProps = ImgHTMLAttributes<HTMLImageElement> & {
   src: string;
 };
 
-export function MediaImage({ alt, className, src, ...props }: MediaImageProps) {
+export function MediaImage({ alt, className, loading = 'lazy', src, ...props }: MediaImageProps) {
   const [resolvedSrc, setResolvedSrc] = useState<string>(() => isExternalMediaUrl(src) ? src : '');
   const [error, setError] = useState<string>();
+  const [shouldLoad, setShouldLoad] = useState(loading !== 'lazy');
+  const placeholderRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     if (isExternalMediaUrl(src)) {
       setResolvedSrc(src);
       setError(undefined);
+      setShouldLoad(true);
       return;
     }
-    const controller = new AbortController();
     let active = true;
     let objectUrl: string | undefined;
     setResolvedSrc('');
     setError(undefined);
-    void fetchMedia(src, controller.signal).then((blob) => {
-      objectUrl = URL.createObjectURL(blob);
-      if (!active) {
-        URL.revokeObjectURL(objectUrl);
-        return;
+    const load = () => {
+      setShouldLoad(true);
+      void fetchCachedMedia(src).then((blob) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setResolvedSrc(objectUrl);
+      }).catch((reason: unknown) => {
+        if (active) setError(reason instanceof Error ? reason.message : 'No pudimos cargar la imagen.');
+      });
+    };
+    if (loading !== 'lazy' || typeof IntersectionObserver === 'undefined') {
+      load();
+      return () => {
+        active = false;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      };
+    }
+    const target = placeholderRef.current;
+    if (!target) {
+      load();
+      return () => { active = false; };
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        observer.disconnect();
+        load();
       }
-      setResolvedSrc(objectUrl);
-    }).catch((reason: unknown) => {
-      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'No pudimos cargar la imagen.');
-    });
+    }, { rootMargin: '300px' });
+    observer.observe(target);
     return () => {
       active = false;
-      controller.abort();
+      observer.disconnect();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [src]);
+  }, [loading, src]);
 
-  if (!resolvedSrc) return <span className={`media-image-placeholder${error ? ' media-image-placeholder--error' : ''}`} role="img" aria-label={alt} aria-live={error ? 'polite' : undefined} aria-busy={!error}>{error ? 'Imagen no disponible' : 'Cargando imagen…'}</span>;
-  return <img {...props} alt={alt} className={className} src={resolvedSrc} onError={() => { const failedSrc = resolvedSrc; setResolvedSrc(''); if (failedSrc.startsWith('blob:')) URL.revokeObjectURL(failedSrc); setError('No pudimos cargar la imagen.'); }} />;
+  if (!resolvedSrc) return <span ref={placeholderRef} className={`media-image-placeholder${error ? ' media-image-placeholder--error' : ''}`} role="img" aria-label={alt} aria-live={error ? 'polite' : undefined} aria-busy={!error}>{error ? 'Imagen no disponible' : shouldLoad ? 'Cargando imagen…' : ''}</span>;
+  return <img {...props} alt={alt} className={className} loading={loading} src={resolvedSrc} onError={() => { const failedSrc = resolvedSrc; setResolvedSrc(''); if (failedSrc.startsWith('blob:')) URL.revokeObjectURL(failedSrc); setError('No pudimos cargar la imagen.'); }} />;
 }

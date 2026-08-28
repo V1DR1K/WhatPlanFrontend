@@ -373,6 +373,9 @@ a {
 .star-control {
   display: inline-flex;
 }
+.star-control--display {
+  display: flex;
+}
 .star-control button {
   border: 0;
   padding: 0;
