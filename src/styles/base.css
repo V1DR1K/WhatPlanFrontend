@@ -20,7 +20,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: var(--bg); }
-#root { min-height: 100vh; isolation: isolate; overflow-x: clip; }
+#root { min-height: 100vh; min-height: 100svh; isolation: isolate; overflow-x: clip; }
 button, input, textarea, select { font: inherit; }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--section-focus, var(--violet)); outline-offset: 3px; }
 button { cursor: pointer; }
@@ -30,7 +30,7 @@ a { color: inherit; }
 .heart-rain span { position: absolute; top: -18vh; left: var(--heart-left); color: #ff83ba; font-size: var(--heart-size); line-height: 1; opacity: .28; text-shadow: 0 0 9px #ff4e9ab3; animation: heart-matrix-fall var(--heart-duration) linear var(--heart-delay) infinite; }
 @keyframes heart-matrix-fall { 0% { transform: translate3d(0, -18vh, 0) rotate(-12deg); } 70% { opacity: .36; } 100% { transform: translate3d(var(--heart-drift), 125vh, 0) rotate(20deg); opacity: .12; } }
 
-.login-shell { position: relative; z-index: 1; display: grid; min-height: 100vh; place-items: center; padding: 24px; }
+.login-shell { position: relative; z-index: 1; display: grid; min-height: 100vh; min-height: 100svh; place-items: center; padding: calc(24px + env(safe-area-inset-top, 0px)) calc(24px + env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) calc(24px + env(safe-area-inset-left, 0px)); }
 .login-card { width: min(420px, 100%); text-align: center; }
 .food-orbit { margin-bottom: 25px; font-size: 42px; letter-spacing: 16px; transform: rotate(-6deg); }
 .food-orbit span { display: inline-block; transform: translateY(-18px); }
