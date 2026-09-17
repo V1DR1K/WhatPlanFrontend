@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { clearMediaCache, fetchCachedMedia, fetchMedia, isExternalMediaUrl } from './api';
+import { clearMediaCache, fetchCachedMedia, fetchMedia, isExternalMediaUrl, session } from './api';
 
 const storage = new Map<string, string>();
 
 beforeEach(() => {
   storage.clear();
+  session.clear();
   clearMediaCache();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => storage.get(key) ?? null,
@@ -22,7 +23,7 @@ describe('authenticated media', () => {
   });
 
   it('sends the current bearer token for API media', async () => {
-    storage.set('wherefood.session', JSON.stringify({ token: 'access-token', username: 'tom', role: 'USER' }));
+    session.set({ token: 'access-token', username: 'tom', role: 'USER' });
     const request = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer access-token');
       return new Response('photo', { status: 200, headers: { 'content-type': 'image/jpeg' } });
@@ -49,7 +50,7 @@ describe('authenticated media', () => {
   });
 
   it('deduplicates concurrent requests for the same media URL', async () => {
-    storage.set('wherefood.session', JSON.stringify({ token: 'access-token', username: 'tom', role: 'USER' }));
+    session.set({ token: 'access-token', username: 'tom', role: 'USER' });
     const request = vi.fn(async () => new Response('photo', { status: 200 }));
     vi.stubGlobal('fetch', request);
 

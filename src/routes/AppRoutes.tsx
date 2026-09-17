@@ -1,10 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { session } from '../lib/api';
+import { restoreSession, session } from '../lib/api';
 import { LoginPage } from '../features/auth/LoginPage';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { AuthenticatedApp } from '../layouts/AuthenticatedApp';
 import { LandingPage } from '../features/landing/LandingPage';
+import { InvitePage } from '../features/couple/InvitePage';
 
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then(({ DashboardPage }) => ({ default: DashboardPage })));
 const DiscoverPage = lazy(() => import('../features/places/DiscoverPage').then(({ DiscoverPage }) => ({ default: DiscoverPage })));
@@ -65,15 +66,17 @@ function SettingsAdmin() {
 }
 
 function WhenDatesSettingsAdmin() {
-  return session.get()?.role === 'ADMIN'
-    ? <Suspense fallback={routeFallback}><WhenDatesSettingsPage /></Suspense>
-    : <Navigate to="/app" replace />;
+  return <Suspense fallback={routeFallback}><WhenDatesSettingsPage /></Suspense>;
 }
 
 export function AppRoutes() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => { void restoreSession().finally(() => setReady(true)); }, []);
+  if (!ready) return routeFallback;
   return <BrowserRouter><Routes>
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/invite/:token" element={<InvitePage />} />
     <Route path="/app" element={<Protected />}>
       <Route index element={<Suspense fallback={routeFallback}><DashboardPage /></Suspense>} />
       <Route path="food" element={<Suspense fallback={routeFallback}><DiscoverPage /></Suspense>} />

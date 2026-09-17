@@ -9,12 +9,11 @@ import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import type { Film } from "../../types/domain";
 import { filmReviewMetrics } from "./reviewMetrics";
 
-const sharedReviewers = new Set(["tomas", "avril"]);
 const sharedReviews = (film: Film) => {
   const latestByAuthor = new Map<string, Film["reviews"][number]>();
   for (const review of film.reviews) {
     const author = review.author?.toLowerCase();
-    if (author && sharedReviewers.has(author) && !latestByAuthor.has(author)) {
+    if (author && !latestByAuthor.has(author)) {
       latestByAuthor.set(author, review);
     }
   }

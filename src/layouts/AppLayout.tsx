@@ -23,12 +23,12 @@ export function AppLayout() {
   const previousHistoryIndex = useRef<number | undefined>(undefined);
   const user = session.get();
   const isAdmin = user?.role === 'ADMIN';
-  const canManageSection = isAdmin;
   const inFood = location.pathname.startsWith('/app/food');
   const inFilms = location.pathname.startsWith('/app/films');
   const inCook = location.pathname.startsWith('/app/how-cook');
   const inFun = location.pathname.startsWith('/app/why-fun');
   const inDates = location.pathname.startsWith('/app/when-dates');
+  const canManageSection = isAdmin || inDates;
   useLayoutEffect(() => {
     const origin = previousPathname.current;
     const parent = origin ? backTarget(origin) : undefined;
@@ -55,7 +55,7 @@ export function AppLayout() {
 
   const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : undefined;
   const sectionShell = section ? `${section}-shell` : '';
-  const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates && isAdmin ? '/app/when-dates/settings' : undefined;
+  const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates ? '/app/when-dates/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
 
   return <SectionThemeContext value={section}>
@@ -69,7 +69,7 @@ export function AppLayout() {
           </>}
           {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
           {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
-          <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
+          <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={async () => { await logout(); navigate('/login'); }} />
         </div>
       </header>
       <div className="page-stage" key={location.pathname}><Outlet /></div>

@@ -17,6 +17,7 @@ import { RecipeForm } from "./RecipeForm";
 import { deleteRecipe, getCookings, getRecipe } from "./homeRecipes";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
+import { getCouple } from "../couple/couple";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 const dateLabel = (date: string) =>
@@ -45,8 +46,10 @@ export function HomeRecipeDetailPage() {
   const recipe = useQuery({ queryKey: ["recipe", id], queryFn: () => getRecipe(id), enabled: validId });
   const cookings = useQuery({ queryKey: ["cookings", id], queryFn: () => getCookings({ recipeId: id }), enabled: validId });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
+  const couple = useQuery({ queryKey: ["couple"], queryFn: getCouple, enabled: validId });
   const list = cookings.data ?? [];
   const specialDateList = specialDates.data ?? [];
+  const members = couple.data?.members ?? [];
   const current = list.find((cooking) => cooking.id === selectedCookingId);
   const reviews = list.flatMap((cooking) => cooking.reviews);
   const ratingAverage = average(reviews.map((review) => review.rating));
@@ -133,7 +136,7 @@ export function HomeRecipeDetailPage() {
             </label>
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button></div>}
           </div>
-          {current && <CookingExperience cooking={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
+          {current && <CookingExperience cooking={current} specialDates={specialDateList} memberNames={members.map((member) => member.displayName)} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
         </> : <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
       </section>
       {editingRecipe && <RecipeForm recipe={value} onClose={() => setEditingRecipe(false)} />}
@@ -144,10 +147,11 @@ export function HomeRecipeDetailPage() {
   );
 }
 
-function CookingExperience({ cooking, specialDates, onReview, ownReview }: { cooking: Cooking; specialDates: SpecialDate[]; onReview: () => void; ownReview: boolean }) {
+function CookingExperience({ cooking, specialDates, memberNames, onReview, ownReview }: { cooking: Cooking; specialDates: SpecialDate[]; memberNames: string[]; onReview: () => void; ownReview: boolean }) {
+  const homeLabel = memberNames[cooking.home === "TOMAS" ? 0 : 1] ?? "Integrante";
   return (
     <div className="experience-detail">
-      <p className="muted">{dateLabel(cooking.cookedOn)}<SpecialDateLabels date={cooking.cookedOn} specialDates={specialDates} /> · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠 Casa de Tomás" : "🏡 Casa de Avril"} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
+      <p className="muted">{dateLabel(cooking.cookedOn)}<SpecialDateLabels date={cooking.cookedOn} specialDates={specialDates} /> · {mealName(cooking.mealType)} · {cooking.home === "TOMAS" ? "🏠" : "🏡"} {homeLabel} · {cooking.servings} porciones. Registrada por {cooking.createdBy}.</p>
       <section className="reviews-section">
         <div className="section-title section-title--compact"><div><p className="eyebrow">RESEÑAS</p><h2>Cómo salió</h2></div><strong>{cooking.reviews.length}</strong></div>
          {cooking.reviews.length ? <div className="home-recipe-review-columns">{cooking.reviews.map((review) => <article className="home-recipe-review" key={review.id}><div><span className="review-avatar">{review.author[0]?.toUpperCase()}</span><h3>Reseña de {review.author}</h3></div><div className="recipe-review-scores"><div className="review-score"><StarRating label={`Puntuación de ${review.author}`} value={review.rating} /><span>{scoreLabel(review.rating)}</span></div><div className="recipe-review-metric"><span>Sabor</span><RatingStars label={`Sabor de ${review.author}`} value={review.taste ?? review.rating} /><b>{scoreLabel(review.taste ?? review.rating)}</b></div><div className="recipe-review-metric"><span>Complejidad</span><RatingStars label={`Complejidad de ${review.author}`} value={review.complexity ?? 1} /><b>{scoreLabel(review.complexity ?? 1)}</b></div></div><p className="review-comment">{review.comment || "Sin comentario."}</p><small>Creada por {review.author} · editada por {review.updatedBy}</small></article>)}</div> : <p className="empty-state">Todavía no hay reseñas para esta cocinada.</p>}

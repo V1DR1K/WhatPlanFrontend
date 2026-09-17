@@ -15,7 +15,6 @@ export const normalizeSession = (value: CentralTokenResponse): Session => {
   if (!username || !token) throw new Error('La respuesta de autenticación está incompleta');
   return {
   token,
-  refreshToken: value.refreshToken,
   username,
   role: value.role ?? value.user?.role ?? 'USER',
   user: { mustChangePassword: value.user?.mustChangePassword ?? false },
@@ -48,19 +47,12 @@ function isApiUrl(path: string) {
 }
 
 export const session = {
-  get: (): Session | null => {
-    const raw = localStorage.getItem('wherefood.session');
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as Session;
-    } catch {
-      localStorage.removeItem('wherefood.session');
-      return null;
-    }
-  },
-  set: (value: Session) => localStorage.setItem('wherefood.session', JSON.stringify(value)),
-  clear: () => localStorage.removeItem('wherefood.session'),
+  get: (): Session | null => volatileSession,
+  set: (value: Session) => { volatileSession = value; },
+  clear: () => { volatileSession = null; },
 };
+
+let volatileSession: Session | null = null;
 
 const sleep = (milliseconds: number) => new Promise((resolve) => globalThis.setTimeout(resolve, milliseconds));
 const refreshedAfter = (startedAt: number) => Number(localStorage.getItem(REFRESH_MARKER_KEY) ?? 0) > startedAt;
@@ -122,14 +114,11 @@ async function refreshOnce(startedAt: number) {
   if (!refreshPromise) {
     const action = async () => {
       if (refreshedAfter(startedAt)) return session.get()?.token ?? null;
-      const refreshToken = session.get()?.refreshToken;
-      if (!refreshToken) return null;
       const request = requestSignal(undefined, DEFAULT_TIMEOUT_MS);
       try {
         const refreshed = await fetch(apiUrl('/auth/refresh'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
+          credentials: 'include',
           signal: request.signal,
         });
         if (!refreshed.ok) return null;
@@ -161,7 +150,7 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
   delete requestInit.signal;
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), { ...requestInit, headers, signal: request.signal });
+    response = await fetch(apiUrl(path), { ...requestInit, credentials: 'include', headers, signal: request.signal });
   } finally {
     request.cleanup();
   }
@@ -188,7 +177,7 @@ export async function fetchMedia(path: string, signal?: AbortSignal) {
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
   let response: Response;
   try {
-    response = await fetch(url, { headers, signal: request.signal });
+    response = await fetch(url, { credentials: 'include', headers, signal: request.signal });
   } finally {
     request.cleanup();
   }
@@ -202,6 +191,26 @@ export async function fetchMedia(path: string, signal?: AbortSignal) {
   }
   if (!response.ok) throw new Error(await parseApiError(response));
   return response.blob();
+}
+
+export async function restoreSession() {
+  const request = requestSignal(undefined, DEFAULT_TIMEOUT_MS);
+  try {
+    const response = await fetch(apiUrl('/auth/refresh'), {
+      method: 'POST',
+      credentials: 'include',
+      signal: request.signal,
+    });
+    if (!response.ok) return null;
+    const next = normalizeSession(await response.json() as CentralTokenResponse);
+    session.set(next);
+    return next;
+  } catch {
+    session.clear();
+    return null;
+  } finally {
+    request.cleanup();
+  }
 }
 
 const MEDIA_CACHE_LIMIT = 80;

@@ -457,12 +457,7 @@ function ReviewCard({
   const own = review.author === session.get()?.username;
    const author = review.author;
   const initial = author[0].toUpperCase();
-  const authorLabel =
-    review.author === "tomas"
-      ? "Tomás"
-      : review.author === "avril"
-        ? "Avril"
-        : author;
+  const authorLabel = author;
   return (
     <article className="film-review-card">
       <div>

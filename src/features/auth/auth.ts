@@ -7,4 +7,9 @@ export const login = (username: string, password: string) => api<CentralTokenRes
   return valueSession;
 });
 
-export const logout = () => { clearMediaCache(); session.clear(); };
+export const logout = async () => {
+  try { await api('/auth/logout', { method: 'POST' }); } finally {
+    clearMediaCache();
+    session.clear();
+  }
+};

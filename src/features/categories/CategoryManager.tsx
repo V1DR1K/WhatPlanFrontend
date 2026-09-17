@@ -69,7 +69,7 @@ export function CategoryManager() {
   return <section className="settings-page">
     <p className="eyebrow">CONFIGURACIÓN COMPARTIDA</p>
     <h2>Rubros y etiquetas</h2>
-    <p className="intro">Avril y Tomas pueden mantener este catálogo. Los rubros definen el tipo de lugar; las etiquetas cuentan por qué vale la pena ir.</p>
+    <p className="intro">Las personas administradoras pueden mantener este catálogo. Los rubros definen el tipo de lugar; las etiquetas cuentan por qué vale la pena ir.</p>
     <div className="settings-grid">
       <section>
         <h3>Rubros</h3>

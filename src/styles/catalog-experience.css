@@ -100,10 +100,8 @@ button.catalog-section-more:disabled {
 
 .rating-stars__star {
   display: inline-block;
-  background: linear-gradient(90deg, var(--section-accent) var(--rating-fill), color-mix(in srgb, var(--section-accent) 20%, var(--line)) var(--rating-fill));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+  color: var(--section-accent);
+  opacity: var(--rating-opacity, 1);
 }
 
 .rating-stars--empty {

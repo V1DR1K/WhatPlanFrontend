@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { useEffect, useState } from "react";
@@ -13,6 +14,7 @@ import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { getRecipes } from "./homeRecipes";
+import { getCouple } from "../couple/couple";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
 import {
   catalogSortFromQuery,
@@ -22,6 +24,11 @@ import {
 
 function homeFromQuery(value: string | null): Home | "ALL" {
   return value === "TOMAS" || value === "AVRIL" ? value : "ALL";
+}
+
+function homeLabel(home: Home, members: { displayName: string }[]) {
+  const index = home === "TOMAS" ? 0 : 1;
+  return members[index]?.displayName ?? `Casa ${index + 1}`;
 }
 
 function useRecipePages({
@@ -87,6 +94,8 @@ export function HomeRecipesPage() {
     catalogSortFromQuery(searchParams.get("sort")),
   );
   const pageSize = useCatalogPageSize();
+  const couple = useQuery({ queryKey: ["couple"], queryFn: getCouple });
+  const members = couple.data?.members ?? [];
   const searchTerm = search.trim();
   const deferredSearch = useDebouncedValue(searchTerm);
   const pendingRecipes = useRecipePages({
@@ -150,10 +159,10 @@ export function HomeRecipesPage() {
             </select>
           </label>
         </div>
-        <div className="home-recipe-home-filters" aria-label="Filtrar recetas por casa">
+        <div className="home-recipe-home-filters" aria-label="Filtrar recetas por integrante">
           <button aria-pressed={home === "ALL"} className={home === "ALL" ? "selected" : ""} type="button" onClick={() => setHome("ALL")}>Todas</button>
-          <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>🏠 Tomás</button>
-          <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
+          <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>🏠 {homeLabel("TOMAS", members)}</button>
+          <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 {homeLabel("AVRIL", members)}</button>
         </div>
       </section>
       {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
