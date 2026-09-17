@@ -15,6 +15,14 @@
     path /assets/*
     file
   }
+  @manifestFile {
+    path /manifest.webmanifest
+    file
+  }
+  @pwaIconFiles {
+    path /icons/*
+    file
+  }
   @api path /api/*
 
   route {
@@ -25,6 +33,16 @@
     # Missing hashed assets must remain 404s, never SPA HTML responses.
     handle @assets {
       header @assetFiles Cache-Control "public, max-age=31536000, immutable"
+      file_server
+    }
+
+    handle @manifestFile {
+      header Cache-Control "public, max-age=300, must-revalidate"
+      file_server
+    }
+
+    handle @pwaIconFiles {
+      header Cache-Control "public, max-age=31536000, immutable"
       file_server
     }
 
