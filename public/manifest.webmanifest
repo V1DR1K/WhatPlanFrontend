@@ -2,7 +2,7 @@
   "name": "WhatPlan | Todos sus planes",
   "short_name": "WhatPlan",
   "description": "Lugares, películas, recetas, salidas y recuerdos en un mismo rincón.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#121112",

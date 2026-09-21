@@ -27,7 +27,9 @@ const REFRESH_LOCK_KEY = 'wherefood.auth.refresh.lock';
 const REFRESH_MARKER_KEY = 'wherefood.auth.refresh.marker';
 const INSTANCE_ID = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 const DEFAULT_TIMEOUT_MS = 15_000;
-let refreshPromise: Promise<string | null> | null = null;
+type RefreshOutcome = { token: string | null; definitive: boolean };
+const refreshFailed = (definitive = false): RefreshOutcome => ({ token: null, definitive });
+let refreshPromise: Promise<RefreshOutcome> | null = null;
 
 export const apiUrl = (path: string) => `${BASE}${path}`;
 export const mediaUrl = (path: string) =>
@@ -99,12 +101,12 @@ export async function parseApiError(response: Response) {
   return text || fallback;
 }
 
-async function withRefreshLock(startedAt: number, action: () => Promise<string | null>) {
+async function withRefreshLock(startedAt: number, action: () => Promise<RefreshOutcome>) {
   const lockValue = `${INSTANCE_ID}:${Date.now()}`;
   const deadline = Date.now() + 12000;
   let acquired = false;
   while (Date.now() < deadline) {
-    if (refreshedAfter(startedAt)) return session.get()?.token ?? null;
+    if (refreshedAfter(startedAt)) return { token: session.get()?.token ?? null, definitive: false };
     const current = localStorage.getItem(REFRESH_LOCK_KEY);
     if (!current || Number(current.split(':')[1] ?? 0) < Date.now() - 12000) {
       localStorage.setItem(REFRESH_LOCK_KEY, lockValue);
@@ -113,7 +115,7 @@ async function withRefreshLock(startedAt: number, action: () => Promise<string |
     }
     await sleep(50);
   }
-  if (!acquired) return null;
+  if (!acquired) return refreshFailed();
   try { return await action(); }
   finally { if (localStorage.getItem(REFRESH_LOCK_KEY) === lockValue) localStorage.removeItem(REFRESH_LOCK_KEY); }
 }
@@ -121,22 +123,21 @@ async function withRefreshLock(startedAt: number, action: () => Promise<string |
 async function refreshOnce(startedAt: number) {
   if (!refreshPromise) {
     const action = async () => {
-      if (refreshedAfter(startedAt)) return session.get()?.token ?? null;
-      const refreshToken = session.get()?.refreshToken;
-      if (!refreshToken) return null;
+      if (refreshedAfter(startedAt)) return { token: session.get()?.token ?? null, definitive: false };
       const request = requestSignal(undefined, DEFAULT_TIMEOUT_MS);
       try {
         const refreshed = await fetch(apiUrl('/auth/refresh'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
+          credentials: 'include',
           signal: request.signal,
         });
-        if (!refreshed.ok) return null;
+        if (!refreshed.ok) return refreshFailed([400, 401, 403].includes(refreshed.status));
         const next = normalizeSession(await refreshed.json() as CentralTokenResponse);
         session.set(next);
         localStorage.setItem(REFRESH_MARKER_KEY, String(Date.now()));
-        return next.token;
+        return { token: next.token, definitive: false };
+      } catch {
+        return refreshFailed();
       } finally {
         request.cleanup();
       }
@@ -168,11 +169,14 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
   if (response.status === 401 && retry && !['/auth/login', '/auth/refresh', '/auth/logout'].includes(path)) {
     if (init.signal?.aborted) throw init.signal.reason;
     const fresh = await refreshOnce(startedAt);
-    if (fresh) return api<T>(path, init, false);
-    clearMediaCache();
-    session.clear();
-    if (window.location.pathname !== '/login') window.location.assign('/login');
-    throw new Error('Tu sesión venció. Ingresá de nuevo para continuar.');
+    if (fresh.token) return api<T>(path, init, false);
+    if (fresh.definitive) {
+      clearMediaCache();
+      session.clear();
+      if (window.location.pathname !== '/login') window.location.assign('/login');
+      throw new Error('Tu sesión venció. Ingresá de nuevo para continuar.');
+    }
+    throw new Error('No se pudo renovar la sesión por un problema de conexión. Tus credenciales siguen guardadas; intentá nuevamente.');
   }
   if (!response.ok) {
     throw new Error(await parseApiError(response));
@@ -195,10 +199,14 @@ export async function fetchMedia(path: string, signal?: AbortSignal) {
   if (response.status === 401) {
     if (signal?.aborted) throw signal.reason;
     const fresh = await refreshOnce(startedAt);
-    if (fresh) return fetchMedia(path, signal);
-    clearMediaCache();
-    session.clear();
-    if (typeof window !== 'undefined' && window.location.pathname !== '/login') window.location.assign('/login');
+    if (fresh.token) return fetchMedia(path, signal);
+    if (fresh.definitive) {
+      clearMediaCache();
+      session.clear();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') window.location.assign('/login');
+    } else {
+      throw new Error('No se pudo renovar la sesión por un problema de conexión. Tus credenciales siguen guardadas; intentá nuevamente.');
+    }
   }
   if (!response.ok) throw new Error(await parseApiError(response));
   return response.blob();

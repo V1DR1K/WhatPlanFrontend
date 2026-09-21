@@ -19,6 +19,16 @@ import './styles/motion.css';
 import './styles/loading.css';
 import './styles/landing.css';
 
+function isStandaloneApp() {
+  return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+// Older installed PWAs keep the start URL captured at installation time.
+// Route those installs into the authenticated shell so they can restore the session.
+if (window.location.pathname === '/' && isStandaloneApp()) {
+  window.history.replaceState(window.history.state, '', `/app${window.location.search}${window.location.hash}`);
+}
+
 // A release can remove a lazily loaded, hash-named chunk while a tab is open.
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
