@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
-import { PhotoPicker } from "../../components/ui/PhotoPicker";
+import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Recipe, RecipeIngredient, RecipeStep } from "../../types/domain";
 import { saveRecipe, uploadRecipePhoto } from "./homeRecipes";
@@ -81,7 +81,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
         </label>
         <div className="photo-field">
           <span>Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span>
-          <PhotoPicker onChange={(files) => setPhoto(files[0])} onPreparingChange={setPreparingPhoto} />
+          <PhotoManagerModal mode="attachment" name="de la receta" photo={photo} onConfirm={setPhoto} onPreparingChange={setPreparingPhoto} />
         </div>
         <small className="tiny">
           {photo

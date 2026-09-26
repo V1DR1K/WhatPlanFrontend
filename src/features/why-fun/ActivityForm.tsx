@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
-import { PhotoPicker } from "../../components/ui/PhotoPicker";
+import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Activity, ActivitySchedule } from "../../types/domain";
 import { getFunCategories, saveActivity, uploadActivityProfilePhoto } from "./whyFun";
@@ -87,7 +87,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
         </label>
         <div className="photo-field">
           <span>Foto de perfil <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span>
-          <PhotoPicker onChange={(files) => setPhoto(files[0])} onPreparingChange={setPreparingPhoto} />
+          <PhotoManagerModal mode="attachment" name="de la actividad" photo={photo} onConfirm={setPhoto} onPreparingChange={setPreparingPhoto} />
         </div>
         <small className="tiny">
           {photo

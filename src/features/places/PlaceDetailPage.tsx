@@ -239,7 +239,7 @@ function VisitExperience({
   return (
     <div className="experience-detail">
       <p className="muted">Visita del {dateLabel(visit.visitedOn)}<SpecialDateLabels date={visit.visitedOn} specialDates={specialDates} />. Registrada por {visit.createdBy}; última edición de {visit.updatedBy}.</p>
-      <ExperienceGallery accentLabel="VISITA" emptyIcon="🍽️" name={`la visita del ${dateLabel(visit.visitedOn)}`} photos={visit.photos} coverPhotoId={visit.coverPhoto?.id} onUpload={async (files) => { await onUpload(files); }} onDelete={onDeletePhoto} onSetCover={onSetCover} />
+      <ExperienceGallery accentLabel="VISITA" emptyIcon="🍽️" manageInModal name={`la visita del ${dateLabel(visit.visitedOn)}`} photos={visit.photos} coverPhotoId={visit.coverPhoto?.id} onUpload={async (files) => { await onUpload(files); }} onDelete={onDeletePhoto} onSetCover={onSetCover} />
       <div className="section-title section-title--compact">
         <div><p className="eyebrow">RESEÑAS</p><h2>Cómo estuvo</h2></div>
         <strong>{visit.reviews.length}</strong>

@@ -12,6 +12,7 @@ type PhotoDraft = {
 
 type PhotoPickerProps = {
   disabled?: boolean;
+  initialFiles?: File[];
   maxFiles?: number;
   multiple?: boolean;
   onChange: (files: File[]) => void;
@@ -21,6 +22,7 @@ type PhotoPickerProps = {
 
 export function PhotoPicker({
   disabled = false,
+  initialFiles,
   maxFiles = 1,
   multiple = false,
   onChange,
@@ -32,6 +34,8 @@ export function PhotoPicker({
   const [preparing, setPreparing] = useState(false);
   const urls = useRef(new Set<string>());
   const sequence = useRef(0);
+  const initialFilesOnMount = useRef(initialFiles);
+  const initialMaxFiles = useRef(maxFiles);
 
   const registerUrl = (file: File) => {
     const url = URL.createObjectURL(file);
@@ -61,6 +65,19 @@ export function PhotoPicker({
 
   useEffect(() => () => {
     urls.current.forEach((url) => URL.revokeObjectURL(url));
+  }, []);
+
+  useEffect(() => {
+    const startingFiles = initialFilesOnMount.current;
+    if (!startingFiles?.length) return;
+    const initial = startingFiles.slice(0, initialMaxFiles.current).map((file) => ({
+      file,
+      id: `${file.name}-${sequence.current++}`,
+      rotation: 0,
+      source: file,
+      url: registerUrl(file),
+    }));
+    setDrafts(initial);
   }, []);
 
   const select = async (selected: FileList | null) => {
@@ -132,7 +149,7 @@ export function PhotoPicker({
           <div className="photo-picker__controls">
             <Button type="button" variant="secondary" disabled={disabled || preparing} onClick={() => { void rotate(draft.id, -1); }}>Rotar izquierda</Button>
             <Button type="button" variant="secondary" disabled={disabled || preparing} onClick={() => { void rotate(draft.id, 1); }}>Rotar derecha</Button>
-            <Button type="button" variant="tertiary" disabled={disabled || preparing} onClick={() => remove(draft.id)}>Quitar</Button>
+            <Button type="button" variant="destructive" disabled={disabled || preparing} onClick={() => remove(draft.id)}>Quitar</Button>
           </div>
         </figcaption>
       </figure>)}
