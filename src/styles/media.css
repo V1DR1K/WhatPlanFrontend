@@ -264,6 +264,23 @@
   .modal .score-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .modal.visit-review-modal .modal__content {
+    padding-inline: 0;
+  }
+
+  .modal.visit-review-modal .score-field .place-score-input {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal.visit-review-modal .score-field--overall {
+    justify-content: center;
+    text-align: center;
+  }
 }
 
 /* Scrollable controls keep a restrained, section-contained black scrollbar. */
@@ -334,7 +351,11 @@
 }
 
 .food-shell .place-review .star-control {
+  display: flex;
+  flex-direction: row;
   gap: 1px;
+  color: color-mix(in srgb, var(--wf-accent) 24%, var(--line));
+  font-size: 18px;
 }
 
 .food-shell .place-review .star-control button {
