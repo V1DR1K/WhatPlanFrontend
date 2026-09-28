@@ -8,7 +8,7 @@ import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { session } from "../../lib/api";
-import { MediaImage } from "../../components/ui/MediaImage";
+import { ExpandablePhoto } from "../../components/ui/ExpandablePhoto";
 import { showNotice } from "../../lib/flash";
 import type { Cooking, CookingReview, SpecialDate } from "../../types/domain";
 import { CookingForm } from "./CookingForm";
@@ -89,7 +89,7 @@ export function HomeRecipeDetailPage() {
         eyebrow="WHOCOOK · RECETA COMPARTIDA"
         media={
           <div className="home-recipe-detail__photo">
-          {profilePhoto ? <MediaImage className="home-recipe-detail__image" src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
+          {profilePhoto ? <ExpandablePhoto imageClassName="home-recipe-detail__image" src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <div className="home-recipe-detail__photo-empty"><span>🍳</span><p>Receta</p></div>}
           </div>
         }
         metadata={

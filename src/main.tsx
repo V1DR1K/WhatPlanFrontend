@@ -18,6 +18,7 @@ import './styles/experience-hero.css';
 import './styles/motion.css';
 import './styles/loading.css';
 import './styles/landing.css';
+import './styles/modals.css';
 
 function isStandaloneApp() {
   return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;

@@ -31,7 +31,7 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
   });
   const remove = useMutation({ mutationFn: () => deleteFilmReview(film.id, review!.id), onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['film', film.id] }), qc.invalidateQueries({ queryKey: ['films'] })]); showNotice('Eliminamos la reseña.'); onClose(); } });
 
-  return <><Modal onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
+  return <><Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
     <p className="eyebrow">{review ? 'EDITAR RESEÑA' : 'RESEÑA DE LA VISTA'}</p>
     <h2>{film.tmdb?.title ?? film.title}</h2>
     <p className="muted">Vista del {dateLabel(view.watchedOn)}</p>

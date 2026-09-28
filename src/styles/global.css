@@ -515,17 +515,6 @@ a {
 .review-comment {
   white-space: pre-wrap;
 }
-.close {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 44px;
-  height: 44px;
-  background: transparent;
-  border: 0;
-  color: white;
-  font-size: 28px;
-}
 .modal-discard {
   position: absolute;
   z-index: 2;
@@ -794,61 +783,6 @@ a {
 .item-photo-button:focus-visible img {
   transform: scale(1.025);
 }
-.photo-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgb(8 7 8 / 90%);
-}
-.photo-lightbox-backdrop {
-  background: rgb(8 7 8 / 90%);
-  overscroll-behavior: contain;
-}
-.modal.photo-lightbox {
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  display: block;
-  width: min(1100px, 100%);
-  max-height: 100%;
-  padding: 24px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.modal.photo-lightbox .modal__content {
-  display: grid;
-  width: 100%;
-  max-height: calc(100svh - 48px);
-  place-items: center;
-  overflow: visible;
-  padding: 0;
-}
-.modal.photo-lightbox .media-image-placeholder,
-.modal.photo-lightbox .modal__content > img {
-  width: auto;
-  max-width: 100%;
-  max-height: calc(100svh - 96px);
-  height: auto;
-  object-fit: contain;
-  border-radius: 12px;
-}
-.modal.photo-lightbox .close {
-  position: fixed;
-  z-index: 1;
-  top: 20px;
-  right: 20px;
-  width: 44px;
-  height: 44px;
-  border: 1px solid #ffffff55;
-  border-radius: 50%;
-  background: #211f21;
-  color: var(--cream);
-  font-size: 30px;
-}
 .media-image-placeholder {
   display: grid;
   width: 100%;
@@ -878,26 +812,6 @@ a {
 }
 .error-boundary h1 {
   font: 600 42px/1 "Fraunces", Georgia, serif;
-}
-.photo-lightbox img {
-  width: auto;
-  max-width: min(1100px, 100%);
-  max-height: 88vh;
-  height: auto;
-  object-fit: contain;
-  border-radius: 12px;
-}
-.photo-lightbox-close {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  width: 44px;
-  height: 44px;
-  border: 1px solid #ffffff55;
-  border-radius: 50%;
-  background: #211f21;
-  color: var(--cream);
-  font-size: 30px;
 }
 @media (max-width: 540px) {
   .item-card img {
@@ -972,14 +886,6 @@ a {
 .item-card .adaptive-photo__image {
   width: 100% !important;
   height: 100% !important;
-  aspect-ratio: auto;
-  object-fit: contain !important;
-}
-.item-card .photo-lightbox img {
-  width: auto !important;
-  height: auto !important;
-  max-width: min(1100px, 100%) !important;
-  max-height: 88vh !important;
   aspect-ratio: auto;
   object-fit: contain !important;
 }

@@ -1,0 +1,198 @@
+/* Shared dialog layout. Keep the close control outside the scrolling content. */
+.modal-backdrop {
+  overflow: hidden;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+.modal {
+  width: min(780px, 100%);
+  max-height: calc(100dvh - 32px);
+  padding: 12px 24px 22px;
+  overflow: hidden;
+}
+
+.modal--compact { width: min(540px, 100%); }
+.modal--wide { width: min(1060px, 100%); }
+
+.modal__topbar {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.modal .modal__topbar .close {
+  position: static;
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--section-accent, #a978ff) 42%, #5a4a52);
+  border-radius: 12px;
+  background: #302a30;
+  color: var(--cream);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.modal .modal__topbar .close:hover { background: #423640; }
+.modal .modal__topbar .close:focus-visible { outline: 2px solid var(--section-accent, #a978ff); outline-offset: 2px; }
+
+.modal__content {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: auto;
+  padding: 0 2px 2px;
+}
+
+.modal__content > form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 20px;
+  row-gap: 8px;
+  align-items: start;
+}
+
+.modal__content > form > :not(label):not(.button),
+.modal__content > form > label:has(textarea) {
+  grid-column: 1 / -1;
+}
+
+.modal__content > form > :is(.eyebrow, h2, p) { margin-block: 0; }
+.modal__content > form > label { margin-block: 2px; }
+.modal__content > form > fieldset { margin-block: 4px; }
+.modal__content > form > .button {
+  width: auto;
+  min-height: 44px;
+  margin: 6px 0 0;
+  justify-self: stretch;
+}
+
+.modal__content > form > .button--primary { order: 2; grid-column: 2; }
+.modal__content > form > :is(.button--secondary, .button--destructive) { order: 1; grid-column: 1; }
+.modal__content > form > .form-error { order: 3; }
+.modal .review-textarea { min-height: clamp(88px, 13dvh, 140px); }
+
+.modal .venue-score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.modal .film-metric-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; }
+.modal .film-metric-fields legend { grid-column: 1 / -1; }
+.modal .film-metric-field { min-width: 0; }
+
+.confirm-dialog__actions,
+.modal-discard__actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+.photo-manager-modal { width: min(1060px, 100%); }
+.photo-manager__saved { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+.photo-manager__photo { grid-template-rows: minmax(0, 130px) auto auto; }
+.photo-manager__preview { display: block; width: 100%; height: 130px; padding: 0; border: 0; border-radius: 9px; background: #111; cursor: zoom-in; }
+.photo-manager__preview:focus-visible { outline: 2px solid var(--section-accent, #a978ff); outline-offset: 2px; }
+.photo-manager__preview > img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
+
+.photo-viewer-backdrop { background: rgb(8 7 8 / 94%); }
+.modal.photo-viewer {
+  width: min(1240px, 100%);
+  height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 32px);
+  padding: 8px 14px 12px;
+  border: 0;
+  background: #121112;
+}
+.modal.photo-viewer .modal__topbar { margin-bottom: 0; }
+.modal.photo-viewer .modal__content {
+  flex: 1 1 auto;
+  display: flex;
+  overflow: hidden;
+  padding: 0;
+}
+.photo-viewer__layout {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.photo-viewer__stage {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #080708;
+  cursor: zoom-in;
+  touch-action: none;
+  user-select: none;
+}
+.photo-viewer__stage.is-zoomed { cursor: grab; }
+.photo-viewer__stage.is-zoomed:active { cursor: grabbing; }
+.photo-viewer__image,
+.photo-viewer__stage .media-image-placeholder {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transform-origin: center;
+}
+.photo-viewer__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.photo-viewer__toolbar > .button { min-width: 110px; }
+.photo-viewer__zoom { display: flex; align-items: center; gap: 6px; }
+.photo-viewer__zoom > .button { min-width: 44px; min-height: 44px; margin: 0; }
+.photo-viewer__zoom output { min-width: 48px; color: var(--cream); font: 600 12px "DM Mono", ui-monospace, monospace; text-align: center; }
+.photo-viewer__count { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
+.photo-viewer-trigger { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.photo-viewer-trigger:focus-visible { outline: 2px solid var(--section-accent, #a978ff); outline-offset: 3px; }
+.photo-viewer-trigger > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 700px) {
+  .modal-backdrop {
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+  .modal,
+  .modal--compact,
+  .modal--wide,
+  .photo-manager-modal {
+    width: 100%;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+    padding: 8px 16px 16px;
+  }
+  .modal__topbar { margin-bottom: 2px; }
+  .modal__content > form { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .modal__content > form > :not(label):not(.button),
+  .modal__content > form > label:has(textarea),
+  .modal__content > form > .button { grid-column: 1; }
+  .modal__content > form > .button { width: 100%; }
+  .modal__content > form > .button--primary { order: 1; }
+  .modal__content > form > .button--secondary { order: 2; }
+  .modal__content > form > .button--destructive { order: 3; }
+  .modal__content > form > .form-error { order: 4; }
+  .modal .venue-score-grid,
+  .modal .film-metric-fields,
+  .confirm-dialog__actions,
+  .modal-discard__actions { grid-template-columns: minmax(0, 1fr); }
+  .modal .score-grid { grid-template-columns: minmax(0, 1fr); }
+  .modal .review-textarea { min-height: 116px; }
+  .modal.photo-viewer {
+    width: 100%;
+    height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+    padding: 4px 8px 8px;
+  }
+  .photo-viewer__toolbar { flex-wrap: wrap; gap: 6px; }
+  .photo-viewer__toolbar > .button { min-width: 86px; min-height: 44px; }
+  .photo-viewer__zoom { order: -1; justify-content: center; width: 100%; }
+  .photo-viewer__zoom > .button { flex: 0 1 auto; }
+}

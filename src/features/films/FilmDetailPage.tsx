@@ -7,6 +7,7 @@ import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { session } from "../../lib/api";
 import { MediaImage } from "../../components/ui/MediaImage";
+import { ExpandablePhoto } from "../../components/ui/ExpandablePhoto";
 import { showNotice } from "../../lib/flash";
 import type { FilmReview, FilmView } from "../../types/domain";
 import { FilmForm } from "./FilmForm";
@@ -151,7 +152,7 @@ export function FilmDetailPage() {
         media={
           <div className="film-detail__poster">
           {posterUrl ? (
-            <MediaImage src={posterUrl} alt={`Póster de ${title}`} width={342} height={513} />
+            <ExpandablePhoto src={posterUrl} alt={`Póster de ${title}`} width={342} height={513} />
           ) : (
             <span>🍿</span>
           )}

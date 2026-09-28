@@ -68,7 +68,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
   });
 
   return (
-    <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}>
+    <Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

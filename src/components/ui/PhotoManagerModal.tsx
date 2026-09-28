@@ -4,6 +4,7 @@ import { Button } from "./Button";
 import { MediaImage } from "./MediaImage";
 import { Modal } from "./Modal";
 import { PhotoPicker } from "./PhotoPicker";
+import { PhotoViewer } from "./PhotoViewer";
 
 type AttachmentProps = {
   mode: "attachment";
@@ -33,6 +34,7 @@ export function PhotoManagerModal(props: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>();
   const [pickerKey, setPickerKey] = useState(0);
+  const [viewerIndex, setViewerIndex] = useState<number>();
 
   const close = () => {
     if (uploading || preparing) return;
@@ -71,7 +73,7 @@ export function PhotoManagerModal(props: Props) {
     <Button type="button" variant="secondary" icon={props.mode === "gallery" ? "🖼️" : "📷"} onClick={() => { setFiles(props.mode === "attachment" && props.photo ? [props.photo] : []); setError(undefined); setOpen(true); }}>
       {props.mode === "gallery" ? "Administrar fotos" : selectedFile ? "Cambiar foto" : "Agregar foto"}
     </Button>
-    {open && <Modal className="photo-manager-modal" onClose={close} pending={uploading || preparing} title={`Administrar ${heading.toLowerCase()}`}>
+    {open && <Modal size="wide" className="photo-manager-modal" onClose={close} pending={uploading || preparing} title={`Administrar ${heading.toLowerCase()}`}>
       <div className="photo-manager">
         <p className="eyebrow">{props.mode === "gallery" ? "GALERÍA" : "FOTO DE PERFIL"}</p>
         <h2>{heading}</h2>
@@ -87,7 +89,7 @@ export function PhotoManagerModal(props: Props) {
           <p className="photo-manager__count">{props.photos.length}/4 fotos guardadas · podés agregar {maxFiles}</p>
           {props.photos.length > 0 && <div className="photo-manager__saved" aria-label="Fotos guardadas">
             {props.photos.map((photo, index) => <article className="photo-manager__photo" key={photo.id}>
-              <MediaImage src={photo.thumbnailUrl || photo.url} alt={`Foto ${index + 1} de ${props.name}`} width={photo.width} height={photo.height} loading="lazy" />
+              <button className="photo-manager__preview" type="button" onClick={() => setViewerIndex(index)} aria-label={`Ampliar foto ${index + 1} de ${props.name}`}><MediaImage src={photo.thumbnailUrl || photo.url} alt={`Foto ${index + 1} de ${props.name}`} width={photo.width} height={photo.height} loading="lazy" /></button>
               {photo.id === props.coverPhotoId && <span className="photo-manager__cover">Foto de portada</span>}
               <div className="photo-manager__photo-actions">
                 {props.onSetCover && photo.id !== props.coverPhotoId && <Button type="button" variant="secondary" icon="⭐" disabled={props.coverPending || uploading} onClick={() => props.onSetCover?.(photo)}>Hacer portada</Button>}
@@ -105,5 +107,6 @@ export function PhotoManagerModal(props: Props) {
         </>}
       </div>
     </Modal>}
+    {viewerIndex !== undefined && props.mode === "gallery" && props.photos[viewerIndex] && <PhotoViewer photos={props.photos.map((photo, index) => ({ src: photo.url, alt: `Foto ${index + 1} de ${props.name}`, width: photo.width, height: photo.height }))} initialIndex={viewerIndex} onIndexChange={setViewerIndex} onClose={() => setViewerIndex(undefined)} />}
   </>;
 }

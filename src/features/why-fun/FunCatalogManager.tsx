@@ -88,7 +88,7 @@ export function FunCatalogManager() {
         </div>
       </section>)}
     </div>
-    {creating === 'category' && <Modal onClose={() => setCreating(undefined)}>
+    {creating === 'category' && <Modal size="compact" onClose={() => setCreating(undefined)}>
       <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createCategory.mutate(categoryDraft); }}>
         <p className="eyebrow">NUEVA CATEGORÍA</p>
         <h2>Agregar categoría</h2>
@@ -98,7 +98,7 @@ export function FunCatalogManager() {
         {createCategory.error && <p className="form-error">{createCategory.error.message}</p>}
       </form>
     </Modal>}
-    {creating === 'subcategory' && <Modal onClose={() => setCreating(undefined)}>
+    {creating === 'subcategory' && <Modal size="compact" onClose={() => setCreating(undefined)}>
       <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); createSubcategory.mutate(subcategoryDraft); }}>
         <p className="eyebrow">NUEVA SUBCATEGORÍA</p>
         <h2>Agregar subcategoría</h2>
@@ -112,7 +112,7 @@ export function FunCatalogManager() {
         {createSubcategory.error && <p className="form-error">{createSubcategory.error.message}</p>}
       </form>
     </Modal>}
-    {editing && <Modal onClose={() => setEditing(undefined)}>
+    {editing && <Modal size="compact" onClose={() => setEditing(undefined)}>
       <form className="fun-edit-category" onSubmit={event => { event.preventDefault(); updateCategory.mutate({ id: editing.id, input: editDraft }); }}>
         <p className="eyebrow">EDITAR {editing.parentId ? 'SUBCATEGORÍA' : 'CATEGORÍA'}</p>
         <h2>{editing.name}</h2>

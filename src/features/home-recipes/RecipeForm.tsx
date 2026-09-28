@@ -61,7 +61,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
   });
 
   return (
-    <Modal onClose={onClose} confirmDiscard pending={mutation.isPending}>
+    <Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending}>
       <form
         className="home-recipe-form"
         onSubmit={(event) => {

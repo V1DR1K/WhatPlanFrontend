@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ExperiencePhoto } from "../../types/domain";
 import { Button } from "./Button";
 import { MediaImage } from "./MediaImage";
-import { Modal } from "./Modal";
+import { PhotoViewer } from "./PhotoViewer";
 import { PhotoPicker } from "./PhotoPicker";
 import { PhotoManagerModal } from "./PhotoManagerModal";
 
@@ -93,18 +93,6 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
     return () => window.clearInterval(timer);
   }, [paused, photos.length]);
 
-  useEffect(() => {
-    if (!lightbox) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-       if (event.key === "ArrowRight") setSelected((current) => nextPhotoIndex(current, photos.length));
-      if (event.key === "ArrowLeft") setSelected((current) => previousPhotoIndex(current, photos.length));
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [lightbox, photos.length]);
-
   const move = (direction: "next" | "previous") => {
     setManualPaused(true);
     setSelected((current) => direction === "next" ? nextPhotoIndex(current, photos.length) : previousPhotoIndex(current, photos.length));
@@ -149,6 +137,6 @@ export function ExperienceGallery({ accentLabel, afterActions, coverPending = fa
     {afterActions}
     <p className="experience-gallery__meta">{accentLabel} · {photos.length}/{MAX_EXPERIENCE_PHOTOS} fotos{manualPaused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
     {uploadError && <p className="form-error">{uploadError}</p>}
-     {lightbox && photo && <Modal backdropClassName="photo-lightbox-backdrop" className="photo-lightbox" onClose={() => setLightbox(false)} title={`Foto ampliada de ${name}`}><MediaImage src={photo.url} alt={`Foto ampliada ${selected + 1} de ${name}`} width={photo.width} height={photo.height} loading="eager" />{photos.length > 1 && <div className="photo-lightbox__controls"><Button icon="‹" type="button" variant="secondary" onClick={() => move("previous")}>Anterior</Button><Button icon="›" type="button" variant="secondary" onClick={() => move("next")}>Siguiente</Button></div>}</Modal>}
+     {lightbox && photo && <PhotoViewer photos={photos.map((value, index) => ({ src: value.url, alt: `Foto ${index + 1} de ${name}`, width: value.width, height: value.height }))} initialIndex={selected} onIndexChange={setSelected} onClose={() => setLightbox(false)} />}
   </section>;
 }

@@ -9,7 +9,7 @@ import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { session } from "../../lib/api";
-import { MediaImage } from "../../components/ui/MediaImage";
+import { ExpandablePhoto } from "../../components/ui/ExpandablePhoto";
 import { showNotice } from "../../lib/flash";
 import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types/domain";
 import { ActivityForm } from "./ActivityForm";
@@ -116,7 +116,7 @@ export function FunVenueDetailPage() {
         eyebrow={`ACTIVIDAD COMPARTIDA · ${value.category.icon} ${value.category.name}`}
         media={
           <div className="fun-detail__cover">
-          {profilePhoto ? <MediaImage src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <span>{value.subcategory.icon}</span>}
+          {profilePhoto ? <ExpandablePhoto src={profilePhoto} alt={`Foto de ${value.name}`} width={720} height={480} /> : <span>{value.subcategory.icon}</span>}
           </div>
         }
         metadata={

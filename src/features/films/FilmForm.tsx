@@ -66,7 +66,7 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
   const toggleGenre = (name: string) => setGenres(current => current.includes(name) ? current.filter(value => value !== name) : [...current, name]);
 
   if (created) return <ReviewPrompt name={created.tmdb?.title ?? created.title} reviewTo={`/app/films/${created.id}`} onClose={onClose} actionLabel="Registrar una vista" message="¿Ya la vieron? Primero registren la vista y después cada uno puede dejar su reseña." />;
-  return <Modal onClose={onClose} confirmDiscard pending={save.isPending}><form className="film-form" onSubmit={event => { event.preventDefault(); save.mutate(new FormData(event.currentTarget)); }}>
+  return <Modal size="wide" onClose={onClose} confirmDiscard pending={save.isPending}><form className="film-form" onSubmit={event => { event.preventDefault(); save.mutate(new FormData(event.currentTarget)); }}>
     <p className="eyebrow">{film ? 'EDITAR PELÍCULA' : 'NUEVA PELÍCULA'}</p>
     <h2>{film ? 'Afinemos la ficha' : 'Elijan la próxima función'}</h2>
     {!film && !manualMode && !selected && <section className="tmdb-search" aria-label="Buscar película en TMDB">

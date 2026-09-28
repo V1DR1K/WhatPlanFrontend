@@ -1,6 +1,6 @@
 import { useState, type CSSProperties, type MouseEventHandler } from "react";
 import { MediaImage } from "./MediaImage";
-import { Modal } from "./Modal";
+import { PhotoViewer } from "./PhotoViewer";
 
 export type PhotoOrientation = "landscape" | "portrait" | "square";
 
@@ -90,6 +90,7 @@ export function AdaptivePhoto({
 }: AdaptivePhotoProps) {
   const [expanded, setExpanded] = useState(false);
   const resolvedFullSrc = fullSrc ?? src;
+  const viewerSrc = photoSource("full", resolvedFullSrc, thumbnailSrc);
   const orientation = getPhotoOrientation(width, height);
   const ratioStyle = photoAspectRatioStyle(width, height, "--photo-aspect-ratio");
   return (
@@ -104,22 +105,7 @@ export function AdaptivePhoto({
       >
         <ResponsiveImage className="adaptive-photo__image" alt={alt} fullSrc={resolvedFullSrc} height={height} loading="eager" mode="full" thumbnailSrc={thumbnailSrc} width={width} />
       </button>
-      {expanded && (
-        <Modal
-          backdropClassName="photo-lightbox-backdrop"
-          className="photo-lightbox"
-          onClose={() => setExpanded(false)}
-          title={`Foto ampliada: ${alt}`}
-        >
-          <ResponsiveImage
-            alt={`Foto ampliada: ${alt}`}
-            fullSrc={resolvedFullSrc}
-            loading="eager"
-            mode="full"
-            thumbnailSrc={thumbnailSrc}
-          />
-        </Modal>
-      )}
+      {expanded && viewerSrc && <PhotoViewer photos={[{ src: viewerSrc, alt, width, height }]} onClose={() => setExpanded(false)} />}
     </>
   );
 }

@@ -58,7 +58,7 @@ export function PlatformManager() {
       setDeletingGenre(undefined);
     },
   });
-  const platformForm = editingPlatform || creatingPlatform ? <Modal onClose={() => { setEditingPlatform(undefined); setCreatingPlatform(false); setPlatform(emptyPlatform); }}>
+  const platformForm = editingPlatform || creatingPlatform ? <Modal size="compact" onClose={() => { setEditingPlatform(undefined); setCreatingPlatform(false); setPlatform(emptyPlatform); }}>
     <form onSubmit={event => { event.preventDefault(); savePlatformMutation.mutate(); }}>
       <p className="eyebrow">{editingPlatform ? 'EDITAR PLATAFORMA' : 'NUEVA PLATAFORMA'}</p>
       <h2>{editingPlatform ? editingPlatform.name : 'Agregar plataforma'}</h2>
@@ -68,7 +68,7 @@ export function PlatformManager() {
       {savePlatformMutation.error && <p className="form-error" role="alert">{savePlatformMutation.error.message}</p>}
     </form>
   </Modal> : null;
-  const genreForm = editingGenre || creatingGenre ? <Modal onClose={() => { setEditingGenre(undefined); setCreatingGenre(false); setGenre(emptyGenre); }}>
+  const genreForm = editingGenre || creatingGenre ? <Modal size="compact" onClose={() => { setEditingGenre(undefined); setCreatingGenre(false); setGenre(emptyGenre); }}>
     <form onSubmit={event => { event.preventDefault(); saveGenreMutation.mutate(); }}>
       <p className="eyebrow">{editingGenre ? 'EDITAR GÉNERO' : 'NUEVO GÉNERO'}</p>
       <h2>{editingGenre ? editingGenre.name : 'Agregar género'}</h2>

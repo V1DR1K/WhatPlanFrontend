@@ -7,6 +7,7 @@ import { Button } from './Button';
 type ModalProps = {
   className?: string;
   backdropClassName?: string;
+  size?: 'compact' | 'standard' | 'wide';
   describedBy?: string;
   description?: string;
   labelledBy?: string;
@@ -25,7 +26,7 @@ export function getFocusableElements(container: HTMLElement) {
     .filter((element) => element.getAttribute('aria-hidden') !== 'true');
 }
 
-export function Modal({ children, className, backdropClassName, describedBy, description, labelledBy, onClose, confirmDiscard = false, pending = false, title }: PropsWithChildren<ModalProps>) {
+export function Modal({ children, className, backdropClassName, size = 'standard', describedBy, description, labelledBy, onClose, confirmDiscard = false, pending = false, title }: PropsWithChildren<ModalProps>) {
   const dialog = useRef<HTMLElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const requestCloseRef = useRef<() => void>(() => undefined);
@@ -106,11 +107,11 @@ export function Modal({ children, className, backdropClassName, describedBy, des
   }, []);
 
   return createPortal(<div className={['modal-backdrop', section && `${section}-shell`, backdropClassName].filter(Boolean).join(' ')} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
-    <section className={['modal', className].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
+    <section className={['modal', `modal--${size}`, className].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       {title && <h2 id={titleId} className="sr-only">{title}</h2>}
       {!title && !labelledBy && <span id={titleId} className="sr-only">Diálogo de WhatPlan</span>}
       <span id={descriptionId} className="sr-only">{description ?? 'Contenido del diálogo.'}</span>
-      <Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" />
+      <div className="modal__topbar"><Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" /></div>
       <div className="modal__content">{children}</div>
       {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">
         <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><div className="modal-discard__actions"><Button variant="secondary" icon="✏️" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="🗑️" type="button" onClick={onClose}>Descartar</Button></div></div>

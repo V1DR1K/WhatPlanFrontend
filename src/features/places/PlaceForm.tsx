@@ -76,7 +76,7 @@ export function PlaceForm({
   const pending = mutation.isPending;
 
   return (
-    <Modal onClose={onClose} confirmDiscard pending={pending}>
+    <Modal size="wide" onClose={onClose} confirmDiscard pending={pending}>
       <form
         onSubmit={(event) => {
           event.preventDefault();

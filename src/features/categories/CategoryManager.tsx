@@ -94,7 +94,7 @@ export function CategoryManager() {
         </div>
       </section>
     </div>
-    {creatingCategory && <Modal onClose={() => setCreatingCategory(false)}>
+    {creatingCategory && <Modal size="compact" onClose={() => setCreatingCategory(false)}>
       <form onSubmit={event => { event.preventDefault(); categoryMutation.mutate(undefined); }}>
         <p className="eyebrow">NUEVO RUBRO</p>
         <h2>Agregar rubro</h2>
@@ -104,7 +104,7 @@ export function CategoryManager() {
         {categoryMutation.error && <p className="form-error" role="alert">{categoryMutation.error.message}</p>}
       </form>
     </Modal>}
-    {creatingTag && <Modal onClose={() => setCreatingTag(false)}>
+    {creatingTag && <Modal size="compact" onClose={() => setCreatingTag(false)}>
       <form onSubmit={event => { event.preventDefault(); tagMutation.mutate(undefined); }}>
         <p className="eyebrow">NUEVA ETIQUETA</p>
         <h2>Agregar etiqueta</h2>
@@ -114,7 +114,7 @@ export function CategoryManager() {
         {tagMutation.error && <p className="form-error" role="alert">{tagMutation.error.message}</p>}
       </form>
     </Modal>}
-    {editingCategory && <Modal onClose={() => setEditingCategory(undefined)}>
+    {editingCategory && <Modal size="compact" onClose={() => setEditingCategory(undefined)}>
       <form onSubmit={event => { event.preventDefault(); categoryMutation.mutate(editingCategory.id); }}>
         <p className="eyebrow">EDITAR RUBRO</p>
         <h2>{editingCategory.name}</h2>
@@ -124,7 +124,7 @@ export function CategoryManager() {
         {categoryMutation.error && <p className="form-error" role="alert">{categoryMutation.error.message}</p>}
       </form>
     </Modal>}
-    {editingTag && <Modal onClose={() => setEditingTag(undefined)}>
+    {editingTag && <Modal size="compact" onClose={() => setEditingTag(undefined)}>
       <form onSubmit={event => { event.preventDefault(); tagMutation.mutate(editingTag.id); }}>
         <p className="eyebrow">EDITAR ETIQUETA</p>
         <h2>{editingTag.name}</h2>
