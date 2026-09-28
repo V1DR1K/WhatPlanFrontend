@@ -60,10 +60,6 @@
 }
 
 .modal__content > form > * { min-width: 0; }
-.modal__content > form.modal-form--paired {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 20px;
-}
 .modal__content > form.modal-form--paired > :is(.eyebrow, h2, p, small, fieldset, .photo-field, .form-columns, .modal-form__actions),
 .modal__content > form.modal-form--paired > label:has(textarea) {
   grid-column: 1 / -1;
@@ -108,7 +104,7 @@
 .modal-form--review > :is(.score-grid, .venue-score-grid, label:has(.review-textarea), .modal-form__actions) { margin-top: 4px; }
 
 .place-editor-form > :is(.eyebrow, h2, .modal-form__actions, .form-error) { grid-column: 1 / -1; }
-.modal__content > form.place-editor-form { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 12px 20px; }
+.modal__content > form.place-editor-form { gap: 12px; }
 .place-editor-form__fields { display: grid; align-content: start; gap: 10px; min-width: 0; }
 .place-editor-form__fields > :is(label, small) { margin: 0; }
 .place-editor-form > .tag-picker { align-self: start; min-width: 0; margin: 0; }

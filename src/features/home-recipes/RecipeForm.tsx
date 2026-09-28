@@ -76,7 +76,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
           <input name="name" defaultValue={recipe?.name} required autoFocus />
         </label>
         <label>
-          Fuente <small className="tiny">Opcional</small>
+          Fuente
           <input name="sourceUrl" type="url" defaultValue={recipe?.sourceUrl ?? undefined} placeholder="https://…" />
         </label>
         <div className="photo-field">

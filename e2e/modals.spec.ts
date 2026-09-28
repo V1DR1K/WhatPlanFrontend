@@ -4,8 +4,8 @@ for (const [kind, width, height, noScroll] of [
   ['real-review', 1366, 768, true],
   ['real-review', 900, 768, true],
   ['real-venue-review', 1366, 768, true],
-  ['real-place', 1366, 768, true],
-  ['real-place', 1440, 900, true],
+  ['real-place', 1366, 768, false],
+  ['real-place', 1440, 900, false],
   ['real-review', 390, 844, false],
   ['real-review', 320, 568, false],
   ['real-place', 390, 844, false],
@@ -31,7 +31,11 @@ for (const [kind, width, height, noScroll] of [
     expect(measurements.escaping).toEqual([]);
     expect(measurements.nestedOverflow.every((amount) => amount <= 2)).toBe(true);
     if (noScroll) expect(measurements.verticalOverflow).toBeLessThanOrEqual(2);
-    await expect(dialog.getByRole('button', { name: kind === 'real-place' ? 'Guardar lugar' : kind === 'real-venue-review' ? 'Guardar opinión del lugar' : 'Guardar reseña' })).toBeVisible();
+    const save = dialog.getByRole('button', { name: kind === 'real-place' ? 'Guardar lugar' : kind === 'real-venue-review' ? 'Guardar opinión del lugar' : 'Guardar reseña' });
+    await save.scrollIntoViewIfNeeded();
+    await expect(save).toBeVisible();
+    const [saveBox, visibleContent] = await Promise.all([save.boundingBox(), dialog.locator('.modal__content').boundingBox()]);
+    expect(saveBox && visibleContent && saveBox.y >= visibleContent.y && saveBox.y + saveBox.height <= visibleContent.y + visibleContent.height).toBe(true);
   });
 }
 

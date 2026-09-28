@@ -23,6 +23,7 @@
 }
 .photo-picker { display: grid; gap: 10px; margin: 8px 0; }
 .photo-picker + .tiny { display: block; }
+.photo-field { display: flex; flex-direction: column; gap: 1em; }
 .photo-field > span { display: block; font: inherit; }
 .photo-picker__select { position: relative; justify-self: start; margin: 0; }
 .photo-picker__select:focus-within { outline: 2px solid var(--section-accent); outline-offset: 3px; }
