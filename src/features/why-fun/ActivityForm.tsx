@@ -70,6 +70,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
   return (
     <Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending}>
       <form
+        className="activity-editor-form modal-form--paired"
         onSubmit={(event) => {
           event.preventDefault();
           mutation.mutate(new FormData(event.currentTarget));
@@ -96,7 +97,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
               ? "La foto actual se conservará si no elegís otra."
               : "Esta foto es independiente de las galerías de cada salida."}
         </small>
-        <fieldset className="tag-picker">
+        <fieldset className="tag-picker activity-editor-form__category">
           <legend>Categoría</legend>
           <div className="tag-options">
             {roots.map((value) => (
@@ -115,7 +116,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
             ))}
           </div>
         </fieldset>
-        <fieldset className="tag-picker" disabled={!categoryId}>
+        <fieldset className="tag-picker activity-editor-form__subcategory" disabled={!categoryId}>
           <legend>Subcategoría</legend>
           <div className="tag-options">
             {children.map((value) => (

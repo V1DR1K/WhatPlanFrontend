@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type SyntheticEvent, type WheelEvent } from 'react';
 import { Button } from './Button';
 import { MediaImage } from './MediaImage';
 import { Modal } from './Modal';
@@ -12,6 +12,11 @@ const ZOOM_STEP = 0.25;
 const clampZoom = (value: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
 const distance = (first: Point, second: Point) => Math.hypot(first.x - second.x, first.y - second.y);
 const midpoint = (first: Point, second: Point) => ({ x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 });
+const fittedImageSize = (stage: HTMLElement, width: number, height: number) => {
+  if (width <= 0 || height <= 0) return { width: 0, height: 0 };
+  const fit = Math.min(1, stage.clientWidth / width, stage.clientHeight / height);
+  return { width: width * fit, height: height * fit };
+};
 
 export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }: {
   photos: ViewerPhoto[];
@@ -22,6 +27,7 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
   const [index, setIndex] = useState(() => Math.min(Math.max(initialIndex, 0), photos.length - 1));
   const [scale, setScale] = useState(MIN_ZOOM);
   const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
+  const [fitted, setFitted] = useState<{ src: string; width: number; height: number }>();
   const scaleRef = useRef(scale);
   const offsetRef = useRef(offset);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -33,10 +39,13 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
     const stage = stageRef.current;
     const image = stage?.querySelector('img');
     if (!stage || !image || zoom <= MIN_ZOOM) return { x: 0, y: 0 };
-    const maxX = Math.max(0, (image.clientWidth * zoom - stage.clientWidth) / 2);
-    const maxY = Math.max(0, (image.clientHeight * zoom - stage.clientHeight) / 2);
+    const naturalWidth = image.naturalWidth || photos[index]?.width || image.clientWidth;
+    const naturalHeight = image.naturalHeight || photos[index]?.height || image.clientHeight;
+    const fitted = fittedImageSize(stage, naturalWidth, naturalHeight);
+    const maxX = Math.max(0, (fitted.width * zoom - stage.clientWidth) / 2);
+    const maxY = Math.max(0, (fitted.height * zoom - stage.clientHeight) / 2);
     return { x: Math.max(-maxX, Math.min(maxX, point.x)), y: Math.max(-maxY, Math.min(maxY, point.y)) };
-  }, []);
+  }, [index, photos]);
 
   const updateOffset = useCallback((next: Point, zoom = scaleRef.current) => {
     const clamped = clampOffset(next, zoom);
@@ -61,10 +70,28 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
     pinchStart.current = undefined;
   }, []);
 
+  const fitPhoto = useCallback((image?: HTMLImageElement | null) => {
+    const stage = stageRef.current;
+    const loadedImage = image ?? stage?.querySelector('img');
+    if (!stage || !loadedImage?.naturalWidth || !loadedImage.naturalHeight) return;
+    setFitted({ src: photos[index].src, ...fittedImageSize(stage, loadedImage.naturalWidth, loadedImage.naturalHeight) });
+    updateOffset(offsetRef.current);
+  }, [index, photos, updateOffset]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const observer = new ResizeObserver(() => fitPhoto());
+    observer.observe(stage);
+    fitPhoto();
+    return () => observer.disconnect();
+  }, [fitPhoto]);
+
   const move = useCallback((direction: -1 | 1) => {
     if (photos.length < 2) return;
     const next = (index + direction + photos.length) % photos.length;
     resetView();
+    setFitted(undefined);
     setIndex(next);
     onIndexChange?.(next);
   }, [index, onIndexChange, photos.length, resetView]);
@@ -81,12 +108,6 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [move, photos.length, resetView, updateScale]);
-
-  useEffect(() => {
-    const onResize = () => updateOffset(offsetRef.current);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [updateOffset]);
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -133,12 +154,15 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
     updateScale(scaleRef.current + (event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
   };
 
+  const onImageLoad = (event: SyntheticEvent<HTMLImageElement>) => fitPhoto(event.currentTarget);
+
   const photo = photos[index];
   if (!photo) return null;
+  const imageFitted = fitted?.src === photo.src;
   return <Modal size="wide" className="photo-viewer" backdropClassName="photo-viewer-backdrop" onClose={onClose} title={`Imagen ampliada: ${photo.alt}`}>
     <div className="photo-viewer__layout">
       <div className={`photo-viewer__stage${scale > MIN_ZOOM ? ' is-zoomed' : ''}`} ref={stageRef} onWheel={onWheel} onDoubleClick={() => updateScale(scale > MIN_ZOOM ? MIN_ZOOM : 2)} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={(event) => onPointerEnd(event, false)}>
-        <MediaImage key={photo.src} className="photo-viewer__image" src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="eager" draggable={false} style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }} />
+        <MediaImage key={photo.src} className={`photo-viewer__image${imageFitted ? ' is-fitted' : ''}`} src={photo.src} alt={photo.alt} loading="eager" draggable={false} onLoad={onImageLoad} style={{ width: imageFitted ? fitted.width : undefined, height: imageFitted ? fitted.height : undefined, transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }} />
       </div>
       <div className="photo-viewer__toolbar" aria-label="Controles de imagen">
         {photos.length > 1 && <Button type="button" variant="secondary" icon="‹" onClick={() => move(-1)} aria-label="Imagen anterior">Anterior</Button>}

@@ -78,6 +78,7 @@ export function PlaceForm({
   return (
     <Modal size="wide" onClose={onClose} confirmDiscard pending={pending}>
       <form
+        className="place-editor-form"
         onSubmit={(event) => {
           event.preventDefault();
           mutation.mutate(new FormData(event.currentTarget));
@@ -85,6 +86,7 @@ export function PlaceForm({
       >
         <p className="eyebrow">{place ? "EDITAR LUGAR" : "NUEVO LUGAR"}</p>
         <h2>{place ? "Ajustemos el lugar" : "¿A dónde quieren ir?"}</h2>
+        <div className="place-editor-form__fields">
         <label>
           Nombre
           <input name="name" defaultValue={place?.name} required autoFocus />
@@ -124,6 +126,7 @@ export function PlaceForm({
             ))}
           </select>
         </label>
+        </div>
         <fieldset className="tag-picker">
           <legend>¿Por qué se destaca?</legend>
           <p>Elegí todas las etiquetas que correspondan.</p>
@@ -146,9 +149,9 @@ export function PlaceForm({
             ))}
           </div>
         </fieldset>
-        <Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto}>
+        <div className="modal-form__actions"><Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto}>
           {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
-        </Button>
+        </Button></div>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}
       </form>
     </Modal>

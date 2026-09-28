@@ -63,7 +63,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
   return (
     <Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending}>
       <form
-        className="home-recipe-form"
+        className="home-recipe-form modal-form--paired"
         onSubmit={(event) => {
           event.preventDefault();
           mutation.mutate(new FormData(event.currentTarget));

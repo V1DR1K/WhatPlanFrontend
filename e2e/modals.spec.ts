@@ -1,6 +1,70 @@
 import { expect, test } from '@playwright/test';
 
 for (const [kind, width, height, noScroll] of [
+  ['real-review', 1366, 768, true],
+  ['real-review', 900, 768, true],
+  ['real-venue-review', 1366, 768, true],
+  ['real-place', 1366, 768, true],
+  ['real-place', 1440, 900, true],
+  ['real-review', 390, 844, false],
+  ['real-review', 320, 568, false],
+  ['real-place', 390, 844, false],
+  ['real-place', 320, 568, false],
+] as const) {
+  test(`${kind} keeps its controls inside the dialog at ${width}×${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto(`/e2e/modal-preview.html?kind=${kind}`);
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    const measurements = await dialog.evaluate((element) => {
+      const content = element.querySelector<HTMLElement>('.modal__content')!;
+      const contentRect = content.getBoundingClientRect();
+      const controls = [...element.querySelectorAll<HTMLElement>('.score-field, .star-control--input, .place-score-input, .tag-picker, .modal-form__actions')];
+      const escaping = controls.filter((control) => {
+        const rect = control.getBoundingClientRect();
+        return rect.left < contentRect.left - 2 || rect.right > contentRect.right + 2;
+      }).map((control) => control.className);
+      const nestedOverflow = [...element.querySelectorAll<HTMLElement>('.tag-options')].map((list) => list.scrollHeight - list.clientHeight);
+      return { horizontalOverflow: content.scrollWidth - content.clientWidth, verticalOverflow: content.scrollHeight - content.clientHeight, nestedOverflow, escaping };
+    });
+    expect(measurements.horizontalOverflow).toBeLessThanOrEqual(2);
+    expect(measurements.escaping).toEqual([]);
+    expect(measurements.nestedOverflow.every((amount) => amount <= 2)).toBe(true);
+    if (noScroll) expect(measurements.verticalOverflow).toBeLessThanOrEqual(2);
+    await expect(dialog.getByRole('button', { name: kind === 'real-place' ? 'Guardar lugar' : kind === 'real-venue-review' ? 'Guardar opinión del lugar' : 'Guardar reseña' })).toBeVisible();
+  });
+}
+
+for (const kind of ['viewer', 'viewer-portrait', 'viewer-square', 'viewer-panorama'] as const) {
+  test(`${kind} fits every edge of the photo on desktop`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto(`/e2e/modal-preview.html?kind=${kind}`);
+    const photo = page.locator('.photo-viewer__image');
+    await expect(photo).toBeVisible();
+    const fitted = async () => {
+      await expect.poll(async () => photo.evaluate((element) => {
+        const image = element as HTMLImageElement;
+        const box = image.getBoundingClientRect();
+        const frame = image.closest('.photo-viewer__stage')!.getBoundingClientRect();
+        return image.naturalWidth > 0 &&
+          box.left >= frame.left - 1 && box.top >= frame.top - 1 &&
+          box.right <= frame.right + 1 && box.bottom <= frame.bottom + 1 &&
+          Math.abs(box.width / box.height - image.naturalWidth / image.naturalHeight) < 0.02;
+      })).toBe(true);
+    };
+    await fitted();
+    await page.getByRole('button', { name: 'Acercar' }).click();
+    await page.getByRole('button', { name: 'Ajustar' }).click();
+    await fitted();
+    await page.setViewportSize({ width: 900, height: 600 });
+    await fitted();
+    await page.getByRole('button', { name: 'Imagen siguiente' }).click();
+    await fitted();
+  });
+}
+
+for (const [kind, width, height, noScroll] of [
   ['review', 1366, 768, true],
   ['review', 1440, 900, true],
   ['recipe', 1440, 900, true],

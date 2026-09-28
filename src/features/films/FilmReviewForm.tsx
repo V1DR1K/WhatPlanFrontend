@@ -31,7 +31,7 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
   });
   const remove = useMutation({ mutationFn: () => deleteFilmReview(film.id, review!.id), onSuccess: async () => { await Promise.all([qc.invalidateQueries({ queryKey: ['film', film.id] }), qc.invalidateQueries({ queryKey: ['films'] })]); showNotice('Eliminamos la reseña.'); onClose(); } });
 
-  return <><Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
+  return <><Modal size="wide" onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form className="modal-form--paired modal-form--review" onSubmit={event => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
     <p className="eyebrow">{review ? 'EDITAR RESEÑA' : 'RESEÑA DE LA VISTA'}</p>
     <h2>{film.tmdb?.title ?? film.title}</h2>
     <p className="muted">Vista del {dateLabel(view.watchedOn)}</p>
@@ -39,8 +39,8 @@ export function FilmReviewForm({ film, view, review, onClose }: { film: Film; vi
     {!!film.tmdb?.cast.filter(member => member.character).length && <label>Personaje favorito<select value={favoriteCharacter} onChange={event => setFavoriteCharacter(event.target.value)}><option value="">No elegir</option>{film.tmdb.cast.filter(member => member.character).map(member => <option key={`${member.name}-${member.character}`} value={member.character}>{member.character} · {member.name}</option>)}</select></label>}
     <fieldset className="film-metric-fields"><legend>¿Cómo fue la película?</legend>{filmReviewMetrics.map(metric => <div className="film-metric-field" key={metric.key}><div><strong>{metric.label}</strong><small>{metricLevel(metric.levels, metrics[metric.key])}</small></div><SegmentedLevel label={metric.label} levels={metric.levels} value={metrics[metric.key]} onChange={value => setMetrics(current => ({ ...current, [metric.key]: value }))} /></div>)}</fieldset>
     <label>Reseña<textarea className="review-textarea" name="comment" defaultValue={review?.comment} placeholder="¿Qué te pareció?" /></label>
-    <Button icon={review ? '💾' : '💬'} disabled={mutation.isPending || remove.isPending}>{mutation.isPending ? 'Guardando…' : review ? 'Guardar reseña' : 'Agregar reseña'}</Button>
-    {review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirmingDelete(true)}>Borrar reseña</Button>}
+    <div className="modal-form__actions"><Button icon={review ? '💾' : '💬'} disabled={mutation.isPending || remove.isPending}>{mutation.isPending ? 'Guardando…' : review ? 'Guardar reseña' : 'Agregar reseña'}</Button>
+    {review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirmingDelete(true)}>Borrar reseña</Button>}</div>
     {(mutation.error || remove.error) && <p className="form-error" role="alert">{(mutation.error || remove.error)!.message}</p>}
   </form></Modal>{confirmingDelete && review && <ConfirmDialog title="¿Borrar esta reseña?" message="La reseña se eliminará definitivamente de esta vista." confirmLabel="Borrar reseña" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}</>;
 }
