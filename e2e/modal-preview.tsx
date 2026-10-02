@@ -8,6 +8,7 @@ import { StarRating } from '../src/components/ui/StarRating';
 import { ConfirmDialog } from '../src/components/ui/ConfirmDialog';
 import { PhotoManagerModal } from '../src/components/ui/PhotoManagerModal';
 import { SectionThemeContext } from '../src/lib/sectionTheme';
+import { ZoneProvider } from '../src/lib/zoneContext';
 import { VisitReviewForm } from '../src/features/items/VisitReviewForm';
 import { PlaceForm } from '../src/features/places/PlaceForm';
 import { PlaceReviewForm } from '../src/features/places/PlaceReviewForm';
@@ -38,6 +39,8 @@ const venueReview = { author: 'tomas', location: 4, heating: 4, bathrooms: 4, ex
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
 queryClient.setQueryData(['categories'], [place.category]);
 queryClient.setQueryData(['highlight-tags'], tags);
+queryClient.setQueryData(['zones'], []);
+queryClient.setQueryData(['zone-preference'], { defaultZoneId: null });
 
 export function Preview() {
   const [open, setOpen] = useState(true);
@@ -67,4 +70,4 @@ export function Preview() {
   </SectionThemeContext.Provider>;
 }
 
-createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><Preview /></QueryClientProvider>);
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><ZoneProvider><Preview /></ZoneProvider></QueryClientProvider>);

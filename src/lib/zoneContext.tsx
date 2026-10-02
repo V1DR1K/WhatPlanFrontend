@@ -12,6 +12,7 @@ type ZoneContextValue = {
 };
 
 const ZoneContext = createContext<ZoneContextValue | null>(null);
+const zoneFilteredQueryKeys = [['places'], ['films'], ['recipes'], ['cookings'], ['activities'], ['when-dates'], ['when-date']] as const;
 
 export function ZoneProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
@@ -19,20 +20,23 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
   const preferenceQuery = useQuery({ queryKey: ['zone-preference'], queryFn: getZonePreference });
   const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const invalidateZoneQueries = useCallback(() => Promise.all(
+    zoneFilteredQueryKeys.map(queryKey => client.invalidateQueries({ queryKey })),
+  ), [client]);
   const selectZone = useCallback((zoneId: number | null) => {
     setSelectedZoneId(zoneId);
     setCurrentZoneFilter(zoneId);
-    void client.invalidateQueries();
-  }, [client]);
+    void invalidateZoneQueries();
+  }, [invalidateZoneQueries]);
 
   useEffect(() => {
     if (preferenceQuery.data && !initialized) {
       setSelectedZoneId(preferenceQuery.data.defaultZoneId);
       setCurrentZoneFilter(preferenceQuery.data.defaultZoneId);
       setInitialized(true);
-      void client.invalidateQueries();
+      void invalidateZoneQueries();
     }
-  }, [client, initialized, preferenceQuery.data]);
+  }, [initialized, invalidateZoneQueries, preferenceQuery.data]);
 
   useEffect(() => {
     if (selectedZoneId !== null && zonesQuery.data && !zonesQuery.data.some(zone => zone.id === selectedZoneId)) {
