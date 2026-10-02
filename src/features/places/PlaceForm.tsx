@@ -8,6 +8,8 @@ import type { Place } from "../../types/domain";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags } from "./highlightTags";
 import { savePlace, uploadPlacePhoto } from "./places";
+import { useZoneContext } from "../../lib/zoneContext";
+import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
 
 const mapsSearch = (address: string) =>
   address
@@ -26,6 +28,8 @@ export function PlaceForm({
   const [categoryId, setCategoryId] = useState(() =>
     place?.category.id ? String(place.category.id) : "",
   );
+  const zoneContext = useZoneContext();
+  const [zoneId, setZoneId] = useState<number | null>(place?.zoneId ?? null);
   const [tagIds, setTagIds] = useState<number[]>(() =>
     place?.tags.map((tag) => tag.id) ?? [],
   );
@@ -46,6 +50,7 @@ export function PlaceForm({
           acceptsReservations: form.get("acceptsReservations") === "on",
           categoryId: Number(form.get("categoryId")),
           tagIds,
+          ...(!place && zoneContext.selectedZoneId === null ? { zoneId: zoneId ?? undefined } : {}),
         },
         place?.id,
       );
@@ -91,6 +96,7 @@ export function PlaceForm({
           Nombre
           <input name="name" defaultValue={place?.name} required autoFocus />
         </label>
+        {!place && zoneContext.selectedZoneId === null && <ZoneAssignmentField value={zoneId} onChange={setZoneId} />}
         <label>
           Dirección <small className="tiny">Opcional</small>
           <input name="address" defaultValue={place?.address ?? undefined} placeholder="Calle 123, Rosario" />
@@ -149,7 +155,7 @@ export function PlaceForm({
             ))}
           </div>
         </fieldset>
-        <div className="modal-form__actions"><Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto}>
+        <div className="modal-form__actions"><Button icon={place ? "💾" : "➕"} disabled={pending || preparingPhoto || (!place && zoneContext.selectedZoneId === null && zoneId === null)}>
           {pending ? "Guardando…" : place ? "Guardar lugar" : "Agregar lugar"}
         </Button></div>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

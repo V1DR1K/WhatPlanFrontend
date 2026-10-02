@@ -6,6 +6,8 @@ import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Activity, ActivitySchedule } from "../../types/domain";
 import { getFunCategories, saveActivity, uploadActivityProfilePhoto } from "./whyFun";
+import { useZoneContext } from "../../lib/zoneContext";
+import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
 
 const days: ActivitySchedule["dayOfWeek"][] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 const dayLabel: Record<ActivitySchedule["dayOfWeek"], string> = {
@@ -21,6 +23,8 @@ const emptySchedule = (): ActivitySchedule => ({ dayOfWeek: "FRIDAY", opensAt: "
 
 export function ActivityForm({ activity, onClose }: { activity?: Activity; onClose: () => void }) {
   const qc = useQueryClient();
+  const zoneContext = useZoneContext();
+  const [zoneId, setZoneId] = useState<number | null>(activity?.zoneId ?? null);
   const [categoryId, setCategoryId] = useState<number | undefined>(activity?.category.id);
   const [subcategoryId, setSubcategoryId] = useState<number | undefined>(activity?.subcategory.id);
   const [schedules, setSchedules] = useState<ActivitySchedule[]>(
@@ -41,6 +45,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
           categoryId,
           subcategoryId,
           schedules,
+          ...(!activity && zoneContext.selectedZoneId === null ? { zoneId: zoneId ?? undefined } : {}),
         },
         activity?.id,
       );
@@ -78,6 +83,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
       >
         <p className="eyebrow">{activity ? "EDITAR ACTIVIDAD" : "NUEVA ACTIVIDAD"}</p>
         <h2>{activity ? "Ajustemos la actividad" : "¿Qué quieren hacer?"}</h2>
+        {!activity && zoneContext.selectedZoneId === null && <ZoneAssignmentField value={zoneId} onChange={setZoneId} />}
         <label>
           Actividad
           <input name="name" defaultValue={activity?.name} required autoFocus placeholder="Ej. Bowling del centro" />
@@ -190,7 +196,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
             Agregar horario
           </Button>
         </fieldset>
-        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
+        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (!activity && zoneContext.selectedZoneId === null && zoneId === null)}>
           {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
         </Button>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

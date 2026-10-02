@@ -1,7 +1,7 @@
 import { api } from '../../lib/api';
 import type { Film, FilmGenreOption, FilmReview, FilmView, Slice, TmdbMovie, WatchPlatform } from '../../types/domain';
 
-export type FilmInput = { tmdbId?: number; title?: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; watchedOn?: string; genres: string[]; platformId?: number };
+export type FilmInput = { tmdbId?: number; title?: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; watchedOn?: string; genres: string[]; platformId?: number; zoneId?: number };
 export type PlatformInput = { name: string; icon: string; active: boolean };
 export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean; search?: string; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();

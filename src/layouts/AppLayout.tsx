@@ -4,6 +4,7 @@ import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
 import { Button, buttonClassName } from '../components/ui/Button';
 import { SectionThemeContext, sectionThemeStyle } from '../lib/sectionTheme';
+import { useZoneContext } from '../lib/zoneContext';
 
 function backTarget(pathname: string) {
   if (pathname === '/app' || pathname === '/app/settings') return '/app';
@@ -22,6 +23,7 @@ export function AppLayout() {
   const previousPathname = useRef<string | undefined>(undefined);
   const previousHistoryIndex = useRef<number | undefined>(undefined);
   const user = session.get();
+  const zoneContext = useZoneContext();
   const isAdmin = user?.role === 'ADMIN';
   const canManageSection = isAdmin;
   const inFood = location.pathname.startsWith('/app/food');
@@ -62,13 +64,20 @@ export function AppLayout() {
     <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section) : undefined}>
       <header className="app-header">
         <Link className="brand" to="/app" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
+        <label className="zone-filter" aria-label="Filtrar registros por Zona">
+          <span>Zona</span>
+          <select aria-label="Filtrar por Zona" value={zoneContext.selectedZoneId ?? ''} disabled={zoneContext.loading} onChange={event => zoneContext.selectZone(event.target.value ? Number(event.target.value) : null)}>
+            <option value="">Todos</option>
+            {zoneContext.zones.map(zone => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+          </select>
+        </label>
         <div className="header-actions">
           {(inFood || inFilms || inCook || inFun || inDates) && <>
             <Link className={buttonClassName('icon', 'round round--section-home')} to="/app" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
             <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
           </>}
           {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
-          {isAdmin && outsideSection && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración global" title="Configuración global">⚙️</Link>}
+          {(!isAdmin || outsideSection) && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración" title="Configuración">⚙️</Link>}
           <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
         </div>
       </header>

@@ -27,6 +27,10 @@ const REFRESH_LOCK_KEY = 'wherefood.auth.refresh.lock';
 const REFRESH_MARKER_KEY = 'wherefood.auth.refresh.marker';
 const INSTANCE_ID = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 const DEFAULT_TIMEOUT_MS = 15_000;
+let currentZoneFilterId: number | null = null;
+const zoneFilteredLists = new Set(['/places', '/places/archived', '/films', '/how-cook/recipes', '/how-cook/cookings', '/why-fun/activities', '/why-fun/plans', '/when-dates']);
+const zoneAssignedCreates = new Set(['/places', '/films', '/how-cook/recipes', '/why-fun/activities', '/why-fun/plans']);
+export const setCurrentZoneFilter = (zoneId: number | null) => { currentZoneFilterId = zoneId; };
 type RefreshOutcome = { token: string | null; definitive: boolean };
 const refreshFailed = (definitive = false): RefreshOutcome => ({ token: null, definitive });
 let refreshPromise: Promise<RefreshOutcome> | null = null;
@@ -151,18 +155,37 @@ async function refreshOnce(startedAt: number) {
 }
 
 export async function api<T>(path: string, init: ApiRequestInit = {}, retry = true) {
+  const method = (init.method ?? 'GET').toUpperCase();
+  const apiPath = path.split('?')[0];
+  let requestPath = path;
+  let requestBody = init.body;
+  const zoneFilteredRequest = zoneFilteredLists.has(apiPath)
+    || apiPath.startsWith('/when-dates/special-dates/') && apiPath.includes('/occurrences/');
+  if (method === 'GET' && currentZoneFilterId !== null && zoneFilteredRequest
+      && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId')) {
+    requestPath += `${requestPath.includes('?') ? '&' : '?'}zoneId=${currentZoneFilterId}`;
+  }
+  if (method === 'POST' && currentZoneFilterId !== null && zoneAssignedCreates.has(apiPath)
+      && typeof requestBody === 'string' && requestBody.length > 0) {
+    try {
+      const payload = JSON.parse(requestBody) as Record<string, unknown>;
+      if (payload.zoneId === undefined) requestBody = JSON.stringify({ ...payload, zoneId: currentZoneFilterId });
+    } catch {
+      // Non-JSON requests are not zone-assigned catalog creations.
+    }
+  }
   const token = session.get()?.token;
   const startedAt = Date.now();
   const request = requestSignal(init.signal, init.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   const headers = new Headers(init.headers);
   if (!(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   if (token && !headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
-  const requestInit: RequestInit = { ...init };
+  const requestInit: RequestInit = { ...init, body: requestBody };
   delete (requestInit as ApiRequestInit).timeoutMs;
   delete requestInit.signal;
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), { ...requestInit, headers, signal: request.signal });
+    response = await fetch(apiUrl(requestPath), { ...requestInit, headers, signal: request.signal });
   } finally {
     request.cleanup();
   }

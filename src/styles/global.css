@@ -196,6 +196,42 @@ a {
   gap: 9px;
   align-items: center;
 }
+.zone-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 45%, var(--line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--section-accent) 9%, var(--panel));
+  color: var(--muted);
+  font-size: 12px;
+}
+.zone-filter select {
+  max-width: min(34vw, 180px);
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: var(--cream);
+  font-weight: 700;
+}
+.zone-filter select:disabled { opacity: .65; }
+.zone-filter option { background: var(--panel); color: var(--cream); }
+.zone-assignment-field { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
+.zone-assignment-field select,
+.zone-settings__add input,
+.zone-settings__list input {
+  min-height: 44px;
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--section-accent) 48%, var(--line));
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--section-accent) 7%, #151415);
+  color: var(--cream);
+}
+.zone-assignment-field option { background: var(--panel); color: var(--cream); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .round,
 .avatar {
   display: grid;
@@ -655,9 +691,19 @@ a {
     padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(45px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
   }
   .app-header {
-    height: calc(62px + env(safe-area-inset-top, 0px));
+    height: calc(102px + env(safe-area-inset-top, 0px));
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    display: grid;
+    align-content: center;
+    column-gap: 8px;
+    row-gap: 8px;
     padding-top: env(safe-area-inset-top, 0px);
   }
+  .app-header > .brand { grid-column: 1; grid-row: 1; }
+  .header-actions { grid-column: 2; grid-row: 1; gap: 5px; }
+  .zone-filter { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; min-height: 34px; padding-block: 2px; }
+  .zone-filter select { max-width: 72%; min-height: 30px; }
   .brand {
     font-size: clamp(25px, 8vw, 31px);
   }

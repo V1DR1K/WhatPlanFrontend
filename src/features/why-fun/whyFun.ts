@@ -2,7 +2,7 @@ import { api } from '../../lib/api';
 import type { Activity, ActivityReview, ActivityVisit, FunCategory, Slice } from '../../types/domain';
 
 export type FunCategoryInput = { parentId?: number; name: string; icon: string; active: boolean };
-export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[] };
+export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[]; zoneId?: number };
 export type ActivityVisitInput = { scheduledAt?: string };
 
 export const getFunCategories = () => api<FunCategory[]>('/why-fun/categories');

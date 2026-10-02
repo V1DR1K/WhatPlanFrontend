@@ -59,9 +59,7 @@ function FunAdmin() {
 }
 
 function SettingsAdmin() {
-  return session.get()?.role === 'ADMIN'
-    ? <Suspense fallback={routeFallback}><SettingsPage /></Suspense>
-    : <Navigate to="/app" replace />;
+  return <Suspense fallback={routeFallback}><SettingsPage /></Suspense>;
 }
 
 function WhenDatesSettingsAdmin() {

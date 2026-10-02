@@ -6,12 +6,16 @@ import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Recipe, RecipeIngredient, RecipeStep } from "../../types/domain";
 import { saveRecipe, uploadRecipePhoto } from "./homeRecipes";
+import { useZoneContext } from "../../lib/zoneContext";
+import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
 
 const emptyIngredient = (): RecipeIngredient => ({ name: "", quantity: 1, unit: "unidad" });
 const emptyStep = (): RecipeStep => ({ instruction: "" });
 
 export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () => void }) {
   const qc = useQueryClient();
+  const zoneContext = useZoneContext();
+  const [zoneId, setZoneId] = useState<number | null>(recipe?.zoneId ?? null);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
     recipe?.ingredients ?? [],
   );
@@ -34,6 +38,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
           sourceUrl: String(form.get("sourceUrl")).trim() || undefined,
           ingredients: cleanIngredients,
           steps: cleanSteps,
+          ...(!recipe && zoneContext.selectedZoneId === null ? { zoneId: zoneId ?? undefined } : {}),
         },
         recipe?.id,
       );
@@ -71,6 +76,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
       >
         <p className="eyebrow">{recipe ? "EDITAR RECETA" : "NUEVA RECETA"}</p>
         <h2>{recipe ? "Ajustemos la receta" : "¿Qué quieren cocinar?"}</h2>
+        {!recipe && zoneContext.selectedZoneId === null && <ZoneAssignmentField value={zoneId} onChange={setZoneId} />}
         <label>
           Nombre
           <input name="name" defaultValue={recipe?.name} required autoFocus />
@@ -174,7 +180,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
             Agregar paso
           </Button>
         </fieldset>
-        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
+        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (!recipe && zoneContext.selectedZoneId === null && zoneId === null)}>
           {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
         </Button>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

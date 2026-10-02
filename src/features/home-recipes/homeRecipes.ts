@@ -1,7 +1,7 @@
 import { api } from '../../lib/api';
 import type { Cooking, CookingReview, Home, MealType, Recipe, RecipeIngredient, RecipeStep, Slice } from '../../types/domain';
 
-export type RecipeInput = { name: string; sourceUrl?: string; ingredients: RecipeIngredient[]; steps: RecipeStep[] };
+export type RecipeInput = { name: string; sourceUrl?: string; ingredients: RecipeIngredient[]; steps: RecipeStep[]; zoneId?: number };
 export type CookingInput = { home: Home; servings: number; cookedOn: string; mealType: MealType };
 export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boolean; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, mediaUrl, parseApiError, session } from "./api";
+import { api, mediaUrl, parseApiError, session, setCurrentZoneFilter } from "./api";
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -14,10 +14,12 @@ function createStorage() {
 const originalStorage = globalThis.localStorage;
 
 beforeEach(() => {
+  setCurrentZoneFilter(null);
   Object.defineProperty(globalThis, "localStorage", { configurable: true, value: createStorage() });
 });
 
 afterEach(() => {
+  setCurrentZoneFilter(null);
   vi.restoreAllMocks();
   Object.defineProperty(globalThis, "localStorage", { configurable: true, value: originalStorage });
 });
@@ -67,5 +69,36 @@ describe("session recovery", () => {
 
     await expect(api("/protected")).rejects.toThrow("Tus credenciales siguen guardadas");
     expect(session.get()?.token).toBe("expired");
+  });
+});
+
+describe("global zone filter", () => {
+  beforeEach(() => {
+    session.set({ token: "active", username: "tomas", role: "USER" });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ content: [] }), { status: 200 })));
+  });
+
+  it("adds the selected zone to catalog list requests", async () => {
+    setCurrentZoneFilter(2);
+
+    await api("/places?size=5");
+
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=2");
+  });
+
+  it("assigns the selected zone to new catalog records", async () => {
+    setCurrentZoneFilter(2);
+
+    await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
+
+    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2 });
+  });
+
+  it("leaves zone unassigned when the global filter is Todos", async () => {
+    await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
+
+    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar" });
   });
 });
