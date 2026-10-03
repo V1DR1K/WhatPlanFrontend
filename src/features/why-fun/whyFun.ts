@@ -1,9 +1,10 @@
+import { getHistory } from '../../lib/history';
 import { api } from '../../lib/api';
 import type { Activity, ActivityReview, ActivityVisit, FunCategory, Slice } from '../../types/domain';
 
 export type FunCategoryInput = { parentId?: number; name: string; icon: string; active: boolean };
-export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[]; zoneId?: number };
-export type ActivityVisitInput = { scheduledAt?: string };
+export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[]; zoneId?: number; stageId?: string | null };
+export type ActivityVisitInput = import("../journey/journey").Binding & { scheduledAt?: string };
 
 export const getFunCategories = () => api<FunCategory[]>('/why-fun/categories');
 export const getAllFunCategories = () => api<FunCategory[]>('/why-fun/categories/all');
@@ -24,7 +25,7 @@ export const getActivity = (id: number) => api<Activity>(`/why-fun/activities/${
 export const saveActivity = (input: ActivityInput, id?: number) => api<Activity>(`/why-fun/activities${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const deleteActivity = (id: number) => api<void>(`/why-fun/activities/${id}`, { method: 'DELETE' });
 export const uploadActivityProfilePhoto = (id: number, file: File) => { const data = new FormData(); data.append('file', file); return api<Activity>(`/why-fun/activities/${id}/photo`, { method: 'POST', body: data }); };
-export const getActivityVisits = (activityId: number) => api<ActivityVisit[]>(`/why-fun/activities/${activityId}/visits`);
+export const getActivityVisits = (activityId: number) => getHistory<ActivityVisit>(`/why-fun/activities/${activityId}/visits`);
 export const createActivityVisit = (activityId: number, input: ActivityVisitInput) => api<ActivityVisit>(`/why-fun/activities/${activityId}/visits`, { method: 'POST', body: JSON.stringify(input) });
 export const updateActivityVisit = (visitId: number, input: ActivityVisitInput) => api<ActivityVisit>(`/why-fun/activity-visits/${visitId}`, { method: 'PUT', body: JSON.stringify(input) });
 export const deleteActivityVisit = (visitId: number) => api<void>(`/why-fun/activity-visits/${visitId}`, { method: 'DELETE' });

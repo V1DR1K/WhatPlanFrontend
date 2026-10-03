@@ -1,17 +1,18 @@
+import { getHistory } from '../../lib/history';
 import { api } from "../../lib/api";
 import type { PlaceVisit, PlaceVisitReview, PlaceVisitSummary } from "../../types/domain";
 export type PlaceVisitReviewInput = Omit<PlaceVisitReview, "id" | "author" | "updatedBy" | "createdAt" | "updatedAt">;
-export const getVisits = (placeId: number) => api<PlaceVisitSummary[]>(`/places/${placeId}/visits`);
+export const getVisits = (placeId: number) => getHistory<PlaceVisitSummary>(`/places/${placeId}/visits`);
 export const getVisit = (visitId: number) => api<PlaceVisit>(`/place-visits/${visitId}`);
-export const createVisit = (placeId: number, visitedOn: string) =>
+export const createVisit = (placeId: number, visitedOn: string, location: import("../journey/journey").Binding = {}) =>
   api<PlaceVisitSummary>(`/places/${placeId}/visits`, {
     method: "POST",
-    body: JSON.stringify({ visitedOn }),
+    body: JSON.stringify({ visitedOn, ...location }),
   });
-export const updateVisit = (visitId: number, visitedOn: string) =>
+export const updateVisit = (visitId: number, visitedOn: string, location: import("../journey/journey").Binding = {}) =>
   api<PlaceVisitSummary>(`/place-visits/${visitId}`, {
     method: "PUT",
-    body: JSON.stringify({ visitedOn }),
+    body: JSON.stringify({ visitedOn, ...location }),
   });
 export const deleteVisit = (visitId: number) => api<void>(`/place-visits/${visitId}`, { method: "DELETE" });
 export const uploadVisitPhoto = (id: number, file: File) => {

@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-03T17:22:30.487Z",
+  "title": "Design System: WhatPlan",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "displayName": "Noche ciruela",
+        "role": "neutral"
+      },
+      "panel": {
+        "displayName": "Panel carbón",
+        "role": "neutral"
+      },
+      "line": {
+        "displayName": "Línea malva",
+        "role": "neutral"
+      },
+      "cream": {
+        "displayName": "Crema cálido",
+        "role": "neutral"
+      },
+      "muted": {
+        "displayName": "Gris rosado",
+        "role": "neutral"
+      },
+      "field-bg": {
+        "displayName": "Campo oscuro",
+        "role": "neutral"
+      },
+      "modal-bg": {
+        "displayName": "Superficie de diálogo",
+        "role": "neutral"
+      },
+      "wp-brand-red": {
+        "displayName": "Coral de marca",
+        "role": "primary"
+      },
+      "wp-brand-contrast": {
+        "displayName": "Contraste coral",
+        "role": "neutral"
+      },
+      "violet": {
+        "displayName": "Violeta de foco",
+        "role": "secondary"
+      },
+      "food-accent": {
+        "displayName": "Naranja gastronómico",
+        "role": "secondary"
+      },
+      "film-accent": {
+        "displayName": "Lavanda de cine",
+        "role": "secondary"
+      },
+      "cook-accent": {
+        "displayName": "Lima de cocina",
+        "role": "secondary"
+      },
+      "fun-accent": {
+        "displayName": "Dorado de actividades",
+        "role": "secondary"
+      },
+      "dates-accent": {
+        "displayName": "Rosa de fechas",
+        "role": "secondary"
+      },
+      "journey-accent": {
+        "displayName": "Celeste de viaje",
+        "role": "secondary"
+      },
+      "journey-contrast": {
+        "displayName": "Contraste de viaje",
+        "role": "neutral"
+      },
+      "journey-surface": {
+        "displayName": "Panel de viaje",
+        "role": "neutral"
+      },
+      "journey-surface-soft": {
+        "displayName": "Superficie profunda de viaje",
+        "role": "neutral"
+      },
+      "journey-foreground": {
+        "displayName": "Texto pálido de viaje",
+        "role": "neutral"
+      },
+      "journey-muted": {
+        "displayName": "Metadato de viaje",
+        "role": "neutral"
+      },
+      "journey-line": {
+        "displayName": "Borde de viaje",
+        "role": "neutral"
+      },
+      "danger-bg": {
+        "displayName": "Fondo destructivo",
+        "role": "neutral"
+      },
+      "danger-border": {
+        "displayName": "Borde destructivo",
+        "role": "neutral"
+      },
+      "danger-text": {
+        "displayName": "Texto destructivo",
+        "role": "neutral"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display editorial",
+        "purpose": "Marca y heroes compartidos."
+      },
+      "headline": {
+        "displayName": "Título de sección",
+        "purpose": "Secciones y diálogos compartidos."
+      },
+      "title": {
+        "displayName": "Título de card",
+        "purpose": "Nombre del registro."
+      },
+      "body": {
+        "displayName": "Lectura funcional",
+        "purpose": "Texto y controles."
+      },
+      "label": {
+        "displayName": "Datos breves",
+        "purpose": "Categorías y metadatos."
+      }
+    },
+    "shadows": [
+      {
+        "name": "button-rest",
+        "value": "3px 3px 0 var(--section-shadow)",
+        "purpose": "Acciones primarias y secundarias compartidas."
+      },
+      {
+        "name": "button-interaction",
+        "value": "2px 2px 0 var(--section-shadow)",
+        "purpose": "Hover/foco de las acciones compartidas."
+      },
+      {
+        "name": "modal",
+        "value": "0 25px 60px #000",
+        "purpose": "Separación del diálogo sobre el fondo."
+      }
+    ],
+    "motion": [
+      {
+        "name": "motion-feedback",
+        "value": "140ms",
+        "purpose": "Feedback compartido."
+      },
+      {
+        "name": "motion-state",
+        "value": "220ms",
+        "purpose": "Cambios de estado compartidos."
+      },
+      {
+        "name": "motion-overlay",
+        "value": "360ms",
+        "purpose": "Llegada de página y diálogo."
+      },
+      {
+        "name": "motion-arrive",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Curva compartida de llegada."
+      },
+      {
+        "name": "motion-leave",
+        "value": "cubic-bezier(0.7, 0, 0.84, 0)",
+        "purpose": "Curva compartida de salida."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-controls",
+        "value": "540px"
+      },
+      {
+        "name": "catalog-controls",
+        "value": "640px"
+      },
+      {
+        "name": "journey-and-modal",
+        "value": "700px"
+      },
+      {
+        "name": "entity-detail",
+        "value": "820px"
+      },
+      {
+        "name": "wide-modal-fields",
+        "value": "1050px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Shared Button variant from src/styles/action-buttons.css; inherits the active section theme.",
+      "html": "<button class=\"ds-button ds-primary\">Guardar</button>",
+      "css": ".ds-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 14px;font:800 13px/1.15 \"DM Sans\",sans-serif;text-decoration:none;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}.ds-button:hover:not(:disabled),.ds-button:focus-visible{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--section-shadow)}.ds-button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}.ds-button:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}.ds-primary{min-height:48px;border-color:var(--section-accent);background:var(--section-accent);color:var(--section-contrast);box-shadow:3px 3px 0 var(--section-shadow)}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Shared Button variant from src/styles/action-buttons.css; inherits the active section theme.",
+      "html": "<button class=\"ds-button ds-secondary\">Editar</button>",
+      "css": ".ds-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 14px;font:800 13px/1.15 \"DM Sans\",sans-serif;text-decoration:none;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}.ds-button:hover:not(:disabled),.ds-button:focus-visible{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--section-shadow)}.ds-button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}.ds-button:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}.ds-secondary{border-color:var(--section-accent);background:color-mix(in srgb,var(--section-accent) 14%,var(--panel));color:var(--section-accent);box-shadow:3px 3px 0 var(--section-shadow)}"
+    },
+    {
+      "name": "Destructive button",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Shared Button variant from src/styles/action-buttons.css; inherits the active section theme.",
+      "html": "<button class=\"ds-button ds-destructive\">Quitar</button>",
+      "css": ".ds-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 14px;font:800 13px/1.15 \"DM Sans\",sans-serif;text-decoration:none;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}.ds-button:hover:not(:disabled),.ds-button:focus-visible{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--section-shadow)}.ds-button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}.ds-button:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}.ds-destructive{border-color:var(--danger-border);background:var(--danger-bg);color:var(--danger-text);box-shadow:3px 3px 0 var(--danger-shadow)}.ds-destructive:hover:not(:disabled),.ds-destructive:focus-visible{box-shadow:2px 2px 0 var(--danger-shadow)}"
+    },
+    {
+      "name": "Tertiary button",
+      "kind": "button",
+      "refersTo": "button-tertiary",
+      "description": "Shared Button variant from src/styles/action-buttons.css; inherits the active section theme.",
+      "html": "<button class=\"ds-button ds-tertiary\">Ver detalle</button>",
+      "css": ".ds-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 14px;font:800 13px/1.15 \"DM Sans\",sans-serif;text-decoration:none;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}.ds-button:hover:not(:disabled),.ds-button:focus-visible{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--section-shadow)}.ds-button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}.ds-button:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}.ds-tertiary{min-width:44px;background:transparent;color:var(--section-accent);box-shadow:none}.ds-tertiary:hover:not(:disabled),.ds-tertiary:focus-visible{box-shadow:none}"
+    },
+    {
+      "name": "Icon button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Shared Button variant from src/styles/action-buttons.css; inherits the active section theme.",
+      "html": "<button class=\"ds-button ds-icon\" aria-label=\"Volver\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m15 18-6-6 6-6\"/></svg></button>",
+      "css": ".ds-button{display:inline-flex;min-height:44px;align-items:center;justify-content:center;gap:8px;border:1px solid transparent;border-radius:12px;padding:10px 14px;font:800 13px/1.15 \"DM Sans\",sans-serif;text-decoration:none;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,opacity .18s ease}.ds-button:hover:not(:disabled),.ds-button:focus-visible{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--section-shadow)}.ds-button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}.ds-button:disabled{cursor:not-allowed;opacity:.45;box-shadow:none}.ds-icon{width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border-color:var(--line);border-radius:50%;background:#211f21;color:var(--cream);box-shadow:none}.ds-icon:hover:not(:disabled),.ds-icon:focus-visible{box-shadow:none}"
+    },
+    {
+      "name": "Input field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Shared form field with visible label and keyboard focus, from global.css and touch.css.",
+      "html": "<label class=\"ds-field\">Nombre<input placeholder=\"Escribí un nombre\" /></label>",
+      "css": ".ds-field{display:grid;gap:6px;color:#d5ced0;font:16px \"DM Sans\",sans-serif}.ds-field input{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;background:#151415;color:var(--cream);font:17px \"DM Sans\",sans-serif}.ds-field input:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}"
+    },
+    {
+      "name": "Quick navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Incumbent chip navigation, from global.css. Cream filled selected state.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Experiencias\"><button class=\"ds-current\" aria-current=\"page\">Lugares</button><button>Películas</button></nav>",
+      "css": ".ds-nav{display:flex;gap:10px;overflow:auto;padding:22px 0}.ds-nav button{min-height:44px;white-space:nowrap;border:1px solid color-mix(in srgb,var(--section-accent) 45%,var(--line));padding:7px 10px;border-radius:9px;background:transparent;color:var(--section-accent);font:13px \"DM Sans\",sans-serif}.ds-nav .ds-current{background:var(--cream);color:#1a1819;border-color:var(--cream);font-weight:700}.ds-nav button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}"
+    },
+    {
+      "name": "Filter chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter selection from global.css; selected tone retains the active section accent.",
+      "html": "<div class=\"ds-chips\"><button>Todos</button><button class=\"ds-selected\" aria-pressed=\"true\">Guardados</button></div>",
+      "css": ".ds-chips{display:flex;gap:7px}.ds-chips button{min-height:44px;white-space:nowrap;border:1px solid color-mix(in srgb,var(--section-accent) 45%,var(--line));padding:7px 10px;border-radius:9px;background:transparent;color:var(--section-accent);font:13px \"DM Sans\",sans-serif}.ds-chips .ds-selected{border-color:var(--section-accent);color:var(--cream);background:color-mix(in srgb,var(--section-accent) 14%,var(--panel))}.ds-chips button:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}"
+    },
+    {
+      "name": "Catalog card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Shared catalog card body from global.css. Media is omitted from this primitive sample.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card-body\"><h3>Un lugar para volver</h3><p>Guardado para compartir</p><a href=\"#detalle\">Ver detalle</a></div></article>",
+      "css": ".ds-card{border:1px solid var(--line);border-radius:17px;overflow:hidden;background:var(--panel);color:var(--cream);font:14px \"DM Sans\",sans-serif;transition:.2s}.ds-card:hover{transform:translateY(-4px);border-color:#6a5665}.ds-card-body{padding:16px}.ds-card h3{margin:0;font-size:17px}.ds-card p{color:var(--muted);font-size:12px}.ds-card a{color:var(--cream);font-weight:600;text-decoration:none}.ds-card a:focus-visible{outline:2px solid var(--section-focus,var(--violet));outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Planes compartidos, estética nocturna",
+    "overview": "Esta frase resume la identidad ya documentada en `MANUAL_DE_MARCA.md`: cercana, nocturna y un poco lúdica. Es una descripción del sistema existente, sin proponer una identidad nueva. La base oscura reúne las experiencias; el color de cada sección identifica las acciones y los estados de esa experiencia.\n\nEl sistema combina títulos editoriales, lectura funcional directa y controles con una pequeña profundidad física. `PRODUCT.md` confirma conservar los controles, la tipografía y la navegación actuales, con uso por teclado, adaptación a teléfonos y respeto por movimiento reducido.",
+    "keyCharacteristics": [
+      "Base oscura compartida y acento propio por experiencia.",
+      "Fraunces para marca y títulos editoriales; DM Sans para uso funcional; DM Mono para datos cortos.",
+      "Acciones redondeadas con sombra sólida; paneles de profundidad tonal.",
+      "Formularios y visor de fotos compartidos entre módulos."
+    ],
+    "rules": [
+      {
+        "name": "The Section Accent Rule",
+        "body": "La experiencia aplica sus colores mediante `SectionShell` y `sectionThemeStyle`; los diálogos conservan ese tema aunque se rendericen en un portal.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tactile Action Rule",
+        "body": "Reutilizar la respuesta del botón compartido: desplazamiento de 1 px y sombra más corta al hover o foco, conservando el contorno visible de foco.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** conservar la base oscura, los temas de sección y los componentes compartidos.",
+      "**Do** mantener etiquetas visibles, foco por teclado y estados de carga, error y deshabilitado.",
+      "**Do** registrar composiciones específicas en briefs de superficie.",
+      "**Do** respetar movimiento reducido en las animaciones de llegada."
+    ],
+    "donts": [
+      "**Don't** sustituir el acento de una experiencia por el de otra.",
+      "**Don't** convertir el celeste o los encabezados propios de viaje en un cambio global.",
+      "**Don't** cubrir pantallas enteras con el acento ni usar Fraunces en formularios o párrafos largos.",
+      "**Don't** agregar cierres que omitan la protección del diálogo compartido."
+    ]
+  }
+}

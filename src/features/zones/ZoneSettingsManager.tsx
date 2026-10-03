@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { Button } from '../../components/ui/Button';
 import { showNotice } from '../../lib/flash';
 import { createZone, deactivateZone, getAllZones, updateZone } from './zones';

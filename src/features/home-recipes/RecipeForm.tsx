@@ -1,3 +1,4 @@
+import { useLocationDraft } from '../journey/LocationFields';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
@@ -6,7 +7,6 @@ import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Recipe, RecipeIngredient, RecipeStep } from "../../types/domain";
 import { saveRecipe, uploadRecipePhoto } from "./homeRecipes";
-import { useZoneContext } from "../../lib/zoneContext";
 import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
 
 const emptyIngredient = (): RecipeIngredient => ({ name: "", quantity: 1, unit: "unidad" });
@@ -14,8 +14,7 @@ const emptyStep = (): RecipeStep => ({ instruction: "" });
 
 export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () => void }) {
   const qc = useQueryClient();
-  const zoneContext = useZoneContext();
-  const [zoneId, setZoneId] = useState<number | null>(recipe?.zoneId ?? null);
+  const { cityId: zoneId, setCityId: setZoneId, stageId, setStageId } = useLocationDraft(recipe?.zoneId);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
     recipe?.ingredients ?? [],
   );
@@ -38,7 +37,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
           sourceUrl: String(form.get("sourceUrl")).trim() || undefined,
           ingredients: cleanIngredients,
           steps: cleanSteps,
-          ...(!recipe && zoneContext.selectedZoneId === null ? { zoneId: zoneId ?? undefined } : {}),
+          zoneId: zoneId ?? undefined, stageId: !recipe ? stageId : null,
         },
         recipe?.id,
       );
@@ -76,7 +75,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
       >
         <p className="eyebrow">{recipe ? "EDITAR RECETA" : "NUEVA RECETA"}</p>
         <h2>{recipe ? "Ajustemos la receta" : "¿Qué quieren cocinar?"}</h2>
-        {!recipe && zoneContext.selectedZoneId === null && <ZoneAssignmentField value={zoneId} onChange={setZoneId} />}
+        <ZoneAssignmentField value={zoneId} onChange={setZoneId} stageId={stageId} onStageChange={setStageId} />
         <label>
           Nombre
           <input name="name" defaultValue={recipe?.name} required autoFocus />
@@ -180,7 +179,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
             Agregar paso
           </Button>
         </fieldset>
-        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (!recipe && zoneContext.selectedZoneId === null && zoneId === null)}>
+        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (zoneId === null)}>
           {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
         </Button>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

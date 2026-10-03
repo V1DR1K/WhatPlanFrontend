@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
@@ -38,7 +40,7 @@ export function FunVenueDetailPage() {
   useInAppBackGuard("/app/why-fun");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [editingVisit, setEditingVisit] = useState<ActivityVisit | null | undefined>();
+  const [editingVisit, setEditingVisit] = useState<ActivityVisit | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedVisitId, setSelectedVisitId] = useState<number>();
   const [reviewing, setReviewing] = useState<ActivityReview | null>();
   const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
@@ -157,6 +159,7 @@ export function FunVenueDetailPage() {
           {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" manageInModal name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
         </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
+      {current?.id && <ExperienceJourneyPanel key={current?.id} source={{section:"FUN",entityId:id,experienceId:current?.id}} physicalCity={value.zoneId} />}
       {editing && <ActivityForm activity={value} onClose={() => setEditing(false)} />}
       {editingVisit !== undefined && <ActivityVisitForm activity={value} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} />}
       {reviewing !== undefined && current && <ActivityReviewForm activityId={value.id} visit={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}

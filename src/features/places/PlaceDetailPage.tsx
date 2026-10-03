@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
@@ -44,7 +46,7 @@ export function PlaceDetailPage() {
   useInAppBackGuard("/app/food");
   const qc = useQueryClient();
   const [editingPlace, setEditingPlace] = useState(false);
-  const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>();
+  const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedVisitId, setSelectedVisitId] = useState<number>();
   const [reviewing, setReviewing] = useState<PlaceVisitReview | null>();
   const [reviewingPlace, setReviewingPlace] = useState(false);
@@ -209,9 +211,10 @@ export function PlaceDetailPage() {
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
+      {visit.data?.id && <ExperienceJourneyPanel key={visit.data?.id} source={{section:"FOOD",entityId:id,experienceId:visit.data?.id}} physicalCity={venue.zoneId} />}
       {editingPlace && <PlaceForm place={venue} onClose={() => setEditingPlace(false)} />}
       {reviewingPlace && <PlaceReviewForm place={venue} review={venue.reviews.find((review) => review.author === session.get()?.username)} onClose={() => setReviewingPlace(false)} />}
-      {editingVisit !== undefined && <VisitForm placeId={venue.id} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} onDeleted={() => setSelectedVisitId(undefined)} />}
+      {editingVisit !== undefined && <VisitForm physicalCity={venue.zoneId} placeId={venue.id} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} onDeleted={() => setSelectedVisitId(undefined)} />}
       {reviewing !== undefined && current && <VisitReviewForm placeId={venue.id} visit={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}
       {confirmingDelete && <ConfirmDialog title="¿Borrar este lugar?" message={removePlace.error ? removePlace.error.message : "Se archivará el lugar y se conservarán sus visitas."} confirmLabel="Borrar lugar" pending={removePlace.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => removePlace.mutate()} />}
       {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de la visita." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(deletingPhoto.id)} />}

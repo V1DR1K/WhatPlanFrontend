@@ -28,6 +28,8 @@ const REFRESH_MARKER_KEY = 'wherefood.auth.refresh.marker';
 const INSTANCE_ID = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 const DEFAULT_TIMEOUT_MS = 15_000;
 let currentZoneFilterId: number | null = null;
+let currentJourneyStageId: string | null = null;
+export const setCurrentJourneyStage = (stageId: string | null) => { currentJourneyStageId = stageId; };
 const zoneFilteredLists = new Set(['/places', '/places/archived', '/films', '/how-cook/recipes', '/how-cook/cookings', '/why-fun/activities', '/why-fun/plans', '/when-dates']);
 const zoneAssignedCreates = new Set(['/places', '/films', '/how-cook/recipes', '/why-fun/activities', '/why-fun/plans']);
 export const setCurrentZoneFilter = (zoneId: number | null) => { currentZoneFilterId = zoneId; };
@@ -162,14 +164,14 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
   const zoneFilteredRequest = zoneFilteredLists.has(apiPath)
     || apiPath.startsWith('/when-dates/special-dates/') && apiPath.includes('/occurrences/');
   if (method === 'GET' && currentZoneFilterId !== null && zoneFilteredRequest
-      && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId')) {
-    requestPath += `${requestPath.includes('?') ? '&' : '?'}zoneId=${currentZoneFilterId}`;
+      && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId') && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('cityId')) {
+    requestPath += `${requestPath.includes('?') ? '&' : '?'}cityId=${currentZoneFilterId}`;
   }
   if (method === 'POST' && currentZoneFilterId !== null && zoneAssignedCreates.has(apiPath)
       && typeof requestBody === 'string' && requestBody.length > 0) {
     try {
       const payload = JSON.parse(requestBody) as Record<string, unknown>;
-      if (payload.zoneId === undefined) requestBody = JSON.stringify({ ...payload, zoneId: currentZoneFilterId });
+      requestBody = JSON.stringify({ ...payload, zoneId: payload.zoneId ?? currentZoneFilterId, stageId: payload.stageId === undefined ? currentJourneyStageId : payload.stageId });
     } catch {
       // Non-JSON requests are not zone-assigned catalog creations.
     }

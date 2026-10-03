@@ -3,8 +3,8 @@ import { sectionThemeStyle, sectionThemes } from "./sectionTheme";
 
 describe("section themes", () => {
   it("defines a complete, distinct theme for every experience", () => {
-    expect(Object.keys(sectionThemes)).toHaveLength(5);
-    expect(new Set(Object.values(sectionThemes).map((theme) => theme.accent)).size).toBe(5);
+    expect(Object.keys(sectionThemes)).toHaveLength(6);
+    expect(new Set(Object.values(sectionThemes).map((theme) => theme.accent)).size).toBe(6);
   });
 
   it("exposes semantic CSS variables for the section shell", () => {

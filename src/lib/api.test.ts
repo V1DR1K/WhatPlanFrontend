@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, mediaUrl, parseApiError, session, setCurrentZoneFilter } from "./api";
+import { api, mediaUrl, parseApiError, session, setCurrentZoneFilter, setCurrentJourneyStage } from "./api";
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -15,11 +15,13 @@ const originalStorage = globalThis.localStorage;
 
 beforeEach(() => {
   setCurrentZoneFilter(null);
+  setCurrentJourneyStage(null);
   Object.defineProperty(globalThis, "localStorage", { configurable: true, value: createStorage() });
 });
 
 afterEach(() => {
   setCurrentZoneFilter(null);
+  setCurrentJourneyStage(null);
   vi.restoreAllMocks();
   Object.defineProperty(globalThis, "localStorage", { configurable: true, value: originalStorage });
 });
@@ -73,9 +75,22 @@ describe("session recovery", () => {
 });
 
 describe("global zone filter", () => {
+  it("uses the same city catalogue for two trips while proposing each selected stage", async()=>{
+    setCurrentZoneFilter(2);setCurrentJourneyStage('stage-a');await api('/films');await api('/films',{method:'POST',body:JSON.stringify({title:'Film'})});
+    setCurrentJourneyStage('stage-b');await api('/films');await api('/films',{method:'POST',body:JSON.stringify({title:'Film'})});
+    const calls=(fetch as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls[0][0]).toBe(calls[2][0]);
+    expect(JSON.parse(calls[1][1].body).stageId).toBe('stage-a');expect(JSON.parse(calls[3][1].body).stageId).toBe('stage-b');
+  });
+  it("keeps an explicit form location and leaves the trip catalogue unfiltered", async()=>{
+    setCurrentZoneFilter(2);setCurrentJourneyStage('stage-a');
+    await api('/places',{method:'POST',body:JSON.stringify({name:'Origin',zoneId:1,stageId:null})});await api('/whither-journey');
+    const calls=(fetch as ReturnType<typeof vi.fn>).mock.calls;expect(JSON.parse(calls[0][1].body)).toEqual({name:'Origin',zoneId:1,stageId:null});expect(calls[1][0]).not.toContain('cityId');
+  });
+
   beforeEach(() => {
     session.set({ token: "active", username: "tomas", role: "USER" });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ content: [] }), { status: 200 })));
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ content: [] }), { status: 200 }))));
   });
 
   it("adds the selected zone to catalog list requests", async () => {
@@ -83,7 +98,7 @@ describe("global zone filter", () => {
 
     await api("/places?size=5");
 
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=2");
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&cityId=2");
   });
 
   it("assigns the selected zone to new catalog records", async () => {
@@ -92,7 +107,7 @@ describe("global zone filter", () => {
     await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
 
     const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
-    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2 });
+    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2, stageId:null });
   });
 
   it("leaves zone unassigned when the global filter is Todos", async () => {

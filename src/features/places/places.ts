@@ -14,7 +14,7 @@ export type PlaceInput = {
   acceptsReservations: boolean;
   categoryId: number;
   tagIds: number[];
-  zoneId?: number;
+  zoneId?: number; stageId?: string | null;
 };
 export type PlaceReviewInput = Omit<PlaceReview, "author">;
 export const getPlaces = (

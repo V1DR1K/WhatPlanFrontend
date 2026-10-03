@@ -6,6 +6,8 @@ import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
 import { AuthenticatedApp } from '../layouts/AuthenticatedApp';
 import { LandingPage } from '../features/landing/LandingPage';
 
+const JourneysPage = lazy(() => import('../features/journey/JourneysPage').then(({ JourneysPage }) => ({ default: JourneysPage })));
+const JourneyDetailPage = lazy(() => import('../features/journey/JourneyDetailPage').then(({ JourneyDetailPage }) => ({ default: JourneyDetailPage })));
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then(({ DashboardPage }) => ({ default: DashboardPage })));
 const DiscoverPage = lazy(() => import('../features/places/DiscoverPage').then(({ DiscoverPage }) => ({ default: DiscoverPage })));
 const PlaceDetailPage = lazy(() => import('../features/places/PlaceDetailPage').then(({ PlaceDetailPage }) => ({ default: PlaceDetailPage })));
@@ -74,6 +76,8 @@ export function AppRoutes() {
     <Route path="/login" element={<LoginPage />} />
     <Route path="/app" element={<Protected />}>
       <Route index element={<Suspense fallback={routeFallback}><DashboardPage /></Suspense>} />
+      <Route path="whither-journey" element={<Suspense fallback={routeFallback}><JourneysPage /></Suspense>} />
+      <Route path="whither-journey/:id" element={<Suspense fallback={routeFallback}><JourneyDetailPage /></Suspense>} />
       <Route path="food" element={<Suspense fallback={routeFallback}><DiscoverPage /></Suspense>} />
       <Route path="food/home" element={<Navigate to="/app/how-cook" replace />} />
       <Route path="food/places/:id" element={<Suspense fallback={routeFallback}><PlaceDetailPage /></Suspense>} />

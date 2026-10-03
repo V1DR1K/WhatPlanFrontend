@@ -1,0 +1,342 @@
+import { api } from "../../lib/api";
+export type City = { id: number; name: string; countryCode: string };
+export type Country = { code: string; name: string };
+export type LocationOption = {
+  key: string;
+  cityId: number;
+  stageId: string | null;
+  journeyId: string | null;
+  label: string;
+};
+export type LocationContext = {
+  coupleId: string;
+  originCityId: number;
+  options: LocationOption[];
+  maxUploadBytes: number;
+};
+export type Binding = {
+  cityId?: number;
+  stageId?: string | null;
+  pointId?: string | null;
+};
+export type Stage = {
+  id: string;
+  cityId: number;
+  cityName: string;
+  countryCode: string;
+  startsOn: string;
+  endsOn: string;
+  position: number;
+};
+export type Trip = {
+  id: string;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+  archived: boolean;
+  stages: Stage[];
+};
+export type TripInput = Pick<Trip, "name" | "startsOn" | "endsOn"> & {
+  stages: { id?: string; cityId: number; startsOn: string; endsOn: string }[];
+};
+export type Section = "FOOD" | "FILM" | "COOK" | "FUN";
+export type Source = {
+  section: Section;
+  entityId: number;
+  experienceId?: number | null;
+};
+export type Point = {
+  id: string;
+  stageId: string;
+  title: string;
+  scheduledOn: string | null;
+  scheduledTime: string | null;
+  notes: string | null;
+  mapsUrl: string | null;
+  position: number;
+  status: "PENDING" | "COMPLETED" | "CANCELLED";
+  source: Source | null;
+};
+export type Stay = {
+  id: string;
+  stageId: string;
+  name: string;
+  startsOn: string;
+  endsOn: string;
+  address: string | null;
+  price: number | string | null;
+  currency: string | null;
+  source: string | null;
+  bookingUrl: string | null;
+  mapsUrl: string | null;
+  photoId: string | null;
+};
+export type Packing = {
+  id: string;
+  userId: number;
+  description: string;
+  quantity: number;
+  packed: boolean;
+};
+export type Movement = {
+  id: string;
+  stageId: string | null;
+  pointId: string | null;
+  stayId: string | null;
+  kind: "FUNDS" | "EXPENSE" | "REFUND";
+  description: string;
+  amount: number | string;
+  currency: string;
+  occurredOn: string;
+};
+export type Balance = {
+  currency: string;
+  funds: number | string;
+  expenses: number | string;
+  refunds: number | string;
+  balance: number | string;
+};
+export type Review = {
+  id: string;
+  stayId: string | null;
+  userId: number;
+  author: string;
+  rating: number;
+  comment: string | null;
+};
+export type JourneyFile = {
+  id: string;
+  name: string;
+  contentType: string;
+  byteSize: number;
+  stageId: string | null;
+  pointId: string | null;
+  stayId: string | null;
+  movementId: string | null;
+  url: string;
+};
+export type Detail = {
+  trip: Trip;
+  points: Point[];
+  stays: Stay[];
+  packing: Packing[];
+  movements: Movement[];
+  balances: Balance[];
+  reviews: Review[];
+  files: JourneyFile[];
+  members: { id: number; username: string }[];
+  dates: {
+    specialDateId: number;
+    date: string;
+    label: string;
+    stageId: string;
+  }[];
+  stageBalances: { stageId: string | null; balances: Balance[] }[];
+};
+export type CatalogSource = {
+  section: Section;
+  entityId: number;
+  title: string;
+  cityId: number;
+  href: string;
+};
+export type Experience = {
+  id: number;
+  date: string;
+  cityId: number;
+  stageId: string | null;
+};
+export const sections: Record<Section, string> = {
+  FOOD: "WhereFood",
+  FILM: "WhichMovie",
+  COOK: "WhoCook",
+  FUN: "WhyFun",
+};
+export const today = () =>
+  new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date());
+export const formatDate = (value: string) =>
+  new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value + "T12:00:00"));
+export const money = (amount: number | string, currency: string) => {
+  const formatter = new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency,
+  });
+  if (typeof amount === "number") return formatter.format(amount);
+  const match = /^(-?)(\d+)(?:\.(\d+))?$/.exec(amount);
+  if (!match) return formatter.format(Number(amount));
+  const digits = formatter.resolvedOptions().maximumFractionDigits ?? 2;
+  const scale = 10n ** BigInt(digits);
+  const fraction = (match[3] ?? "").padEnd(digits + 1, "0");
+  const units =
+    BigInt(match[2]) * scale +
+    BigInt(fraction.slice(0, digits) || "0") +
+    (fraction[digits] >= "5" ? 1n : 0n);
+  const integer = units / scale;
+  const negative = match[1] === "-";
+  const signed = negative ? (integer === 0n ? -0 : -integer) : integer;
+  return formatter
+    .formatToParts(signed)
+    .map((part) =>
+      part.type === "fraction"
+        ? (units % scale).toString().padStart(digits, "0")
+        : part.value,
+    )
+    .join("");
+};
+export const sourceHref = (source: Source) =>
+  `${{ FOOD: "/app/food/places/", FILM: "/app/films/", COOK: "/app/how-cook/", FUN: "/app/why-fun/" }[source.section]}${source.entityId}`;
+export const getLocationContext = () =>
+  api<LocationContext>("/location-context");
+export const saveOrigin = (cityId: number) =>
+  api<LocationContext>("/location-context/origin", {
+    method: "PUT",
+    body: JSON.stringify({ cityId }),
+  });
+export const getCity = (id: number) => api<City>(`/cities/${id}`);
+export const getCountries = () => api<Country[]>("/cities/countries");
+export const getCities = (countryCode?: string, search?: string) => {
+  const q = new URLSearchParams();
+  if (countryCode) q.set("countryCode", countryCode);
+  if (search) q.set("search", search);
+  return api<City[]>(`/cities?${q}`);
+};
+export const saveCity = (name: string, countryCode: string) =>
+  api<City>("/cities", {
+    method: "POST",
+    body: JSON.stringify({ name, countryCode }),
+  });
+export const getTrips = (page = 0) =>
+  api<Trip[]>(`/whither-journey?page=${page}&size=20`);
+export const getTrip = (id: string) => api<Detail>(`/whither-journey/${id}`);
+export const saveTrip = (input: TripInput, id?: string) =>
+  api<Trip>(`/whither-journey${id ? `/${id}` : ""}`, {
+    method: id ? "PUT" : "POST",
+    body: JSON.stringify(input),
+  });
+export const archiveTrip = (id: string) =>
+  api<void>(`/whither-journey/${id}/archive`, { method: "PUT" });
+export const deleteTrip = (id: string) =>
+  api<void>(`/whither-journey/${id}`, { method: "DELETE" });
+export const saveResource = <T>(
+  tripId: string,
+  resource: string,
+  input: Omit<T, "id">,
+  id?: string,
+) =>
+  api<T>(`/whither-journey/${tripId}/${resource}${id ? `/${id}` : ""}`, {
+    method: id ? "PUT" : "POST",
+    body: JSON.stringify(input),
+  });
+export const deleteResource = (resource: string, id: string) =>
+  api<void>(`/whither-journey/${resource}/${id}`, { method: "DELETE" });
+export const saveReview = (
+  tripId: string,
+  rating: number,
+  comment: string,
+  stayId?: string,
+) =>
+  api<Review>(`/whither-journey/${tripId}/reviews/me`, {
+    method: "PUT",
+    body: JSON.stringify({ stayId, rating, comment }),
+  });
+export const uploadFile = (
+  tripId: string,
+  file: File,
+  links: {
+    stageId?: string;
+    pointId?: string;
+    stayId?: string;
+    movementId?: string;
+    hotelPhoto?: boolean;
+  } = {},
+) => {
+  const q = new URLSearchParams();
+  Object.entries(links).forEach(([k, v]) => {
+    if (v) q.set(k, String(v));
+  });
+  const data = new FormData();
+  data.append("file", file);
+  return api<JourneyFile>(`/whither-journey/${tripId}/files?${q}`, {
+    method: "POST",
+    body: data,
+  });
+};
+export const getSources = (
+  section: Section,
+  cityId?: number,
+  search?: string,
+) => {
+  const q = new URLSearchParams();
+  if (cityId) q.set("cityId", String(cityId));
+  if (search) q.set("search", search);
+  return api<CatalogSource[]>(`/whither-journey/catalog/${section}?${q}`);
+};
+export const getExperiences = async (
+  source: Source,
+  from?: string,
+  to?: string,
+) => {
+  const results: Experience[] = [];
+  for (let page = 0; ; page++) {
+    const query = new URLSearchParams({ page: String(page) });
+    if (from) query.set("from", from);
+    if (to) query.set("to", to);
+    const chunk = await api<Experience[]>(
+      `/whither-journey/experiences/${source.section}/${source.entityId}?${query}`,
+    );
+    results.push(...chunk);
+    if (chunk.length < 100) return results;
+  }
+};
+export const getExperienceLocation = (source: Source) =>
+  api<Binding & { journeyId?: string }>(
+    `/whither-journey/experiences/${source.section}/${source.entityId}/${source.experienceId}/location`,
+  );
+export const bindExperience = (source: Source, input: Binding) =>
+  api<Binding & { journeyId?: string }>(
+    `/whither-journey/experiences/${source.section}/${source.entityId}/${source.experienceId}/location`,
+    { method: "PUT", body: JSON.stringify(input) },
+  );
+export const saveDateLocation = (
+  specialDateId: number,
+  date: string,
+  input: Binding,
+) =>
+  api(
+    `/when-dates/special-dates/${specialDateId}/occurrences/${date}/location`,
+    { method: "PUT", body: JSON.stringify(input) },
+  );
+
+export const relinkFile = (
+  id: string,
+  links: {
+    stageId: string | null;
+    pointId: string | null;
+    stayId: string | null;
+    movementId: string | null;
+  },
+) =>
+  api<JourneyFile>(`/whither-journey/files/${id}/links`, {
+    method: "PUT",
+    body: JSON.stringify(links),
+  });
+
+export const linkDate = (
+  id: string,
+  input: {
+    stageId: string;
+    date: string;
+    specialDateId?: number;
+    label?: string;
+  },
+) =>
+  api(`/whither-journey/${id}/dates`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });

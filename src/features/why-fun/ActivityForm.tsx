@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocationDraft } from '../journey/LocationFields';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
@@ -6,7 +8,6 @@ import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Activity, ActivitySchedule } from "../../types/domain";
 import { getFunCategories, saveActivity, uploadActivityProfilePhoto } from "./whyFun";
-import { useZoneContext } from "../../lib/zoneContext";
 import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
 
 const days: ActivitySchedule["dayOfWeek"][] = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
@@ -23,8 +24,7 @@ const emptySchedule = (): ActivitySchedule => ({ dayOfWeek: "FRIDAY", opensAt: "
 
 export function ActivityForm({ activity, onClose }: { activity?: Activity; onClose: () => void }) {
   const qc = useQueryClient();
-  const zoneContext = useZoneContext();
-  const [zoneId, setZoneId] = useState<number | null>(activity?.zoneId ?? null);
+  const { cityId: zoneId, setCityId: setZoneId, stageId, setStageId } = useLocationDraft(activity?.zoneId);
   const [categoryId, setCategoryId] = useState<number | undefined>(activity?.category.id);
   const [subcategoryId, setSubcategoryId] = useState<number | undefined>(activity?.subcategory.id);
   const [schedules, setSchedules] = useState<ActivitySchedule[]>(
@@ -45,7 +45,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
           categoryId,
           subcategoryId,
           schedules,
-          ...(!activity && zoneContext.selectedZoneId === null ? { zoneId: zoneId ?? undefined } : {}),
+          zoneId: zoneId ?? undefined, stageId: !activity ? stageId : null,
         },
         activity?.id,
       );
@@ -83,7 +83,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
       >
         <p className="eyebrow">{activity ? "EDITAR ACTIVIDAD" : "NUEVA ACTIVIDAD"}</p>
         <h2>{activity ? "Ajustemos la actividad" : "¿Qué quieren hacer?"}</h2>
-        {!activity && zoneContext.selectedZoneId === null && <ZoneAssignmentField value={zoneId} onChange={setZoneId} />}
+        <ZoneAssignmentField value={zoneId} onChange={setZoneId} stageId={stageId} onStageChange={setStageId} />
         <label>
           Actividad
           <input name="name" defaultValue={activity?.name} required autoFocus placeholder="Ej. Bowling del centro" />
@@ -196,7 +196,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
             Agregar horario
           </Button>
         </fieldset>
-        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (!activity && zoneContext.selectedZoneId === null && zoneId === null)}>
+        <Button icon={activity ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (zoneId === null)}>
           {mutation.isPending ? "Guardando…" : activity ? "Guardar actividad" : "Agregar actividad"}
         </Button>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

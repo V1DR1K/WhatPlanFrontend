@@ -1,4 +1,5 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useInAppBackGuard } from '../../lib/backGuard';
 import { CatalogMediaCard } from '../../components/ui/CatalogMediaCard';
 import { CatalogMoreButton } from '../../components/ui/IncrementalCatalog';

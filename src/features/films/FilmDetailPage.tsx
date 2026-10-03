@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
@@ -38,7 +40,7 @@ export function FilmDetailPage() {
   useInAppBackGuard("/app/films");
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [addingView, setAddingView] = useState(false);
+  const [addingView, setAddingView] = useState(() => new URLSearchParams(window.location.search).get("journeyAction") === "register");
   const [editingView, setEditingView] = useState<FilmView>();
   const [reviewing, setReviewing] = useState<{
     view: FilmView;
@@ -386,6 +388,7 @@ export function FilmDetailPage() {
           </p>
         )}
       </section>
+      {selectedViewId && <ExperienceJourneyPanel key={selectedViewId} source={{section:"FILM",entityId:id,experienceId:selectedViewId}} physicalCity={undefined} />}
       {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
       {addingView && (
         <FilmViewForm

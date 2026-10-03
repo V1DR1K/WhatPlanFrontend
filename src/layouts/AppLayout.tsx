@@ -12,6 +12,7 @@ function backTarget(pathname: string) {
   if (pathname.startsWith('/app/films/')) return '/app/films';
   if (pathname.startsWith('/app/how-cook/')) return '/app/how-cook';
   if (pathname.startsWith('/app/why-fun/')) return '/app/why-fun';
+  if (pathname.startsWith('/app/whither-journey/')) return '/app/whither-journey';
   if (pathname.startsWith('/app/when-dates/')) return '/app/when-dates';
   return '/app';
 }
@@ -27,6 +28,7 @@ export function AppLayout() {
   const isAdmin = user?.role === 'ADMIN';
   const canManageSection = isAdmin;
   const inFood = location.pathname.startsWith('/app/food');
+  const inJourney = location.pathname.startsWith('/app/whither-journey');
   const inFilms = location.pathname.startsWith('/app/films');
   const inCook = location.pathname.startsWith('/app/how-cook');
   const inFun = location.pathname.startsWith('/app/why-fun');
@@ -55,24 +57,24 @@ export function AppLayout() {
   const currentBackTarget = backTarget(location.pathname);
   const isDetail = currentBackTarget !== '/app';
 
-  const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : undefined;
+  const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : inJourney ? 'journey' : undefined;
   const sectionShell = section ? `${section}-shell` : '';
   const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates && isAdmin ? '/app/when-dates/settings' : undefined;
-  const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates;
+  const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates && !inJourney;
 
   return <SectionThemeContext value={section}>
     <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section) : undefined}>
       <header className="app-header">
         <Link className="brand" to="/app" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
-        <label className="zone-filter" aria-label="Filtrar registros por Zona">
-          <span>Zona</span>
-          <select aria-label="Filtrar por Zona" value={zoneContext.selectedZoneId ?? ''} disabled={zoneContext.loading} onChange={event => zoneContext.selectZone(event.target.value ? Number(event.target.value) : null)}>
-            <option value="">Todos</option>
-            {zoneContext.zones.map(zone => <option key={zone.id} value={zone.id}>{zone.name}</option>)}
+        <label className="zone-filter" aria-label="Filtrar registros por ciudad">
+          <span>Ciudad</span>
+          <select aria-label="Filtrar por ciudad" value={zoneContext.selectedLocationKey} disabled={zoneContext.loading} onChange={event => zoneContext.selectLocation(event.target.value)}>
+            <option value="all">Todas las ciudades</option>
+            {zoneContext.options.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
           </select>
         </label>
         <div className="header-actions">
-          {(inFood || inFilms || inCook || inFun || inDates) && <>
+          {(inFood || inFilms || inCook || inFun || inDates || inJourney) && <>
             <Link className={buttonClassName('icon', 'round round--section-home')} to="/app" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
             <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
           </>}

@@ -1,0 +1,867 @@
+import { getSpecialDates } from "../special-dates/specialDates";
+import { linkDate } from "./journey";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "../../lib/locationQuery";
+import { Link } from "react-router-dom";
+import { Button } from "../../components/ui/Button";
+import { Modal } from "../../components/ui/Modal";
+import { StarRating } from "../../components/ui/StarRating";
+import { useZoneContext } from "../../lib/zoneContext";
+import { session } from "../../lib/api";
+import { showNotice } from "../../lib/flash";
+import {
+  getSources,
+  getExperiences,
+  saveResource,
+  saveReview,
+  sections,
+  sourceHref,
+  today,
+  type Detail,
+  type Point,
+  type Stay,
+  type Movement,
+  type Section,
+  type Review,
+} from "./journey";
+export function useJourneyRefresh(id: string) {
+  const client = useQueryClient();
+  return () =>
+    Promise.all(
+      [
+        "journey",
+        "journeys",
+        "location-context",
+        "experience-location",
+        "when-dates",
+        "when-date",
+        "places",
+        "recipes",
+        "films",
+        "activities",
+      ].map((key) =>
+        client.invalidateQueries({
+          queryKey: key === "journey" ? [key, id] : [key],
+        }),
+      ),
+    );
+}
+function text(form: FormData, key: string) {
+  return String(form.get(key) ?? "").trim() || null;
+}
+function FormError({ error }: { error: Error | null }) {
+  return error ? (
+    <p className="form-error" role="alert">
+      {error.message}
+    </p>
+  ) : null;
+}
+function StageSelect({
+  detail,
+  value,
+  onChange,
+  optional = false,
+}: {
+  detail: Detail;
+  value: string;
+  onChange: (v: string) => void;
+  optional?: boolean;
+}) {
+  return (
+    <label>
+      Destino
+      <select
+        required={!optional}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {optional && <option value="">Todo el viaje</option>}
+        {detail.trip.stages.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.cityName} · {s.startsOn} / {s.endsOn}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+export function PointEditor({
+  detail,
+  point,
+  day,
+  completing = false,
+  onClose,
+}: {
+  detail: Detail;
+  point?: Point;
+  day?: string;
+  completing?: boolean;
+  onClose: () => void;
+}) {
+  const refresh = useJourneyRefresh(detail.trip.id);
+  const context = useZoneContext();
+  const [stageId, setStageId] = useState(
+    point?.stageId ??
+      detail.trip.stages.find(
+        (s) => day && day >= s.startsOn && day <= s.endsOn,
+      )?.id ??
+      detail.trip.stages[0].id,
+  );
+  const stage = detail.trip.stages.find((s) => s.id === stageId)!;
+  const [section, setSection] = useState<Section | "">(
+    point?.source?.section ?? "",
+  );
+  const [entityId, setEntityId] = useState(point?.source?.entityId ?? 0);
+  const [experienceId, setExperienceId] = useState(
+    point?.source?.experienceId ?? 0,
+  );
+  const [title, setTitle] = useState(point?.title ?? "");
+  const [status, setStatus] = useState<Point["status"]>(
+    completing ? "COMPLETED" : (point?.status ?? "PENDING"),
+  );
+  const [scheduledOn, setScheduledOn] = useState(
+    point?.scheduledOn ?? day ?? "",
+  );
+  const [search, setSearch] = useState("");
+  const catalog = useQuery({
+    queryKey: ["journey-sources", section, stage.cityId, search],
+    queryFn: () => getSources(section as Section, stage.cityId, search),
+    enabled: !!section,
+  });
+  const experiences = useQuery({
+    queryKey: [
+      "journey-experiences",
+      section,
+      entityId,
+      stage.startsOn,
+      stage.endsOn,
+    ],
+    queryFn: () =>
+      getExperiences(
+        { section: section as Section, entityId },
+        stage.startsOn,
+        stage.endsOn,
+      ),
+    enabled: !!section && !!entityId,
+  });
+  const save = useMutation({
+    mutationFn: (form: FormData) =>
+      saveResource<Point>(
+        detail.trip.id,
+        "points",
+        {
+          stageId,
+          title,
+          scheduledOn: scheduledOn || null,
+          scheduledTime: text(form, "scheduledTime"),
+          notes: text(form, "notes"),
+          mapsUrl: text(form, "mapsUrl"),
+          position: point?.position ?? detail.points.length,
+          status,
+          source:
+            section && entityId
+              ? { section, entityId, experienceId: experienceId || null }
+              : null,
+        },
+        point?.id,
+      ),
+    onSuccess: async () => {
+      await refresh();
+      showNotice("Punto del recorrido guardado.");
+      onClose();
+    },
+  });
+  const linked = !!point?.source?.experienceId;
+  const register = point?.source
+    ? `${sourceHref(point.source)}?${new URLSearchParams({ journeyPoint: point.id, journeyStage: point.stageId, journeySection: point.source.section, journeyEntity: String(point.source.entityId), journeyDate: point.scheduledOn ?? today(), journeyAction: "register" })}`
+    : "";
+  return (
+    <Modal
+      onClose={onClose}
+      size="wide"
+      confirmDiscard
+      pending={save.isPending}
+      title={
+        completing
+          ? "Completar actividad"
+          : point
+            ? "Editar punto"
+            : "Agregar punto"
+      }
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate(new FormData(e.currentTarget));
+        }}
+      >
+        <h2>
+          {completing
+            ? "¿Qué hicieron en este punto?"
+            : point
+              ? "Editar punto del recorrido"
+              : "Agregar al recorrido"}
+        </h2>
+        <StageSelect detail={detail} value={stageId} onChange={setStageId} />
+        <div className="form-columns">
+          <label>
+            Sección
+            <select
+              value={section}
+              disabled={linked}
+              onChange={(e) => {
+                setSection(e.target.value as Section | "");
+                setEntityId(0);
+                setExperienceId(0);
+              }}
+            >
+              <option value="">Punto libre</option>
+              {Object.entries(sections).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          {!!section && (
+            <label>
+              Ficha
+              <select
+                required
+                value={entityId || ""}
+                disabled={linked || catalog.isLoading}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  setEntityId(id);
+                  setExperienceId(0);
+                  if (!title)
+                    setTitle(
+                      catalog.data?.find((s) => s.entityId === id)?.title ?? "",
+                    );
+                }}
+              >
+                <option value="">Elegí una ficha</option>
+                {point?.source &&
+                  !catalog.data?.some(
+                    (s) => s.entityId === point.source?.entityId,
+                  ) && (
+                    <option value={point.source.entityId}>{point.title}</option>
+                  )}
+                {catalog.data?.map((s) => (
+                  <option key={s.entityId} value={s.entityId}>
+                    {s.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        {!!section && !linked && (
+          <label>
+            Buscar una ficha
+            <input
+              type="search"
+              value={search}
+              maxLength={160}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Nombre de la ficha"
+            />
+          </label>
+        )}
+        <FormError error={catalog.error} />
+        <label>
+          Actividad
+          <input
+            required
+            maxLength={160}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+        <div className="form-columns">
+          <label>
+            Día
+            <input
+              type="date"
+              min={stage.startsOn}
+              max={stage.endsOn}
+              value={scheduledOn}
+              onChange={(e) => setScheduledOn(e.target.value)}
+            />
+          </label>
+          <label>
+            Hora
+            <input
+              name="scheduledTime"
+              type="time"
+              defaultValue={point?.scheduledTime ?? ""}
+            />
+          </label>
+        </div>
+        <label>
+          Notas
+          <textarea
+            name="notes"
+            maxLength={4000}
+            defaultValue={point?.notes ?? ""}
+          />
+        </label>
+        <label>
+          Google Maps
+          <input
+            type="url"
+            name="mapsUrl"
+            maxLength={1000}
+            placeholder="https://maps.google.com/…"
+            defaultValue={point?.mapsUrl ?? ""}
+          />
+        </label>
+        <label>
+          Estado
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value as Point["status"])}
+          >
+            <option value="PENDING">Pendiente</option>
+            <option value="COMPLETED">Realizado</option>
+            <option value="CANCELLED">Cancelado</option>
+          </select>
+        </label>
+        {!!section && !!entityId && (
+          <label>
+            Experiencia vinculada
+            <select
+              value={experienceId || ""}
+              required={status === "COMPLETED"}
+              disabled={linked}
+              onChange={(e) => setExperienceId(Number(e.target.value))}
+            >
+              <option value="">Todavía no registrada</option>
+              {experiences.data
+                ?.filter(
+                  (e) =>
+                    e.date >= stage.startsOn &&
+                    e.date <= stage.endsOn &&
+                    (!e.stageId || e.stageId === stageId),
+                )
+                .map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.date} · #{e.id}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )}
+        {status === "COMPLETED" &&
+          section &&
+          !experienceId &&
+          point?.source && (
+            <p>
+              Elijan una experiencia ya registrada o{" "}
+              <Link
+                to={register}
+                onClick={() => context.selectLocation(stageId)}
+              >
+                registren la experiencia en {sections[section]}
+              </Link>
+              .
+            </p>
+          )}
+        <FormError error={experiences.error} />
+        <FormError error={save.error} />
+        <Button
+          disabled={
+            save.isPending ||
+            (!!section && !entityId) ||
+            (status === "COMPLETED" && !!section && !experienceId)
+          }
+        >
+          {save.isPending ? "Guardando…" : "Guardar punto"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+export function StayEditor({
+  detail,
+  stay,
+  onClose,
+}: {
+  detail: Detail;
+  stay?: Stay;
+  onClose: () => void;
+}) {
+  const refresh = useJourneyRefresh(detail.trip.id);
+  const [stageId, setStageId] = useState(
+    stay?.stageId ?? detail.trip.stages[0].id,
+  );
+  const stage = detail.trip.stages.find((s) => s.id === stageId)!;
+  const save = useMutation({
+    mutationFn: (form: FormData) =>
+      saveResource<Stay>(
+        detail.trip.id,
+        "stays",
+        {
+          stageId,
+          name: text(form, "name")!,
+          startsOn: text(form, "startsOn")!,
+          endsOn: text(form, "endsOn")!,
+          address: text(form, "address"),
+          price: text(form, "price"),
+          currency: text(form, "currency"),
+          source: text(form, "source"),
+          bookingUrl: text(form, "bookingUrl"),
+          mapsUrl: text(form, "mapsUrl"),
+          photoId: stay?.photoId ?? null,
+        },
+        stay?.id,
+      ),
+    onSuccess: async () => {
+      await refresh();
+      showNotice("Alojamiento guardado.");
+      onClose();
+    },
+  });
+  return (
+    <Modal
+      onClose={onClose}
+      size="wide"
+      confirmDiscard
+      pending={save.isPending}
+      title="Alojamiento"
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate(new FormData(e.currentTarget));
+        }}
+      >
+        <h2>{stay ? "Editar alojamiento" : "¿Dónde se quedan?"}</h2>
+        <StageSelect detail={detail} value={stageId} onChange={setStageId} />
+        <label>
+          Nombre
+          <input
+            name="name"
+            required
+            maxLength={160}
+            defaultValue={stay?.name}
+          />
+        </label>
+        <div className="form-columns">
+          <label>
+            Llegada
+            <input
+              name="startsOn"
+              type="date"
+              required
+              min={stage.startsOn}
+              max={stage.endsOn}
+              defaultValue={stay?.startsOn ?? stage.startsOn}
+            />
+          </label>
+          <label>
+            Salida
+            <input
+              name="endsOn"
+              type="date"
+              required
+              min={stage.startsOn}
+              max={stage.endsOn}
+              defaultValue={stay?.endsOn ?? stage.endsOn}
+            />
+          </label>
+        </div>
+        <label>
+          Dirección
+          <input
+            name="address"
+            maxLength={300}
+            defaultValue={stay?.address ?? ""}
+          />
+        </label>
+        <div className="form-columns">
+          <label>
+            Precio del alojamiento
+            <input
+              type="number"
+              name="price"
+              min="0"
+              step="0.0001"
+              defaultValue={stay?.price ?? ""}
+            />
+          </label>
+          <label>
+            Moneda
+            <input
+              name="currency"
+              pattern="[A-Z]{3}"
+              maxLength={3}
+              defaultValue={stay?.currency ?? "ARS"}
+              list="journey-currencies"
+            />
+          </label>
+        </div>
+        <p className="muted">
+          El precio no se descuenta del saldo. Registren los pagos en Dinero.
+        </p>
+        <label>
+          Dónde lo consiguieron
+          <input
+            name="source"
+            maxLength={300}
+            defaultValue={stay?.source ?? ""}
+            placeholder="Booking, recomendación…"
+          />
+        </label>
+        <label>
+          Enlace de reserva
+          <input
+            name="bookingUrl"
+            type="url"
+            maxLength={1000}
+            defaultValue={stay?.bookingUrl ?? ""}
+          />
+        </label>
+        <label>
+          Google Maps
+          <input
+            name="mapsUrl"
+            type="url"
+            maxLength={1000}
+            defaultValue={stay?.mapsUrl ?? ""}
+          />
+        </label>
+        <FormError error={save.error} />
+        <Button disabled={save.isPending}>
+          {save.isPending ? "Guardando…" : "Guardar alojamiento"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+export function MovementEditor({
+  detail,
+  movement,
+  initialPointId,
+  onClose,
+}: {
+  detail: Detail;
+  movement?: Movement;
+  initialPointId?: string;
+  onClose: () => void;
+}) {
+  const refresh = useJourneyRefresh(detail.trip.id);
+  const initialPoint = detail.points.find((p) => p.id === initialPointId);
+  const [stageId, setStageId] = useState(
+    movement?.stageId ?? initialPoint?.stageId ?? "",
+  );
+  const [pointId, setPointId] = useState(
+    movement?.pointId ?? initialPointId ?? "",
+  );
+  const [stayId, setStayId] = useState(movement?.stayId ?? "");
+  const save = useMutation({
+    mutationFn: (form: FormData) =>
+      saveResource<Movement>(
+        detail.trip.id,
+        "movements",
+        {
+          stageId: stageId || null,
+          pointId: pointId || null,
+          stayId: stayId || null,
+          kind: text(form, "kind") as Movement["kind"],
+          description: text(form, "description")!,
+          amount: text(form, "amount")!,
+          currency: text(form, "currency")!,
+          occurredOn: text(form, "occurredOn")!,
+        },
+        movement?.id,
+      ),
+    onSuccess: async () => {
+      await refresh();
+      showNotice("Movimiento guardado.");
+      onClose();
+    },
+  });
+  return (
+    <Modal
+      onClose={onClose}
+      size="wide"
+      confirmDiscard
+      pending={save.isPending}
+      title="Movimiento de dinero"
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate(new FormData(e.currentTarget));
+        }}
+      >
+        <h2>{movement ? "Editar movimiento" : "Registrar dinero"}</h2>
+        <label>
+          Tipo
+          <select name="kind" defaultValue={movement?.kind ?? "EXPENSE"}>
+            <option value="EXPENSE">Gasto</option>
+            <option value="FUNDS">Dinero llevado o agregado</option>
+            <option value="REFUND">Reintegro</option>
+          </select>
+        </label>
+        <label>
+          Descripción
+          <input
+            name="description"
+            required
+            maxLength={160}
+            defaultValue={movement?.description}
+          />
+        </label>
+        <div className="form-columns">
+          <label>
+            Importe
+            <input
+              name="amount"
+              type="number"
+              required
+              min="0.0001"
+              max="99999999999999.9999"
+              step="0.0001"
+              defaultValue={movement?.amount}
+            />
+          </label>
+          <label>
+            Moneda
+            <input
+              name="currency"
+              required
+              pattern="[A-Z]{3}"
+              maxLength={3}
+              list="journey-currencies"
+              defaultValue={movement?.currency ?? "ARS"}
+            />
+          </label>
+        </div>
+        <label>
+          Fecha del movimiento
+          <input
+            name="occurredOn"
+            required
+            type="date"
+            defaultValue={movement?.occurredOn ?? today()}
+          />
+        </label>
+        <StageSelect
+          detail={detail}
+          value={stageId}
+          optional
+          onChange={(v) => {
+            setStageId(v);
+            setPointId("");
+            setStayId("");
+          }}
+        />
+        <div className="form-columns">
+          <label>
+            Actividad
+            <select
+              value={pointId}
+              onChange={(e) => {
+                const point = detail.points.find(
+                  (p) => p.id === e.target.value,
+                );
+                setPointId(e.target.value);
+                if (point) setStageId(point.stageId);
+              }}
+            >
+              <option value="">Sin actividad</option>
+              {detail.points
+                .filter((p) => !stageId || p.stageId === stageId)
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Alojamiento
+            <select
+              value={stayId}
+              onChange={(e) => {
+                const stay = detail.stays.find((s) => s.id === e.target.value);
+                setStayId(e.target.value);
+                if (stay) setStageId(stay.stageId);
+              }}
+            >
+              <option value="">Sin alojamiento</option>
+              {detail.stays
+                .filter((s) => !stageId || s.stageId === stageId)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+        </div>
+        <FormError error={save.error} />
+        <Button disabled={save.isPending}>
+          {save.isPending ? "Guardando…" : "Guardar movimiento"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+export function ReviewEditor({
+  detail,
+  stayId,
+  onClose,
+}: {
+  detail: Detail;
+  stayId?: string;
+  onClose: () => void;
+}) {
+  const refresh = useJourneyRefresh(detail.trip.id);
+  const own: Review | undefined = detail.reviews.find(
+    (r) =>
+      r.author === session.get()?.username && r.stayId === (stayId ?? null),
+  );
+  const [rating, setRating] = useState(own?.rating ?? 0);
+  const [comment, setComment] = useState(own?.comment ?? "");
+  const save = useMutation({
+    mutationFn: () => saveReview(detail.trip.id, rating, comment, stayId),
+    onSuccess: async () => {
+      await refresh();
+      showNotice("Reseña guardada.");
+      onClose();
+    },
+  });
+  return (
+    <Modal
+      onClose={onClose}
+      confirmDiscard
+      pending={save.isPending}
+      title={stayId ? "Reseñar alojamiento" : "Reseñar viaje"}
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate();
+        }}
+      >
+        <h2>
+          {stayId ? "¿Cómo estuvo la estadía?" : "¿Cómo estuvo el viaje?"}
+        </h2>
+        <StarRating
+          label="Puntuación"
+          value={rating || undefined}
+          onChange={setRating}
+        />
+        <label>
+          Su recuerdo
+          <textarea
+            value={comment}
+            maxLength={2000}
+            onChange={(e) => setComment(e.target.value)}
+          />
+        </label>
+        <FormError error={save.error} />
+        <Button disabled={save.isPending || !rating}>
+          {save.isPending ? "Guardando…" : "Guardar mi reseña"}
+        </Button>
+      </form>
+    </Modal>
+  );
+}
+
+export function JourneyDateEditor({
+  detail,
+  onClose,
+}: {
+  detail: Detail;
+  onClose: () => void;
+}) {
+  const refresh = useJourneyRefresh(detail.trip.id);
+  const templates = useQuery({
+    queryKey: ["special-dates"],
+    queryFn: getSpecialDates,
+  });
+  const [stageId, setStageId] = useState(detail.trip.stages[0].id);
+  const [dateId, setDateId] = useState("");
+  const stage = detail.trip.stages.find((s) => s.id === stageId)!;
+  const save = useMutation({
+    mutationFn: (form: FormData) =>
+      linkDate(detail.trip.id, {
+        stageId,
+        date: String(form.get("date")),
+        specialDateId: dateId ? Number(dateId) : undefined,
+        label: dateId ? undefined : String(form.get("label")),
+      }),
+    onSuccess: async () => {
+      await refresh();
+      onClose();
+    },
+  });
+  return (
+    <Modal
+      title="Vincular fecha importante"
+      onClose={onClose}
+      pending={save.isPending}
+      confirmDiscard
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          save.mutate(new FormData(e.currentTarget));
+        }}
+      >
+        <h2>Una fecha para recordar</h2>
+        <p className="muted">
+          Quedará en WhenDates y en este viaje, aunque todavía no hayan
+          registrado experiencias.
+        </p>
+        <StageSelect detail={detail} value={stageId} onChange={setStageId} />
+        <label>
+          Fecha importante
+          <select value={dateId} onChange={(e) => setDateId(e.target.value)}>
+            <option value="">Crear una fecha única</option>
+            {templates.data?.map((d) => (
+              <option value={d.id} key={d.id}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {!dateId && (
+          <label>
+            Nombre
+            <input
+              name="label"
+              required
+              maxLength={160}
+              placeholder="Nuestro aniversario en viaje"
+            />
+          </label>
+        )}
+        <label>
+          Día
+          <input
+            name="date"
+            type="date"
+            required
+            min={stage.startsOn}
+            max={stage.endsOn}
+            defaultValue={stage.startsOn}
+            key={stageId}
+          />
+        </label>
+        <FormError error={save.error ?? templates.error} />
+        <Button disabled={save.isPending}>Vincular fecha</Button>
+      </form>
+    </Modal>
+  );
+}

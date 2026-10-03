@@ -1,4 +1,5 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInAppBackGuard } from "../../lib/backGuard";

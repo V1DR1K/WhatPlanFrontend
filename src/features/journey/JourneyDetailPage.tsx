@@ -1,0 +1,1087 @@
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useQuery } from "../../lib/locationQuery";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
+import { RatingStars } from "../../components/ui/RatingStars";
+import { useZoneContext } from "../../lib/zoneContext";
+import { api } from "../../lib/api";
+import { showNotice } from "../../lib/flash";
+import {
+  getTrip,
+  archiveTrip,
+  deleteTrip,
+  saveResource,
+  deleteResource,
+  formatDate,
+  money,
+  sourceHref,
+  today,
+  type Point,
+  type Stay,
+  type Movement,
+  type JourneyFile,
+  type Packing,
+} from "./journey";
+import { JourneyForm } from "./JourneyForm";
+import { PlaneIcon } from "./JourneysPage";
+import {
+  JourneyDateEditor,
+  PointEditor,
+  StayEditor,
+  MovementEditor,
+  ReviewEditor,
+  useJourneyRefresh,
+} from "./JourneyEditors";
+import {
+  FilePreview,
+  FileUpload,
+  FileLinksEditor,
+  fileLabel,
+  downloadFile,
+} from "./JourneyFiles";
+const tabs = ["Agenda", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
+export function JourneyDetailPage() {
+  const { id = "" } = useParams();
+  const navigate = useNavigate();
+  const context = useZoneContext();
+  const detail = useQuery({
+    queryKey: ["journey", id],
+    queryFn: () => getTrip(id),
+    enabled: /^[0-9a-f-]{36}$/i.test(id),
+  });
+  const refresh = useJourneyRefresh(id);
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Agenda");
+  const [day, setDay] = useState("");
+  const [dateEditor, setDateEditor] = useState(false);
+  const [editTrip, setEditTrip] = useState(false);
+  const [point, setPoint] = useState<Point | null>();
+  const [completing, setCompleting] = useState(false);
+  const [stay, setStay] = useState<Stay | null>();
+  const [movement, setMovement] = useState<Movement | null>();
+  const [review, setReview] = useState<string | null>();
+  const [upload, setUpload] = useState<string | null>();
+  const [preview, setPreview] = useState<JourneyFile>();
+  const [fileLinks, setFileLinks] = useState<JourneyFile>();
+  const [packingEdit, setPackingEdit] = useState<Packing>();
+  const [movementPoint, setMovementPoint] = useState<string>();
+  const [moneyStage, setMoneyStage] = useState("");
+  const [confirm, setConfirm] = useState<{
+    resource: string;
+    id: string;
+    title: string;
+  }>();
+  const [notice, setNotice] = useState("");
+  const [packingUser, setPackingUser] = useState<number>(0);
+  const change = useMutation({
+    mutationFn: async (action: {
+      type: string;
+      value?: Point | Packing;
+      ids?: string[];
+    }) => {
+      if (action.type === "point")
+        return saveResource<Point>(
+          id,
+          "points",
+          action.value as Point,
+          (action.value as Point).id,
+        );
+      if (action.type === "packing")
+        return saveResource<Packing>(
+          id,
+          "packing",
+          action.value as Packing,
+          (action.value as Packing).id,
+        );
+      if (action.type === "order")
+        return api(`/whither-journey/${id}/points/order`, {
+          method: "PUT",
+          body: JSON.stringify(action.ids),
+        });
+    },
+    onSuccess: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: async () => {
+      if (!confirm) return;
+      if (confirm.resource === "archive") return archiveTrip(id);
+      if (confirm.resource === "trip") return deleteTrip(id);
+      return deleteResource(confirm.resource, confirm.id);
+    },
+    onSuccess: async () => {
+      await refresh();
+      if (confirm?.resource === "trip") navigate("/app/whither-journey");
+      setConfirm(undefined);
+      showNotice("Cambio guardado.");
+    },
+  });
+  const addPacking = useMutation({
+    mutationFn: (form: FormData) =>
+      saveResource<Packing>(id, "packing", {
+        userId: packingUser || detail.data!.members[0].id,
+        description: String(form.get("description")),
+        quantity: Number(form.get("quantity")),
+        packed: false,
+      }),
+    onSuccess: refresh,
+  });
+  if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (!detail.data)
+    return (
+      <section className="journey-page">
+        <Link to="/app/whither-journey">← Volver a viajes</Link>
+        <p className="form-error" role="alert">
+          {detail.error?.message ?? "No encontramos este viaje."}
+        </p>
+        <Button variant="secondary" onClick={() => void detail.refetch()}>
+          Reintentar
+        </Button>
+      </section>
+    );
+  const value = detail.data;
+  const trip = value.trip;
+  const editable = !trip.archived;
+  const selectedDay =
+    day ||
+    (today() >= trip.startsOn && today() <= trip.endsOn
+      ? today()
+      : trip.startsOn);
+  const points = value.points
+    .filter((p) =>
+      selectedDay === "unscheduled"
+        ? !p.scheduledOn
+        : p.scheduledOn === selectedDay,
+    )
+    .sort((a, b) => a.position - b.position);
+  const shownBalances = moneyStage
+    ? (value.stageBalances?.find((s) =>
+        moneyStage === "general"
+          ? s.stageId === null
+          : s.stageId === moneyStage,
+      )?.balances ?? [])
+    : value.balances;
+  const empty =
+    !value.points.length &&
+    !value.stays.length &&
+    !value.packing.length &&
+    !value.movements.length &&
+    !value.files.length &&
+    !value.reviews.length &&
+    !value.dates?.length;
+  const completed = value.points.filter((p) => p.status === "COMPLETED").length;
+  const requestDelete = (resource: string, itemId: string, title: string) => {
+    remove.reset();
+    setConfirm({ resource, id: itemId, title });
+  };
+  const reorder = (index: number, offset: number) => {
+    const ids = points.map((p) => p.id);
+    [ids[index], ids[index + offset]] = [ids[index + offset], ids[index]];
+    change.mutate({ type: "order", ids });
+  };
+  return (
+    <section className="journey-page journey-detail">
+      <Link className="journey-back" to="/app/whither-journey">
+        ← Todos sus viajes
+      </Link>
+      <header className="journey-heading">
+        <div>
+          <PlaneIcon />
+          <h1>{trip.name}</h1>
+          <p>
+            {formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}
+            {trip.archived ? " · Archivado" : ""}
+          </p>
+        </div>
+        {editable && (
+          <Button variant="secondary" onClick={() => setEditTrip(true)}>
+            Editar viaje
+          </Button>
+        )}
+      </header>
+      <div className="journey-destinations" aria-label="Destinos del viaje">
+        {trip.stages.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            disabled={!editable}
+            className={context.selectedStageId === s.id ? "is-selected" : ""}
+            onClick={() => {
+              context.selectLocation(s.id);
+              setDay(s.startsOn);
+              setTab("Agenda");
+            }}
+          >
+            <strong>{s.cityName}</strong>
+            <span>
+              {s.countryCode} · {formatDate(s.startsOn)} —{" "}
+              {formatDate(s.endsOn)}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="journey-overview">
+        <p>
+          {completed} de {value.points.length} puntos realizados
+        </p>
+        <progress
+          value={completed}
+          max={Math.max(1, value.points.length)}
+          aria-label="Progreso del viaje"
+        />
+        <div className="journey-balances">
+          {value.balances.map((b) => (
+            <span key={b.currency}>
+              Saldo {b.currency}:{" "}
+              <strong>{money(b.balance, b.currency)}</strong>
+            </span>
+          ))}
+        </div>
+        {value.dates?.length > 0 && (
+          <div className="journey-linked-dates">
+            <strong>Fechas para compartir</strong>
+            {value.dates.map((d) => (
+              <Link
+                key={`${d.specialDateId}-${d.date}`}
+                to={`/app/when-dates/${d.specialDateId}/${d.date}`}
+              >
+                {d.label} · {formatDate(d.date)}
+              </Link>
+            ))}
+          </div>
+        )}
+        {editable && (
+          <Button variant="secondary" onClick={() => setDateEditor(true)}>
+            Vincular fecha importante
+          </Button>
+        )}
+        <div className="journey-review-summary">
+          {value.reviews
+            .filter((r) => !r.stayId)
+            .map((r) => (
+              <div key={r.id}>
+                <strong>{r.author}</strong>
+                <RatingStars label="Viaje" value={r.rating} />
+                <p>{r.comment}</p>
+              </div>
+            ))}
+          {editable && (
+            <Button variant="secondary" onClick={() => setReview(null)}>
+              Mi reseña del viaje
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="journey-tabs" role="tablist" aria-label="Organizar viaje">
+        {tabs.map((t) => (
+          <button
+            type="button"
+            key={t}
+            id={`journey-tab-${t}`}
+            role="tab"
+            aria-selected={tab === t}
+            aria-controls="journey-panel"
+            tabIndex={tab === t ? 0 : -1}
+            onClick={() => setTab(t)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                const next =
+                  tabs[
+                    (tabs.indexOf(t) +
+                      (e.key === "ArrowRight" ? 1 : tabs.length - 1)) %
+                      tabs.length
+                  ];
+                setTab(next);
+                document.getElementById(`journey-tab-${next}`)?.focus();
+              }
+            }}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+      {(change.error || addPacking.error || notice) && (
+        <p role="alert" className="form-error">
+          {change.error?.message || addPacking.error?.message || notice}
+        </p>
+      )}
+      <section
+        id="journey-panel"
+        className="journey-panel"
+        role="tabpanel"
+        aria-labelledby={`journey-tab-${tab}`}
+      >
+        {tab === "Agenda" && (
+          <>
+            <div className="journey-panel__heading">
+              <h2>Un día a la vez</h2>
+              {editable && (
+                <Button
+                  onClick={() => {
+                    setPoint(null);
+                    setCompleting(false);
+                  }}
+                >
+                  Agregar punto
+                </Button>
+              )}
+            </div>
+            <div className="journey-day-picker">
+              <label>
+                Día del recorrido
+                <input
+                  type="date"
+                  min={trip.startsOn}
+                  max={trip.endsOn}
+                  value={
+                    selectedDay === "unscheduled" ? trip.startsOn : selectedDay
+                  }
+                  onChange={(e) => setDay(e.target.value)}
+                />
+              </label>
+              <Button
+                variant="secondary"
+                aria-pressed={selectedDay === "unscheduled"}
+                onClick={() =>
+                  setDay(
+                    selectedDay === "unscheduled"
+                      ? trip.startsOn
+                      : "unscheduled",
+                  )
+                }
+              >
+                Sin día asignado (
+                {value.points.filter((p) => !p.scheduledOn).length})
+              </Button>
+            </div>
+            {!points.length && (
+              <p className="journey-empty">
+                Todavía no hay puntos para este día. Pueden agregar un paseo
+                libre o una ficha de sus catálogos.
+              </p>
+            )}
+            <ol className="journey-route">
+              {points.map((p, index) => (
+                <li
+                  key={p.id}
+                  className={`journey-route__point is-${p.status.toLowerCase()}`}
+                >
+                  <span className="journey-route__marker" aria-hidden="true">
+                    {p.status === "COMPLETED" ? "✓" : index + 1}
+                  </span>
+                  <div>
+                    <p className="journey-route__time">
+                      {p.scheduledTime?.slice(0, 5) || "Sin horario"} ·{" "}
+                      {trip.stages.find((s) => s.id === p.stageId)?.cityName}
+                    </p>
+                    <h3>{p.title}</h3>
+                    <span className="journey-status">
+                      {p.status === "COMPLETED"
+                        ? "Realizado"
+                        : p.status === "CANCELLED"
+                          ? "Cancelado"
+                          : "Pendiente"}
+                    </span>
+                    {p.notes && <p>{p.notes}</p>}
+                    <div className="journey-actions">
+                      {p.source && (
+                        <Link
+                          to={sourceHref(p.source)}
+                          onClick={() => context.selectLocation(p.stageId)}
+                        >
+                          Abrir ficha
+                        </Link>
+                      )}
+                      {p.mapsUrl && (
+                        <a href={p.mapsUrl} target="_blank" rel="noreferrer">
+                          Google Maps ↗
+                        </a>
+                      )}
+                      {editable && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            disabled={change.isPending}
+                            onClick={() => {
+                              setPoint(p);
+                              setCompleting(false);
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          {p.status !== "COMPLETED" && (
+                            <Button
+                              disabled={change.isPending}
+                              onClick={() => {
+                                if (p.source && !p.source.experienceId) {
+                                  setPoint(p);
+                                  setCompleting(true);
+                                } else
+                                  change.mutate({
+                                    type: "point",
+                                    value: { ...p, status: "COMPLETED" },
+                                  });
+                              }}
+                            >
+                              Marcar realizado
+                            </Button>
+                          )}
+                          {p.status !== "CANCELLED" && (
+                            <Button
+                              variant="secondary"
+                              disabled={change.isPending}
+                              onClick={() =>
+                                change.mutate({
+                                  type: "point",
+                                  value: { ...p, status: "CANCELLED" },
+                                })
+                              }
+                            >
+                              Cancelar punto
+                            </Button>
+                          )}
+                          <Button
+                            variant="secondary"
+                            onClick={() => {
+                              setMovementPoint(p.id);
+                              setMovement(null);
+                            }}
+                          >
+                            Registrar gasto
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            disabled={change.isPending || index === 0}
+                            aria-label={`Mover ${p.title} hacia arriba`}
+                            onClick={() => reorder(index, -1)}
+                          >
+                            ↑
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            disabled={
+                              change.isPending || index === points.length - 1
+                            }
+                            aria-label={`Mover ${p.title} hacia abajo`}
+                            onClick={() => reorder(index, 1)}
+                          >
+                            ↓
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() =>
+                              requestDelete(
+                                "points",
+                                p.id,
+                                "¿Quitar este punto?",
+                              )
+                            }
+                          >
+                            Quitar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
+        {tab === "Archivos" && (
+          <>
+            <div className="journey-panel__heading">
+              <h2>Todo a mano</h2>
+              {editable && (
+                <Button onClick={() => setUpload(null)}>Guardar archivo</Button>
+              )}
+            </div>
+            {!value.files.length && (
+              <p className="journey-empty">
+                Guarden reservas, entradas y recibos para encontrarlos durante
+                el viaje.
+              </p>
+            )}
+            <ul className="journey-file-list">
+              {value.files.map((f) => (
+                <li key={f.id}>
+                  <div>
+                    <strong>{f.name}</strong>
+                    <span>
+                      {fileLabel(f, value)} · {(f.byteSize / 1024).toFixed(0)}{" "}
+                      KB
+                    </span>
+                  </div>
+                  <div className="journey-actions">
+                    <Button variant="secondary" onClick={() => setPreview(f)}>
+                      Vista previa
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() =>
+                        void downloadFile(f).catch((e) => setNotice(e.message))
+                      }
+                    >
+                      Descargar
+                    </Button>
+                    {editable && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => setFileLinks(f)}
+                      >
+                        Cambiar vínculo
+                      </Button>
+                    )}{" "}
+                    {editable && (
+                      <Button
+                        variant="destructive"
+                        onClick={() =>
+                          requestDelete("files", f.id, "¿Quitar este archivo?")
+                        }
+                      >
+                        Quitar
+                      </Button>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {tab === "Estadías" && (
+          <>
+            <div className="journey-panel__heading">
+              <h2>Dónde se quedan</h2>
+              {editable && (
+                <Button onClick={() => setStay(null)}>
+                  Agregar alojamiento
+                </Button>
+              )}
+            </div>
+            {!value.stays.length && (
+              <p className="journey-empty">
+                Agreguen alojamientos y sus enlaces de reserva.
+              </p>
+            )}
+            <div className="journey-stays">
+              {value.stays.map((s) => (
+                <article key={s.id} className="journey-stay">
+                  {s.photoId && (
+                    <AdaptivePhoto
+                      context="place"
+                      fullSrc={`/whither-journey/files/${s.photoId}/content`}
+                      alt={s.name}
+                    />
+                  )}
+                  <div>
+                    <h3>{s.name}</h3>
+                    <p>
+                      {trip.stages.find((st) => st.id === s.stageId)?.cityName}{" "}
+                      · {formatDate(s.startsOn)} — {formatDate(s.endsOn)}
+                    </p>
+                    <p>{s.address}</p>
+                    {s.price != null && s.currency && (
+                      <p>
+                        {money(s.price, s.currency)} · Precio del alojamiento
+                      </p>
+                    )}
+                    {s.source && <p>Lo consiguieron en {s.source}</p>}
+                    <div className="journey-actions">
+                      {s.bookingUrl && (
+                        <a href={s.bookingUrl} target="_blank" rel="noreferrer">
+                          Reserva ↗
+                        </a>
+                      )}
+                      {s.mapsUrl && (
+                        <a href={s.mapsUrl} target="_blank" rel="noreferrer">
+                          Google Maps ↗
+                        </a>
+                      )}
+                      {editable && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setStay(s)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setUpload(s.id)}
+                          >
+                            Foto / archivo
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setReview(s.id)}
+                          >
+                            Mi reseña
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() =>
+                              requestDelete(
+                                "stays",
+                                s.id,
+                                "¿Quitar el alojamiento?",
+                              )
+                            }
+                          >
+                            Quitar
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    {value.reviews
+                      .filter((r) => r.stayId === s.id)
+                      .map((r) => (
+                        <div key={r.id} className="journey-stay-review">
+                          <strong>{r.author}</strong>
+                          <RatingStars label="Alojamiento" value={r.rating} />
+                          <p>{r.comment}</p>
+                        </div>
+                      ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
+        {tab === "Valijas" && (
+          <>
+            <h2>Las valijas de cada uno</h2>
+            {editable && (
+              <form
+                className="journey-packing-add"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  addPacking.mutate(new FormData(form), {
+                    onSuccess: () => form.reset(),
+                  });
+                }}
+              >
+                <label>
+                  Valija
+                  <select
+                    value={packingUser || value.members[0]?.id || ""}
+                    onChange={(e) => setPackingUser(Number(e.target.value))}
+                  >
+                    {value.members.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.username}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Qué llevar
+                  <input
+                    name="description"
+                    required
+                    maxLength={160}
+                    placeholder="Pasaporte, cargador…"
+                  />
+                </label>
+                <label>
+                  Cantidad
+                  <input
+                    name="quantity"
+                    type="number"
+                    required
+                    min="1"
+                    max="999"
+                    defaultValue="1"
+                  />
+                </label>
+                <Button disabled={addPacking.isPending}>Agregar</Button>
+              </form>
+            )}
+            <div className="journey-packing">
+              {value.members.map((member) => {
+                const items = value.packing.filter(
+                  (p) => p.userId === member.id,
+                );
+                const done = items.filter((p) => p.packed).length;
+                return (
+                  <section key={member.id}>
+                    <h3>{member.username}</h3>
+                    <p>
+                      {done} de {items.length} guardadas
+                    </p>
+                    <progress
+                      max={Math.max(1, items.length)}
+                      value={done}
+                      aria-label={`Valija de ${member.username}`}
+                    />
+                    {!items.length && (
+                      <p className="muted">
+                        Todavía no hay cosas en esta lista.
+                      </p>
+                    )}
+                    <ul>
+                      {items.map((item) => (
+                        <li key={item.id}>
+                          <label className="journey-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={item.packed}
+                              disabled={!editable || change.isPending}
+                              onChange={(e) =>
+                                change.mutate({
+                                  type: "packing",
+                                  value: { ...item, packed: e.target.checked },
+                                })
+                              }
+                            />
+                            <span>
+                              {item.description}{" "}
+                              <small>× {item.quantity}</small>
+                            </span>
+                          </label>
+                          {editable && (
+                            <Button
+                              variant="secondary"
+                              onClick={() => setPackingEdit(item)}
+                            >
+                              Editar
+                            </Button>
+                          )}
+                          {editable && (
+                            <Button
+                              variant="destructive"
+                              onClick={() =>
+                                requestDelete(
+                                  "packing",
+                                  item.id,
+                                  "¿Quitar de la valija?",
+                                )
+                              }
+                            >
+                              Quitar
+                            </Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                );
+              })}
+            </div>
+          </>
+        )}
+        {tab === "Dinero" && (
+          <>
+            <div className="journey-panel__heading">
+              <h2>Dinero del viaje</h2>
+              {editable && (
+                <Button
+                  onClick={() => {
+                    setMovementPoint(undefined);
+                    setMovement(null);
+                  }}
+                >
+                  Registrar movimiento
+                </Button>
+              )}
+            </div>
+            <p className="muted">
+              Fondos − gastos + reintegros. Cada moneda conserva su propio
+              saldo.
+            </p>
+            <div className="journey-money-summary">
+              {shownBalances.map((b) => (
+                <section key={b.currency}>
+                  <h3>{b.currency}</h3>
+                  <dl>
+                    <div>
+                      <dt>Llevado / agregado</dt>
+                      <dd>{money(b.funds, b.currency)}</dd>
+                    </div>
+                    <div>
+                      <dt>Gastado</dt>
+                      <dd>{money(b.expenses, b.currency)}</dd>
+                    </div>
+                    <div>
+                      <dt>Reintegrado</dt>
+                      <dd>{money(b.refunds, b.currency)}</dd>
+                    </div>
+                    <div>
+                      <dt>Disponible</dt>
+                      <dd>{money(b.balance, b.currency)}</dd>
+                    </div>
+                  </dl>
+                </section>
+              ))}
+            </div>
+            {!value.movements.length && (
+              <p className="journey-empty">
+                Agreguen el dinero que llevan y los gastos de sus actividades.
+              </p>
+            )}
+            <label className="journey-money-filter">
+              Desglose por etapa
+              <select
+                value={moneyStage}
+                onChange={(e) => setMoneyStage(e.target.value)}
+              >
+                <option value="">Todo el viaje</option>
+                <option value="general">Movimientos generales</option>
+                {trip.stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.cityName} · {formatDate(s.startsOn)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <ul className="journey-money-list">
+              {value.movements
+                .filter(
+                  (m) =>
+                    !moneyStage ||
+                    (moneyStage === "general"
+                      ? !m.stageId
+                      : m.stageId === moneyStage),
+                )
+                .map((m) => (
+                  <li key={m.id}>
+                    <div>
+                      <strong>{m.description}</strong>
+                      <span>
+                        {m.occurredOn} ·{" "}
+                        {m.kind === "FUNDS"
+                          ? "Fondos"
+                          : m.kind === "REFUND"
+                            ? "Reintegro"
+                            : "Gasto"}{" "}
+                        ·{" "}
+                        {trip.stages.find((s) => s.id === m.stageId)
+                          ?.cityName || "Todo el viaje"}
+                        {m.pointId
+                          ? ` · ${value.points.find((p) => p.id === m.pointId)?.title ?? "Actividad"}`
+                          : ""}
+                        {m.stayId
+                          ? ` · ${value.stays.find((s) => s.id === m.stayId)?.name ?? "Alojamiento"}`
+                          : ""}
+                      </span>
+                    </div>
+                    <strong>{money(m.amount, m.currency)}</strong>
+                    {editable && (
+                      <div className="journey-actions">
+                        <Button
+                          variant="secondary"
+                          onClick={() => setMovement(m)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() =>
+                            requestDelete(
+                              "movements",
+                              m.id,
+                              "¿Quitar este movimiento?",
+                            )
+                          }
+                        >
+                          Quitar
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </>
+        )}
+      </section>
+      {editable && (
+        <footer className="journey-footer">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              requestDelete("archive", id, "¿Archivar este viaje?")
+            }
+          >
+            Archivar viaje
+          </Button>
+          {empty && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                requestDelete("trip", id, "¿Eliminar este viaje vacío?")
+              }
+            >
+              Eliminar viaje vacío
+            </Button>
+          )}
+        </footer>
+      )}
+      <datalist id="journey-currencies">
+        {["ARS", "USD", "EUR", "BRL", "UYU", "CLP", "GBP", "JPY", "MXN"].map(
+          (c) => (
+            <option key={c} value={c} />
+          ),
+        )}
+      </datalist>
+      {dateEditor && (
+        <JourneyDateEditor
+          detail={value}
+          onClose={() => setDateEditor(false)}
+        />
+      )}{" "}
+      {packingEdit && (
+        <PackingEditor
+          item={packingEdit}
+          pending={change.isPending}
+          error={change.error?.message}
+          onClose={() => setPackingEdit(undefined)}
+          onSave={(item) =>
+            change.mutate(
+              { type: "packing", value: item },
+              { onSuccess: () => setPackingEdit(undefined) },
+            )
+          }
+        />
+      )}{" "}
+      {fileLinks && (
+        <FileLinksEditor
+          detail={value}
+          file={fileLinks}
+          onClose={() => setFileLinks(undefined)}
+        />
+      )}
+      {editTrip && (
+        <JourneyForm trip={trip} onClose={() => setEditTrip(false)} />
+      )}{" "}
+      {point !== undefined && (
+        <PointEditor
+          detail={value}
+          point={point ?? undefined}
+          day={selectedDay === "unscheduled" ? undefined : selectedDay}
+          completing={completing}
+          onClose={() => setPoint(undefined)}
+        />
+      )}{" "}
+      {stay !== undefined && (
+        <StayEditor
+          detail={value}
+          stay={stay ?? undefined}
+          onClose={() => setStay(undefined)}
+        />
+      )}{" "}
+      {movement !== undefined && (
+        <MovementEditor
+          detail={value}
+          movement={movement ?? undefined}
+          initialPointId={movementPoint}
+          onClose={() => setMovement(undefined)}
+        />
+      )}{" "}
+      {review !== undefined && (
+        <ReviewEditor
+          detail={value}
+          stayId={review ?? undefined}
+          onClose={() => setReview(undefined)}
+        />
+      )}{" "}
+      {upload !== undefined && (
+        <FileUpload
+          detail={value}
+          stayId={upload ?? undefined}
+          onClose={() => setUpload(undefined)}
+        />
+      )}{" "}
+      {preview && (
+        <FilePreview file={preview} onClose={() => setPreview(undefined)} />
+      )}{" "}
+      {confirm && (
+        <ConfirmDialog
+          title={confirm.title}
+          message={
+            remove.error?.message ??
+            (confirm.resource === "archive"
+              ? "El historial se conserva y los destinos dejan de aparecer en nuevas selecciones."
+              : "El contenido vinculado debe reubicarse antes de eliminar este registro.")
+          }
+          pending={remove.isPending}
+          confirmLabel="Confirmar"
+          onConfirm={() => remove.mutate()}
+          onClose={() => setConfirm(undefined)}
+        />
+      )}{" "}
+      {remove.error && (
+        <p className="form-error" role="alert">
+          {remove.error.message}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function PackingEditor({
+  item,
+  pending,
+  error,
+  onSave,
+  onClose,
+}: {
+  item: Packing;
+  pending: boolean;
+  error?: string;
+  onSave: (item: Packing) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Modal
+      title="Editar elemento de valija"
+      onClose={onClose}
+      pending={pending}
+      confirmDiscard
+    >
+      <form
+        className="journey-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const f = new FormData(e.currentTarget);
+          onSave({
+            ...item,
+            description: String(f.get("description")),
+            quantity: Number(f.get("quantity")),
+          });
+        }}
+      >
+        <h2>Editar lo que llevan</h2>
+        <label>
+          Qué llevar
+          <input
+            name="description"
+            required
+            maxLength={160}
+            defaultValue={item.description}
+          />
+        </label>
+        <label>
+          Cantidad
+          <input
+            name="quantity"
+            type="number"
+            required
+            min="1"
+            max="999"
+            defaultValue={item.quantity}
+          />
+        </label>
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <Button disabled={pending}>Guardar cambios</Button>
+      </form>
+    </Modal>
+  );
+}

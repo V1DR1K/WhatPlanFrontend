@@ -1,4 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '../../lib/locationQuery';
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
@@ -38,7 +40,7 @@ export function HomeRecipeDetailPage() {
   useInAppBackGuard("/app/how-cook");
   const qc = useQueryClient();
   const [editingRecipe, setEditingRecipe] = useState(false);
-  const [editingCooking, setEditingCooking] = useState<Cooking | null | undefined>();
+  const [editingCooking, setEditingCooking] = useState<Cooking | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedCookingId, setSelectedCookingId] = useState<number>();
   const [reviewing, setReviewing] = useState<CookingReview | null>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -136,6 +138,7 @@ export function HomeRecipeDetailPage() {
           {current && <CookingExperience cooking={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
         </> : <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
       </section>
+      {current?.id && <ExperienceJourneyPanel key={current?.id} source={{section:"COOK",entityId:id,experienceId:current?.id}} physicalCity={undefined} />}
       {editingRecipe && <RecipeForm recipe={value} onClose={() => setEditingRecipe(false)} />}
       {editingCooking !== undefined && <CookingForm recipe={value} cooking={editingCooking ?? undefined} onClose={() => setEditingCooking(undefined)} onSaved={(saved) => setSelectedCookingId(saved.id)} />}
       {reviewing !== undefined && current && <CookingReviewForm cooking={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}

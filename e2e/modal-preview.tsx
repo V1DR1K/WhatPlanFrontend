@@ -37,10 +37,10 @@ const visit = { id: 1, placeId: 27, visitedOn: '2026-09-23', photos: [], reviews
 const review = { id: 1, author: 'tomas', updatedBy: 'tomas', overall: 4, taste: 4, price: 4, comment: 'Muy rica la pizza. '.repeat(18) } as PlaceVisitReview;
 const venueReview = { author: 'tomas', location: 4, heating: 4, bathrooms: 4, exterior: 4, seating: 4, service: 4, ambiance: 4, comment: 'Buen lugar para volver.' } as PlaceReview;
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: Infinity, retry: false } } });
-queryClient.setQueryData(['categories'], [place.category]);
-queryClient.setQueryData(['highlight-tags'], tags);
+queryClient.setQueryData(['categories',{coupleId:'preview'}], [place.category]);
+queryClient.setQueryData(['highlight-tags',{coupleId:'preview'}], tags);
 queryClient.setQueryData(['zones'], []);
-queryClient.setQueryData(['zone-preference'], { defaultZoneId: null });
+queryClient.setQueryData(['location-context',undefined], {coupleId:'preview',originCityId:1,options:[{key:'origin',cityId:1,stageId:null,journeyId:null,label:'Rosario · Origen'}]});
 
 export function Preview() {
   const [open, setOpen] = useState(true);

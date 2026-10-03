@@ -1,7 +1,7 @@
 import { createContext } from "react";
 import type { CSSProperties } from "react";
 
-export type SectionId = "food" | "film" | "cook" | "fun" | "dates";
+export type SectionId = "food" | "film" | "cook" | "fun" | "dates" | "journey";
 
 export const SectionThemeContext = createContext<SectionId | undefined>(undefined);
 
@@ -15,6 +15,7 @@ export type SectionTheme = {
 };
 
 export const sectionThemes: Record<SectionId, SectionTheme> = {
+  journey: { accent: "#83d8f5", contrast: "#102b38", focus: "#83d8f5", shadow: "#245c73", surface: "#18323e", surfaceSoft: "#12232d" },
   food: { accent: "#ff8a00", contrast: "#2a1600", focus: "#a978ff", shadow: "#6b3600", surface: "#332000", surfaceSoft: "#241600" },
   film: { accent: "#b8adff", contrast: "#291f43", focus: "#a978ff", shadow: "#4f427e", surface: "#29243c", surfaceSoft: "#1d1b27" },
   cook: { accent: "#d4ef55", contrast: "#26351d", focus: "#a978ff", shadow: "#394321", surface: "#2b3120", surfaceSoft: "#222d1a" },
