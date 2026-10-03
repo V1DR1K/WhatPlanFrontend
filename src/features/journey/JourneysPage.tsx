@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useQuery } from "../../lib/locationQuery";
 import { Button } from "../../components/ui/Button";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
+import { SectionShell } from "../../components/ui/SectionShell";
 import { JourneyForm } from "./JourneyForm";
 import { getTrips, formatDate, today } from "./journey";
 export function PlaneIcon() {
@@ -31,7 +32,7 @@ export function JourneysPage() {
     queryFn: () => getTrips(page),
   });
   return (
-    <section className="journey-page">
+    <SectionShell className="journey-page" section="journey">
       <header className="journey-heading">
         <div>
           <PlaneIcon />
@@ -70,27 +71,43 @@ export function JourneysPage() {
       )}
       <div className="journey-catalog">
         {trips.data?.map((trip) => (
-          <Link
-            className="journey-trip"
-            to={`/app/whither-journey/${trip.id}`}
+          <CatalogMediaCard
             key={trip.id}
+            ariaLabel={`Ver viaje ${trip.name}`}
+            badge={trip.archived ? "ARCHIVADO" : `${trip.stages.length} destinos`}
+            eyebrow={trip.stages.map((s) => s.cityName).join(" → ")}
+            footer={
+              <>
+                <span>
+                  {formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}
+                </span>
+                <span>
+                  {trip.archived
+                    ? "Ver viaje"
+                    : trip.endsOn < today()
+                      ? "Un viaje para recordar"
+                      : "Preparar el recorrido"}{" "}
+                  →
+                </span>
+              </>
+            }
+            image={
+              <div className="journey-trip__art">
+                <PlaneIcon />
+                <span>{trip.stages.length} destinos · {trip.stages.map((s) => s.cityName).join(" → ")}</span>
+              </div>
+            }
+            orientation="landscape"
+            theme="journey"
+            title={trip.name}
+            to={`/app/whither-journey/${trip.id}`}
           >
-            <span className="journey-trip__route">
-              {trip.stages.map((s) => s.cityName).join(" → ")}
-            </span>
-            <h2>{trip.name}</h2>
-            <p>
-              {formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}
+            <p className="catalog-media-card__note">
+              {trip.endsOn < today()
+                ? "Un viaje para recordar"
+                : "Destinos, agenda y recuerdos del viaje"}
             </p>
-            <span>
-              {trip.archived
-                ? "Archivado"
-                : trip.endsOn < today()
-                  ? "Un viaje para recordar"
-                  : "Preparar el recorrido"}{" "}
-              →
-            </span>
-          </Link>
+          </CatalogMediaCard>
         ))}
       </div>
       {(page > 0 || trips.data?.length === 20) && (
@@ -113,6 +130,6 @@ export function JourneysPage() {
         </nav>
       )}
       {creating && <JourneyForm onClose={() => setCreating(false)} />}
-    </section>
+    </SectionShell>
   );
 }

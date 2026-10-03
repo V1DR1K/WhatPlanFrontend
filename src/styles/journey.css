@@ -1,16 +1,21 @@
 .module-card--journey {
-  --module-color: #83d8f5;
-  --section-accent: #83d8f5;
-  background: #18323e;
-  color: #e4f6ff;
+  background:
+    radial-gradient(circle at 90% 12%, color-mix(in srgb, var(--section-accent) 88%, transparent) 0 4%, transparent 27%),
+    linear-gradient(135deg, var(--section-surface), #1f1d1d 68%);
+  box-shadow: 7px 7px 0 var(--section-shadow);
+}
+.module-card--journey:hover,
+.module-card--journey:focus-visible {
+  border-color: var(--section-accent);
+  box-shadow: 10px 12px 0 var(--section-shadow);
 }
 .module-card--journey .module-card__emoji svg {
-  width: 72px;
-  height: 72px;
-  color: #83d8f5;
+  width: 61px;
+  height: 61px;
+  color: var(--section-accent);
 }
 .module-card--journey h2 span {
-  color: #83d8f5;
+  color: var(--section-accent);
 }
 .journey-page {
   max-width: 1160px;
@@ -51,35 +56,30 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
 }
-.journey-trip {
-  display: block;
-  padding: 28px;
-  background: #18323e;
-  border-radius: 14px;
-  color: #e4f6ff;
-  text-decoration: none;
-  transition: background 0.2s ease-out;
+.journey-trip__art {
+  display: grid;
+  min-height: 100%;
+  padding: 20px;
+  place-content: center;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--section-accent) 18%, transparent), transparent 40%),
+    var(--section-surface-soft);
+  color: var(--section-accent);
+  text-align: center;
 }
-.journey-trip:hover {
-  background: #204552;
+.journey-trip__art svg {
+  width: 54px;
+  height: 54px;
+  justify-self: center;
 }
-.journey-trip__route {
-  color: #83d8f5;
-  font-size: 0.9rem;
-  overflow-wrap: anywhere;
-}
-.journey-trip h2 {
-  margin: 16px 0 12px;
-  overflow-wrap: anywhere;
-}
-.journey-trip p {
-  color: #b9dce9;
-}
-.journey-trip > span:last-child {
-  display: block;
-  margin-top: 28px;
-  font-weight: 600;
-  color: #83d8f5;
+.journey-trip__art span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--section-accent) 24%, var(--cream));
+  font-size: 12px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 .journey-empty {
   padding: 36px 12px;
@@ -615,13 +615,9 @@
   .journey-file-preview iframe {
     height: 60vh;
   }
-  .journey-trip {
-    padding: 24px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .journey-route__marker,
-  .journey-trip {
+  .journey-route__marker {
     animation: none !important;
     transition: none !important;
   }

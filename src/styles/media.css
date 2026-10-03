@@ -526,6 +526,7 @@
 .catalog-media-card-link--food { --catalog-accent: #ff8a00; --catalog-contrast: #2a1600; }
 .catalog-media-card-link--cook { --catalog-accent: #d4ef55; --catalog-contrast: #26351d; }
 .catalog-media-card-link--fun { --catalog-accent: var(--section-accent); --catalog-contrast: #342500; }
+.catalog-media-card-link--journey { --catalog-accent: var(--section-accent); --catalog-contrast: var(--section-contrast); }
 
 .catalog-media-card-link:focus-visible {
   outline: 2px solid var(--catalog-accent);

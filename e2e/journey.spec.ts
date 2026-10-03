@@ -125,6 +125,19 @@ for (const viewport of [
         (r) => r.path === "/api/whither-journey" && r.method === "POST",
       ),
     ).toBeTruthy();
+    await page.goto("/app/whither-journey");
+    const tripCard = page.getByRole("link", {
+      name: "Ver viaje Buenos Aires y Montevideo",
+    });
+    await expect(tripCard).toHaveClass(/catalog-media-card-link--journey/);
+    await expect(
+      tripCard.locator(".catalog-media-card--journey"),
+    ).toHaveCSS("border-radius", "16px");
+    expect(
+      await tripCard.evaluate((element) =>
+        getComputedStyle(element).getPropertyValue("--catalog-accent").trim(),
+      ),
+    ).toBe("#83d8f5");
     const measurements = await page.evaluate(() => ({
       width: document.documentElement.clientWidth,
       scroll: document.documentElement.scrollWidth,

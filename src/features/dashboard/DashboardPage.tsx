@@ -1,5 +1,6 @@
 import { PlaneIcon } from '../journey/JourneysPage';
 import { Link } from 'react-router-dom';
+import { sectionThemeStyle } from '../../lib/sectionTheme';
 
 export function DashboardPage() {
   return <section className="picks-dashboard">
@@ -13,7 +14,7 @@ export function DashboardPage() {
       <Link to="/app/how-cook" className="module-card module-card--cook"><div className="module-card__emoji">🍳<span>🥘</span></div><p>QUIÉN COCINA</p><h2>who<span>cook</span></h2><small>Guarden recetas y cada cocinada</small><b>Entrar a la cocina →</b></Link>
       <Link to="/app/why-fun" className="module-card module-card--fun"><div className="module-card__emoji">🎲<span>🕹️</span></div><p>POR QUÉ DIVERTIRNOS</p><h2>why<span>fun</span></h2><small>Guarden salidas, juegos y experiencias</small><b>Entrar a divertirse →</b></Link>
       <Link to="/app/when-dates" className="module-card module-card--dates"><div className="module-card__emoji">💝<span>📅</span></div><p>CUÁNDO RECORDAMOS</p><h2>when<span>dates</span></h2><small>Vuelvan a sus fechas importantes</small><b>Entrar a recordar →</b></Link>
-      <Link to="/app/whither-journey" className="module-card module-card--journey"><div className="module-card__emoji"><PlaneIcon /></div><p>ADÓNDE VIAJAMOS</p><h2>whither<span>journey</span></h2><small>Organicen destinos, recorridos y recuerdos</small><b>Preparar nuestro viaje →</b></Link>
+      <Link to="/app/whither-journey" className="module-card module-card--journey" style={sectionThemeStyle('journey')}><div className="module-card__emoji"><PlaneIcon /></div><p>ADÓNDE VIAJAMOS</p><h2>whither<span>journey</span></h2><small>Organicen destinos, recorridos y recuerdos</small><b>Preparar nuestro viaje →</b></Link>
     </div>
     <p className="dashboard-foot">Hecho para dos, con hambre y películas de sobra. ♥</p>
   </section>;
