@@ -20,6 +20,7 @@ import { deleteRecipe, getCookings, getRecipe } from "./homeRecipes";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { useLocationQueryScope } from "../../lib/locationQueryScope";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "long", year: "numeric" })
@@ -39,13 +40,14 @@ export function HomeRecipeDetailPage() {
   const navigate = useNavigate();
   useInAppBackGuard("/app/how-cook");
   const qc = useQueryClient();
+  const locationScope = useLocationQueryScope();
   const [editingRecipe, setEditingRecipe] = useState(false);
   const [editingCooking, setEditingCooking] = useState<Cooking | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedCookingId, setSelectedCookingId] = useState<number>();
   const [reviewing, setReviewing] = useState<CookingReview | null>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const recipe = useQuery({ queryKey: ["recipe", id], queryFn: () => getRecipe(id), enabled: validId });
-  const cookings = useQuery({ queryKey: ["cookings", id], queryFn: () => getCookings({ recipeId: id }), enabled: validId });
+  const cookings = useQuery({ queryKey: ["cookings", ...locationScope, id], queryFn: () => getCookings({ recipeId: id }), enabled: validId });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const list = cookings.data ?? [];
   const specialDateList = specialDates.data ?? [];

@@ -6,6 +6,7 @@ import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { JourneyForm } from "./JourneyForm";
 import { getTrips, formatDate, today } from "./journey";
+import { useZoneContext } from "../../lib/zoneContext";
 export function PlaneIcon() {
   return (
     <svg
@@ -27,8 +28,9 @@ export function PlaneIcon() {
 export function JourneysPage() {
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(0);
+  const { coupleId } = useZoneContext();
   const trips = useQuery({
-    queryKey: ["journeys", page],
+    queryKey: ["journeys", coupleId, page],
     queryFn: () => getTrips(page),
   });
   return (

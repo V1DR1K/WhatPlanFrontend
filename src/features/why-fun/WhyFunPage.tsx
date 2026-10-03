@@ -15,6 +15,7 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
+import { useLocationQueryScope } from "../../lib/locationQueryScope";
 import { getActivities, getFunCategories } from "./whyFun";
 import {
   catalogSortFromQuery,
@@ -49,8 +50,9 @@ function useActivityPages({
   visited: boolean;
   pageSize: number;
 }) {
+  const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["activities", visited, categoryId, subcategoryId, search, sort, pageSize],
+    queryKey: ["activities", ...locationScope, visited, categoryId, subcategoryId, search, sort, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getActivities({
         categoryId,

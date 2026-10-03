@@ -12,6 +12,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useCatalogPageSize } from '../../lib/settings';
 import { getSpecialDates } from '../special-dates/specialDates';
 import { getWhenDates } from './whenDates';
+import { useZoneContext } from '../../lib/zoneContext';
 
 const displayDate = (date: string) => date.split('-').reverse().join('/');
 const recurrenceLabel: Record<string, string> = { ONCE: 'Única', ANNUAL: 'Anual', MONTHLY: 'Mensual' };
@@ -22,9 +23,10 @@ export function WhenDatesPage() {
   const querySpecialDateId = Number(searchParams.get('specialDate'));
   const specialDateId = Number.isInteger(querySpecialDateId) && querySpecialDateId > 0 ? querySpecialDateId : undefined;
   const pageSize = useCatalogPageSize();
-  const specialDates = useQuery({ queryKey: ['special-dates'], queryFn: getSpecialDates });
+  const { coupleId, selectedZoneId } = useZoneContext();
+  const specialDates = useQuery({ queryKey: ['special-dates', coupleId], queryFn: getSpecialDates });
   const entries = useInfiniteQuery({
-    queryKey: ['when-dates', specialDateId, pageSize],
+    queryKey: ['when-dates', coupleId, selectedZoneId, specialDateId, pageSize],
     queryFn: ({ pageParam, signal }) => getWhenDates(specialDateId, pageParam, pageSize, signal),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,

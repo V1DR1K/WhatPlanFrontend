@@ -16,6 +16,7 @@ import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
+import { useLocationQueryScope } from "../../lib/locationQueryScope";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -37,8 +38,9 @@ function useFilmPages({
   watched: boolean;
   pageSize: number;
 }) {
+  const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["films", watched, genre, platformId, search, sort, pageSize],
+    queryKey: ["films", ...locationScope, watched, genre, platformId, search, sort, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getFilms({
         genre,

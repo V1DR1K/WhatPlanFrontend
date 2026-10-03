@@ -12,6 +12,7 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
+import { useLocationQueryScope } from "../../lib/locationQueryScope";
 import { getRecipes } from "./homeRecipes";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
 import {
@@ -37,8 +38,9 @@ function useRecipePages({
   sort: CatalogSortValue;
   pageSize: number;
 }) {
+  const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["recipes", cooked, home, search, sort, pageSize],
+    queryKey: ["recipes", ...locationScope, cooked, home, search, sort, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getRecipes({
         cooked,

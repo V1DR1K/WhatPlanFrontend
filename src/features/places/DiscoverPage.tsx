@@ -21,6 +21,7 @@ import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
+import { useLocationQueryScope } from "../../lib/locationQueryScope";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -53,9 +54,10 @@ function PlaceSection({
   hasFilter: boolean;
   pageSize: number;
 }) {
+  const locationScope = useLocationQueryScope();
   const query = useInfiniteQuery({
     // A changed search or sort starts a distinct infinite query at cursor zero.
-    queryKey: ["places", status, category, highlightTagId, search, sort, pageSize],
+    queryKey: ["places", ...locationScope, status, category, highlightTagId, search, sort, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getPlaces(
         category,
@@ -100,6 +102,7 @@ function PlaceSection({
 }
 export function DiscoverPage() {
   useInAppBackGuard("/app");
+  const locationScope = useLocationQueryScope();
   const [searchParams, setSearchParams] = useSearchParams();
   const [category, setCategory] = useState<number | undefined>(() =>
     positiveIdFromQuery(searchParams.get("category")),
@@ -130,7 +133,7 @@ export function DiscoverPage() {
     queryFn: ({ signal }) => getPlaces(undefined, undefined, undefined, undefined, deferredSearch, undefined, 10, signal),
     enabled: Boolean(deferredSearch),
   });
-  const archived = useQuery({ queryKey: ["places", "archived"], queryFn: getArchivedPlaces, enabled: showArchived });
+  const archived = useQuery({ queryKey: ["places", ...locationScope, "archived"], queryFn: getArchivedPlaces, enabled: showArchived });
   const restore = useMutation({ mutationFn: restorePlace, onSuccess: async place => { await Promise.all([qc.invalidateQueries({ queryKey: ["places"] }), qc.invalidateQueries({ queryKey: ["places", "archived"] })]); showNotice(`${place.name} volvió a la lista de lugares.`); } });
   useEffect(() => {
     const next = new URLSearchParams();

@@ -15,14 +15,16 @@ import { showNotice } from '../../lib/flash';
 import type { ExperiencePhoto, WhenDateComment } from '../../types/domain';
 import { deleteWhenDateComment, deleteWhenDatePhoto, getWhenDateOccurrence, saveWhenDateComment, setWhenDateCover, uploadWhenDatePhoto } from './whenDates';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
+import { useZoneContext } from '../../lib/zoneContext';
 
 const displayDate = (date: string) => date.split('-').reverse().join('/');
 
 export function WhenDateDetailPage() {
   useInAppBackGuard('/app/when-dates');
+  const { coupleId, selectedZoneId } = useZoneContext();
   const specialDateId = Number(useParams().specialDateId); const date = useParams().date ?? ''; const valid = Number.isInteger(specialDateId) && specialDateId > 0 && /^\d{4}-\d{2}-\d{2}$/.test(date);
   const qc = useQueryClient(); const [commenting, setCommenting] = useState<WhenDateComment | null>(); const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
-  const detail = useQuery({ queryKey: ['when-date', specialDateId, date], queryFn: () => getWhenDateOccurrence(specialDateId, date), enabled: valid });
+  const detail = useQuery({ queryKey: ['when-date', coupleId, selectedZoneId, specialDateId, date], queryFn: () => getWhenDateOccurrence(specialDateId, date), enabled: valid });
   const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: ['when-date', specialDateId, date] }), qc.invalidateQueries({ queryKey: ['when-dates'] })]);
   const saveComment = useMutation({ mutationFn: (comment: string) => saveWhenDateComment(specialDateId, date, comment), onSuccess: async () => { await refresh(); showNotice('Guardamos tu recuerdo.'); setCommenting(undefined); } });
   const removeComment = useMutation({ mutationFn: () => deleteWhenDateComment(specialDateId, date), onSuccess: async () => { await refresh(); showNotice('Eliminamos tu comentario.'); setCommenting(undefined); } });
