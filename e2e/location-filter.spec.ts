@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-test("switching to all cities reloads Rosario's historical catalog", async ({ page }) => {
+for (const role of ["USER", "ADMIN"] as const) {
+test(`${role}: switching to all cities reloads Rosario's historical catalog`, async ({ page }) => {
   const requests: URL[] = [];
   const rosarioPlace = {
     id: 101,
@@ -21,11 +22,11 @@ test("switching to all cities reloads Rosario's historical catalog", async ({ pa
     updatedAt: "2025-01-01T00:00:00Z",
   };
 
-  await page.addInitScript(() => localStorage.setItem("wherefood.session", JSON.stringify({
+  await page.addInitScript((sessionRole) => localStorage.setItem("wherefood.session", JSON.stringify({
     token: "location-filter-test",
     username: "tomas",
-    role: "USER",
-  })));
+    role: sessionRole,
+  })), role);
 
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
@@ -70,4 +71,25 @@ test("switching to all cities reloads Rosario's historical catalog", async ({ pa
   expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("cityId") === "2")).toBe(true);
   expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("cityId") === "1")).toBe(true);
   expect(requests.some((url) => url.pathname.endsWith("/places") && !url.searchParams.has("cityId"))).toBe(true);
+});
+}
+
+test("an administrator without a location context sees the error instead of an empty catalog", async ({ page }) => {
+  let catalogRequests = 0;
+  await page.addInitScript(() => localStorage.setItem("wherefood.session", JSON.stringify({
+    token: "location-filter-test", username: "admin-without-couple", role: "ADMIN",
+  })));
+  await page.route("**/api/**", async route => {
+    if (new URL(route.request().url()).pathname === "/api/location-context") {
+      return route.fulfill({ status: 403, contentType: "application/problem+json",
+        body: JSON.stringify({ detail: "Necesitás una pareja activa" }) });
+    }
+    catalogRequests += 1;
+    return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
+  });
+
+  await page.goto("/app/food");
+  await expect(page.getByRole("alert")).toContainText("Necesitás una pareja activa");
+  await expect(page.getByRole("button", { name: "Reintentar" })).toBeVisible();
+  expect(catalogRequests).toBe(0);
 });

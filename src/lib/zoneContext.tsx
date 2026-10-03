@@ -14,8 +14,7 @@ type ZoneContextValue = {
 const ZoneContext = createContext<ZoneContextValue | null>(null);
 export function ZoneProvider({ children }: { children: ReactNode }) {
   const client = useQueryClient();
-  const isAdmin=session.get()?.role==='ADMIN';
-  const context = useQuery({ queryKey: ['location-context', session.get()?.username], queryFn: getLocationContext, enabled:!isAdmin, refetchInterval: 15_000 });
+  const context = useQuery({ queryKey: ['location-context', session.get()?.username], queryFn: getLocationContext, refetchInterval: 15_000 });
   const [selectedLocationKey, setSelectedLocationKey] = useState('origin');
   const selected = context.data?.options.find(option => option.key === selectedLocationKey) ?? (selectedLocationKey === 'all' ? undefined : context.data?.options[0]);
   const cityId = selected?.cityId ?? null;
@@ -36,11 +35,11 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
   }, [context.data, selected, selectedLocationKey]);
   const value = useMemo<ZoneContextValue>(() => ({
     zones: Array.from(new Map((context.data?.options ?? []).map(o => [o.cityId, { id: o.cityId, name: o.label.split(' · ')[0] }])).values()),
-    options: context.data?.options ?? [], coupleId: context.data?.coupleId ?? (isAdmin?'admin':''),
+    options: context.data?.options ?? [], coupleId: context.data?.coupleId ?? '',
     selectedZoneId: cityId, selectedStageId: stageId, selectedLocationKey,
     defaultZoneId: context.data?.originCityId ?? null, maxUploadBytes:context.data?.maxUploadBytes??10485760, loading: context.isLoading,
     selectZone, selectLocation,
-  }), [context.data, context.isLoading, cityId, stageId, selectedLocationKey, selectZone, selectLocation,isAdmin]);
+  }), [context.data, context.isLoading, cityId, stageId, selectedLocationKey, selectZone, selectLocation]);
   if (context.isLoading) return <LoadingSkeleton variant="route" />;
   if (context.isError&&!context.data) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
   return <ZoneContext.Provider value={value}>{context.isRefetchError&&<p className="form-error" role="status">No pudimos actualizar las ubicaciones. <Button variant="secondary" onClick={()=>void context.refetch()}>Reintentar</Button></p>}{children}</ZoneContext.Provider>;
