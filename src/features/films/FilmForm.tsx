@@ -1,4 +1,3 @@
-import { useLocationDraft } from '../journey/LocationFields';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
@@ -11,7 +10,7 @@ import { ReviewPrompt } from '../../components/ui/ReviewPrompt';
 import { MediaImage } from '../../components/ui/MediaImage';
 import { useDebouncedValue } from '../../lib/useDebouncedValue';
 import { showNotice } from '../../lib/flash';
-import { ZoneAssignmentField } from '../zones/ZoneAssignmentField';
+import { useLocationDraft } from '../journey/LocationFields';
 
 const manualInput = (form: FormData, synopsis: string | undefined, genres: string[]): FilmInput => ({
   title: String(form.get('title')).trim(),
@@ -28,7 +27,7 @@ function TmdbAttribution() {
 
 export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }) {
   const qc = useQueryClient();
-  const { cityId: zoneId, setCityId: setZoneId, stageId, setStageId } = useLocationDraft(film?.zoneId);
+  const { stageId } = useLocationDraft(film?.zoneId);
   const [genres, setGenres] = useState<string[]>(film?.genres ?? []);
   const [file, setFile] = useState<File>();
   const [preparingPhoto, setPreparingPhoto] = useState(false);
@@ -45,8 +44,8 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
   const save = useMutation({
     mutationFn: async (data: FormData) => {
       const input = isTmdbFilm
-        ? { tmdbId: importedTmdbId, platformId: data.get('platformId') ? Number(data.get('platformId')) : undefined, genres: [], zoneId: zoneId ?? undefined, stageId: !film ? stageId : null }
-        : { ...manualInput(data, film?.synopsis, genres), zoneId: zoneId ?? undefined, stageId: !film ? stageId : null };
+        ? { tmdbId: importedTmdbId, platformId: data.get('platformId') ? Number(data.get('platformId')) : undefined, genres: [], stageId: !film ? stageId : null }
+        : { ...manualInput(data, film?.synopsis, genres), stageId: !film ? stageId : null };
       const saved = await saveFilm(input, film?.id);
       try {
         return { film: file && !isTmdbFilm ? await uploadFilmPhoto(saved.id, file) : saved };
@@ -55,7 +54,7 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
       }
     },
     onSuccess: async result => {
-      await Promise.all([qc.invalidateQueries({ queryKey: ['films'] }), qc.invalidateQueries({ queryKey: ['film', result.film.id] })]);
+      await Promise.all([qc.invalidateQueries({ queryKey: ['films'] }), qc.invalidateQueries({ queryKey: ['film', result.film.id] }), qc.invalidateQueries({ queryKey: ['journey-day'] })]);
       if (!film) {
         setCreated(result.film);
         if (result.photoError) showNotice(`Guardamos la película, pero el póster no se subió: ${result.photoError}`, 'error');
@@ -85,13 +84,12 @@ export function FilmForm({ onClose, film }: { onClose: () => void; film?: Film }
      {selected && <section className="tmdb-selection"><div>{selected.posterUrl ? <MediaImage src={selected.posterUrl} alt={`Póster de ${selected.title}`} width={160} height={240} /> : <span aria-hidden="true">🎬</span>}<div><p className="eyebrow">SELECCIONADA EN TMDB</p><h3>{selected.title}</h3>{releaseYear(selected.releaseDate) && <small>{releaseYear(selected.releaseDate)}</small>}<p>{selected.synopsis || 'La ficha se completará desde TMDB.'}</p></div></div><Button variant="tertiary" icon="✕" type="button" onClick={() => setSelected(undefined)}>Cambiar película</Button></section>}
      {film?.tmdbId && <section className="tmdb-selection tmdb-selection--saved"><div>{film.tmdb?.posterUrl ? <MediaImage src={film.tmdb.posterUrl} alt={`Póster de ${film.tmdb.title ?? film.title}`} width={160} height={240} /> : <span aria-hidden="true">🎬</span>}<div><p className="eyebrow">FICHA SINCRONIZADA CON TMDB</p><h3>{film.tmdb?.title ?? film.title}</h3><p>La información de la película se consulta desde TMDB y no se duplica en WhatPlan.</p></div></div></section>}
     {isTmdbFilm && <TmdbAttribution />}
-    <ZoneAssignmentField value={zoneId} onChange={setZoneId} stageId={stageId} onStageChange={setStageId} />
     {!isTmdbFilm && (manualMode || film) && <>
       <label>Título<input name="title" defaultValue={film?.title} required autoFocus /></label>
       <div className="photo-field"><span>Foto o póster <small className="tiny">JPG, PNG, WebP o HEIC · hasta 10 MB</small></span><PhotoPicker onChange={files => setFile(files[0])} onPreparingChange={setPreparingPhoto} /></div>
       <small className="tiny">{file ? `Se cargará ${file.name}.` : film?.posterUrl ? 'La imagen actual se conservará si no elegís otra.' : 'Podés subir una imagen; se adapta automáticamente a los mosaicos.'}</small>
       <fieldset className="tag-picker film-genre-picker"><legend>Géneros</legend><p>Elegí todos los que correspondan. El catálogo se administra desde Configuración.</p><div className="tag-options">{visibleOptions.map(option => <label className="tag-option" key={option.id}><input type="checkbox" checked={genres.includes(option.name)} onChange={() => toggleGenre(option.name)} /><span>{option.emoji} {option.name}</span></label>)}</div></fieldset>
     </>}
-     {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><Button icon={film ? '💾' : '➕'} disabled={save.isPending || preparingPhoto || (zoneId === null)}>{save.isPending ? 'Guardando…' : film ? 'Guardar película' : 'Agregar película'}</Button>{save.error && <p className="form-error" role="alert">{save.error.message}</p>}</> : null}
+     {isTmdbFilm || manualMode || film ? <><div className="form-columns"><label>Plataforma<select name="platformId" defaultValue={film?.platform?.id ?? ''}><option value="">Todavía no sabemos</option>{availablePlatforms.map(platform => <option key={platform.id} value={platform.id}>{platform.icon} {platform.name}{!platform.active ? ' (inactiva)' : ''}</option>)}</select></label></div><Button icon={film ? '💾' : '➕'} disabled={save.isPending || preparingPhoto}>{save.isPending ? 'Guardando…' : film ? 'Guardar película' : 'Agregar película'}</Button>{save.error && <p className="form-error" role="alert">{save.error.message}</p>}</> : null}
   </form></Modal>;
 }

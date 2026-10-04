@@ -1,4 +1,3 @@
-import { useLocationDraft } from '../journey/LocationFields';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Modal } from "../../components/ui/Modal";
@@ -7,14 +6,14 @@ import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { showNotice } from "../../lib/flash";
 import type { Recipe, RecipeIngredient, RecipeStep } from "../../types/domain";
 import { saveRecipe, uploadRecipePhoto } from "./homeRecipes";
-import { ZoneAssignmentField } from "../zones/ZoneAssignmentField";
+import { useLocationDraft } from "../journey/LocationFields";
 
 const emptyIngredient = (): RecipeIngredient => ({ name: "", quantity: 1, unit: "unidad" });
 const emptyStep = (): RecipeStep => ({ instruction: "" });
 
 export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () => void }) {
   const qc = useQueryClient();
-  const { cityId: zoneId, setCityId: setZoneId, stageId, setStageId } = useLocationDraft(recipe?.zoneId);
+  const { stageId } = useLocationDraft(recipe?.zoneId);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
     recipe?.ingredients ?? [],
   );
@@ -37,7 +36,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
           sourceUrl: String(form.get("sourceUrl")).trim() || undefined,
           ingredients: cleanIngredients,
           steps: cleanSteps,
-          zoneId: zoneId ?? undefined, stageId: !recipe ? stageId : null,
+          stageId: !recipe ? stageId : null,
         },
         recipe?.id,
       );
@@ -56,6 +55,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["recipes"] }),
         qc.invalidateQueries({ queryKey: ["recipe", saved.id] }),
+        qc.invalidateQueries({ queryKey: ["journey-day"] }),
       ]);
       showNotice(photoUploadError ?? (recipe
         ? "Actualizamos la receta compartida."
@@ -75,7 +75,6 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
       >
         <p className="eyebrow">{recipe ? "EDITAR RECETA" : "NUEVA RECETA"}</p>
         <h2>{recipe ? "Ajustemos la receta" : "¿Qué quieren cocinar?"}</h2>
-        <ZoneAssignmentField value={zoneId} onChange={setZoneId} stageId={stageId} onStageChange={setStageId} />
         <label>
           Nombre
           <input name="name" defaultValue={recipe?.name} required autoFocus />
@@ -179,7 +178,7 @@ export function RecipeForm({ recipe, onClose }: { recipe?: Recipe; onClose: () =
             Agregar paso
           </Button>
         </fieldset>
-        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto || (zoneId === null)}>
+        <Button icon={recipe ? "💾" : "➕"} disabled={mutation.isPending || preparingPhoto}>
           {mutation.isPending ? "Guardando…" : recipe ? "Guardar receta" : "Agregar receta"}
         </Button>
         {mutation.error && <p className="form-error" role="alert">{mutation.error.message}</p>}

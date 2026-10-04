@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { useZoneContext } from "../../lib/zoneContext";
 import { api } from "../../lib/api";
@@ -21,6 +22,7 @@ import {
   money,
   sourceHref,
   today,
+  setJourneyCover,
   type Point,
   type Stay,
   type Movement,
@@ -28,6 +30,7 @@ import {
   type Packing,
 } from "./journey";
 import { JourneyForm } from "./JourneyForm";
+import { JourneyDaySummary } from "./JourneyDaySummary";
 import { PlaneIcon } from "./JourneysPage";
 import {
   JourneyDateEditor,
@@ -44,7 +47,7 @@ import {
   fileLabel,
   downloadFile,
 } from "./JourneyFiles";
-const tabs = ["Agenda", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
+const tabs = ["Resumen", "Agenda", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 export function JourneyDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -55,7 +58,7 @@ export function JourneyDetailPage() {
     enabled: /^[0-9a-f-]{36}$/i.test(id),
   });
   const refresh = useJourneyRefresh(id);
-  const [tab, setTab] = useState<(typeof tabs)[number]>("Agenda");
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Resumen");
   const [day, setDay] = useState("");
   const [dateEditor, setDateEditor] = useState(false);
   const [editTrip, setEditTrip] = useState(false);
@@ -315,6 +318,20 @@ export function JourneyDetailPage() {
         role="tabpanel"
         aria-labelledby={`journey-tab-${tab}`}
       >
+        {tab === "Resumen" && (
+          <JourneyDaySummary
+            detail={value}
+            date={selectedDay === "unscheduled" ? trip.startsOn : selectedDay}
+            onDateChange={setDay}
+            editable={editable}
+            tripPhotos={value.files.filter((f) => f.purpose === "TRIP" || f.purpose === "DAY")}
+            coverPhotoId={trip.coverPhotoId ?? undefined}
+            onCover={async (fileId) => {
+              await setJourneyCover(id, fileId);
+              await refresh();
+            }}
+          />
+        )}
         {tab === "Agenda" && (
           <>
             <div className="journey-panel__heading">
@@ -500,15 +517,18 @@ export function JourneyDetailPage() {
                 <Button onClick={() => setUpload(null)}>Guardar archivo</Button>
               )}
             </div>
-            {!value.files.length && (
+            {!value.files.some((file) => file.purpose === "ATTACHMENT") && (
               <p className="journey-empty">
                 Guarden reservas, entradas y recibos para encontrarlos durante
                 el viaje.
               </p>
             )}
             <ul className="journey-file-list">
-              {value.files.map((f) => (
+              {value.files.filter((f) => f.purpose === "ATTACHMENT").map((f) => (
                 <li key={f.id}>
+                  {f.contentType.startsWith("image/") && (
+                    <MediaImage className="journey-file-thumbnail" src={f.thumbnailUrl ?? f.url} alt={`Miniatura de ${f.name}`} width={f.width ?? 640} height={f.height ?? 480} />
+                  )}
                   <div>
                     <strong>{f.name}</strong>
                     <span>
@@ -970,6 +990,7 @@ export function JourneyDetailPage() {
         <StayEditor
           detail={value}
           stay={stay ?? undefined}
+          initialStageId={trip.stages.find((stage) => selectedDay >= stage.startsOn && selectedDay <= stage.endsOn)?.id}
           onClose={() => setStay(undefined)}
         />
       )}{" "}
@@ -978,6 +999,7 @@ export function JourneyDetailPage() {
           detail={value}
           movement={movement ?? undefined}
           initialPointId={movementPoint}
+          initialStageId={trip.stages.find((stage) => selectedDay >= stage.startsOn && selectedDay <= stage.endsOn)?.id}
           onClose={() => setMovement(undefined)}
         />
       )}{" "}
@@ -1037,6 +1059,7 @@ function PackingEditor({
 }) {
   return (
     <Modal
+      className="journey-modal"
       title="Editar elemento de valija"
       onClose={onClose}
       pending={pending}

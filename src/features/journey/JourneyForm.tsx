@@ -4,6 +4,7 @@ import { useQuery } from "../../lib/locationQuery";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { PhotoPicker } from "../../components/ui/PhotoPicker";
 import { showNotice } from "../../lib/flash";
 import {
   getCities,
@@ -13,6 +14,8 @@ import {
   type City,
   type Trip,
   today,
+  uploadJourneyPhoto,
+  setJourneyCover,
 } from "./journey";
 export type CityDraft = { id?: number; name: string; countryCode: string };
 export function CityPicker({
@@ -93,7 +96,41 @@ type StageDraft = {
   city: CityDraft;
   startsOn: string;
   endsOn: string;
+  manualDates: boolean;
 };
+const dayNumber = (date: string) => Math.floor(Date.parse(`${date}T00:00:00Z`) / 86_400_000);
+const dayString = (day: number) => new Date(day * 86_400_000).toISOString().slice(0, 10);
+export function distributeDates<T extends Pick<StageDraft, "startsOn" | "endsOn" | "manualDates">>(stages: T[], start: string, end: string) {
+  const first = dayNumber(start); const finish = dayNumber(end);
+  if (finish < first) return { stages, error: "La fecha de fin debe ser posterior al inicio." };
+  const next = stages.map((stage) => ({ ...stage }));
+  let cursor = first; let index = 0;
+  while (index < next.length) {
+    if (next[index].manualDates) {
+      const from = dayNumber(next[index].startsOn); const to = dayNumber(next[index].endsOn);
+      if (from !== cursor || to < from || to > finish)
+        return { stages, error: "Las etapas fijas deben quedar consecutivas. Agregá un destino automático para cubrir los días libres." };
+      cursor = to + 1; index += 1; continue;
+    }
+    const runStart = index;
+    while (index < next.length && !next[index].manualDates) index += 1;
+    const count = index - runStart;
+    const boundary = index < next.length ? dayNumber(next[index].startsOn) : finish + 1;
+    const available = boundary - cursor;
+    if (available < count)
+      return { stages, error: "No quedan suficientes días libres para repartir los destinos. Ajustá alguna fecha o ampliá el viaje." };
+    const base = Math.floor(available / count); const remainder = available % count;
+    for (let offset = 0; offset < count; offset += 1) {
+      const length = base + (offset < remainder ? 1 : 0);
+      next[runStart + offset].startsOn = dayString(cursor);
+      next[runStart + offset].endsOn = dayString(cursor + length - 1);
+      cursor += length;
+    }
+  }
+  if (cursor !== finish + 1)
+    return { stages, error: "Quedaron días del viaje sin destino. Ajustá una etapa o agregá otro destino." };
+  return { stages: next, error: "" };
+}
 export function JourneyForm({
   trip,
   onClose,
@@ -106,10 +143,15 @@ export function JourneyForm({
   const [name, setName] = useState(trip?.name ?? "");
   const [startsOn, setStartsOn] = useState(trip?.startsOn ?? today());
   const [endsOn, setEndsOn] = useState(trip?.endsOn ?? today());
+  const [maxTripPhotos, setMaxTripPhotos] = useState(trip?.maxTripPhotos ?? 20);
+  const [maxDayPhotos, setMaxDayPhotos] = useState(trip?.maxDayPhotos ?? 10);
+  const [coverFile, setCoverFile] = useState<File>();
+  const [allocationError, setAllocationError] = useState("");
   const [stages, setStages] = useState<StageDraft[]>(
     trip?.stages.map((s) => ({
       key: s.id,
       stageId: s.id,
+      manualDates: true,
       city: { id: s.cityId, name: s.cityName, countryCode: s.countryCode },
       startsOn: s.startsOn,
       endsOn: s.endsOn,
@@ -119,13 +161,19 @@ export function JourneyForm({
         city: { countryCode: "AR", name: "" },
         startsOn: today(),
         endsOn: today(),
+        manualDates: false,
       },
     ],
   );
-  const update = (key: string, change: Partial<StageDraft>) =>
-    setStages((current) =>
-      current.map((s) => (s.key === key ? { ...s, ...change } : s)),
-    );
+  const update = (key: string, change: Partial<StageDraft>) => {
+    const next = stages.map((s) => s.key === key
+      ? { ...s, ...change,
+          manualDates: "startsOn" in change || "endsOn" in change ? true : s.manualDates }
+      : s);
+    const allocation = distributeDates(next, startsOn, endsOn);
+    setStages(allocation.stages);
+    setAllocationError(allocation.error);
+  };
   const suggestion = stages
     .map((s) => s.city.name.trim())
     .filter(Boolean)
@@ -153,12 +201,28 @@ export function JourneyForm({
           name: (name.trim() || suggestion).slice(0, 160),
           startsOn,
           endsOn,
+          maxTripPhotos,
+          maxDayPhotos,
           stages: resolved,
         },
         trip?.id,
       );
     },
     onSuccess: async (saved) => {
+      try {
+        if (coverFile) {
+          const photo = await uploadJourneyPhoto(saved.id, coverFile, "TRIP");
+          await setJourneyCover(saved.id, photo.id);
+        }
+      } catch (reason) {
+        showNotice(reason instanceof Error
+          ? `El viaje se guardó, pero no pudimos subir la portada: ${reason.message}`
+          : "El viaje se guardó, pero no pudimos subir la portada.");
+        await client.invalidateQueries({ queryKey: ["journey", saved.id] });
+        onClose();
+        navigate(`/app/whither-journey/${saved.id}`);
+        return;
+      }
       await Promise.all([
         client.invalidateQueries({ queryKey: ["journeys"] }),
         client.invalidateQueries({ queryKey: ["journey", saved.id] }),
@@ -176,6 +240,7 @@ export function JourneyForm({
   });
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       size="wide"
       confirmDiscard
@@ -191,8 +256,18 @@ export function JourneyForm({
       >
         <h2>{trip ? "Editar viaje" : "¿Adónde quieren ir?"}</h2>
         <p className="muted">
-          Cada destino tendrá su lugar en el filtro de ciudad.
+          El recorrido reparte las fechas disponibles entre los destinos.
         </p>
+        <div className="form-columns">
+          <label>Límite de fotos del viaje<input type="number" min="1" max="100" required value={maxTripPhotos} onChange={(e) => setMaxTripPhotos(Number(e.target.value))} /></label>
+          <label>Límite de fotos por día<input type="number" min="1" max="100" required value={maxDayPhotos} onChange={(e) => setMaxDayPhotos(Number(e.target.value))} /></label>
+        </div>
+        <fieldset className="journey-cover-picker">
+          <legend>Foto de portada</legend>
+          <PhotoPicker maxFiles={1} onChange={(files) => setCoverFile(files[0])} selectLabel="Elegir foto de portada" />
+          {coverFile && <p>Vista previa de {coverFile.name}</p>}
+          {trip?.coverPhotoUrl && !coverFile && <small>La portada actual se conserva si no elegís otra.</small>}
+        </fieldset>
         <label>
           Nombre del viaje
           <input
@@ -209,7 +284,13 @@ export function JourneyForm({
               required
               type="date"
               value={startsOn}
-              onChange={(e) => setStartsOn(e.target.value)}
+              onChange={(e) => {
+                const nextStart = e.target.value;
+                setStartsOn(nextStart);
+                const allocation = distributeDates(stages, nextStart, endsOn);
+                setStages(allocation.stages);
+                setAllocationError(allocation.error);
+              }}
             />
           </label>
           <label>
@@ -219,7 +300,13 @@ export function JourneyForm({
               type="date"
               min={startsOn}
               value={endsOn}
-              onChange={(e) => setEndsOn(e.target.value)}
+              onChange={(e) => {
+                const nextEnd = e.target.value;
+                setEndsOn(nextEnd);
+                const allocation = distributeDates(stages, startsOn, nextEnd);
+                setStages(allocation.stages);
+                setAllocationError(allocation.error);
+              }}
             />
           </label>
         </div>
@@ -259,7 +346,11 @@ export function JourneyForm({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => setStages(stages.filter((v) => v.key !== s.key))}
+                onClick={() => {
+                  const allocation = distributeDates(stages.filter((v) => v.key !== s.key), startsOn, endsOn);
+                  setStages(allocation.stages);
+                  setAllocationError(allocation.error);
+                }}
               >
                 Quitar destino
               </Button>
@@ -270,22 +361,26 @@ export function JourneyForm({
           type="button"
           variant="secondary"
           disabled={stages.length >= 100}
-          onClick={() =>
-            setStages([
+          onClick={() => {
+            const allocation = distributeDates([
               ...stages,
               {
                 key: crypto.randomUUID(),
                 city: { countryCode: "AR", name: "" },
                 startsOn,
                 endsOn,
+                manualDates: false,
               },
-            ])
-          }
+            ], startsOn, endsOn);
+            setStages(allocation.stages);
+            setAllocationError(allocation.error);
+          }}
         >
           Agregar otro destino
         </Button>
+        {allocationError && <p className="form-error" role="alert">{allocationError}</p>}
         <div className="journey-form__actions">
-          <Button disabled={save.isPending || !suggestion}>
+          <Button disabled={save.isPending || !suggestion || !!allocationError}>
             {save.isPending ? "Guardando…" : "Guardar viaje"}
           </Button>
         </div>

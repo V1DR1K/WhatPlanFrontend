@@ -65,6 +65,7 @@ export function PlaceDetailPage() {
       qc.invalidateQueries({ queryKey: ["places"] }),
       qc.invalidateQueries({ queryKey: ["place", id] }),
       qc.invalidateQueries({ queryKey: ["visits", id] }),
+      qc.invalidateQueries({ queryKey: ["journey-day"] }),
       ...(selectedVisitId
         ? [qc.invalidateQueries({ queryKey: ["visit", selectedVisitId] })]
         : []),
@@ -207,7 +208,7 @@ export function PlaceDetailPage() {
             {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           {visit.isLoading && <LoadingSkeleton variant="list" />}
-          {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(photo.id)} />}
+          {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(Number(photo.id))} />}
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
@@ -217,7 +218,7 @@ export function PlaceDetailPage() {
       {editingVisit !== undefined && <VisitForm physicalCity={venue.zoneId} placeId={venue.id} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} onDeleted={() => setSelectedVisitId(undefined)} />}
       {reviewing !== undefined && current && <VisitReviewForm placeId={venue.id} visit={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}
       {confirmingDelete && <ConfirmDialog title="¿Borrar este lugar?" message={removePlace.error ? removePlace.error.message : "Se archivará el lugar y se conservarán sus visitas."} confirmLabel="Borrar lugar" pending={removePlace.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => removePlace.mutate()} />}
-      {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de la visita." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(deletingPhoto.id)} />}
+      {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de la visita." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(Number(deletingPhoto.id))} />}
     </section>
   );
 }

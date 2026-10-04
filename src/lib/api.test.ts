@@ -107,7 +107,7 @@ describe("global zone filter", () => {
     await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
 
     const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
-    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2, stageId:null });
+    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2 });
   });
 
   it("leaves zone unassigned when the global filter is Todos", async () => {

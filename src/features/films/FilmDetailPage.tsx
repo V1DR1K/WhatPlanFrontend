@@ -64,6 +64,7 @@ export function FilmDetailPage() {
   const remove = useMutation({
     mutationFn: () => deleteFilm(id),
     onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["journey-day"] });
       await qc.invalidateQueries({ queryKey: ["films"] });
       showNotice("Eliminamos la película y su historial.");
       navigate("/app/films");
@@ -73,6 +74,7 @@ export function FilmDetailPage() {
     mutationFn: (view: FilmView) => deleteFilmView(id, view.id),
     onSuccess: async () => {
       await Promise.all([
+        qc.invalidateQueries({ queryKey: ["journey-day"] }),
         qc.invalidateQueries({ queryKey: ["film", id] }),
         qc.invalidateQueries({ queryKey: ["films"] }),
       ]);

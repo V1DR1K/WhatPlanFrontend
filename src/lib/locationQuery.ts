@@ -13,9 +13,6 @@ export function useQuery<
   const prefix = String(options.queryKey[0]);
   const cityScoped = [
     "places",
-    "films",
-    "recipes",
-    "cookings",
     "activities",
     "when-dates",
     "when-date",

@@ -49,7 +49,7 @@ export function FilePreview({
       <PhotoViewer photos={[{ src: url, alt: file.name }]} onClose={onClose} />
     );
   return (
-    <Modal onClose={onClose} size="wide" title={file.name}>
+    <Modal className="journey-modal" onClose={onClose} size="wide" title={file.name}>
       <div className="journey-file-preview">
         <h2>{file.name}</h2>
         {error && (
@@ -117,6 +117,7 @@ export function FileUpload({
   const maxMegabytes = (maxUploadBytes / 1024 / 1024).toLocaleString("es-AR");
   const refresh = useJourneyRefresh(detail.trip.id);
   const [file, setFile] = useState<File>();
+  const [previewUrl, setPreviewUrl] = useState("");
   const [linkType, setLinkType] = useState(stayId ? "stay" : "trip");
   const [linkId, setLinkId] = useState(stayId ?? "");
   const [hotelPhoto, setHotelPhoto] = useState(!!stayId);
@@ -154,6 +155,15 @@ export function FileUpload({
       onClose();
     },
   });
+  useEffect(() => {
+    if (!file?.type.startsWith("image/")) {
+      setPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
   const choices =
     linkType === "stage"
       ? detail.trip.stages.map((s) => ({ id: s.id, name: s.cityName }))
@@ -164,6 +174,7 @@ export function FileUpload({
           : detail.movements.map((m) => ({ id: m.id, name: m.description }));
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       confirmDiscard
       pending={upload.isPending}
@@ -189,6 +200,9 @@ export function FileUpload({
             onChange={(e) => setFile(e.target.files?.[0])}
           />
         </label>
+        {file && (previewUrl
+          ? <div className="journey-file-upload-preview"><img src={previewUrl} alt={`Vista previa de ${file.name}`} /><span>{file.name}</span></div>
+          : <div className="journey-file-upload-preview"><span aria-hidden="true">📄</span><span>PDF listo para guardar: {file.name}</span></div>)}
         <label>
           Vincular a
           <select
@@ -323,6 +337,7 @@ export function FileLinksEditor({
   });
   return (
     <Modal
+      className="journey-modal"
       title="Cambiar vínculo del archivo"
       onClose={onClose}
       pending={save.isPending}

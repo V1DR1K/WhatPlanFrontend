@@ -107,7 +107,7 @@ export function Modal({ children, className, backdropClassName, size = 'standard
   }, []);
 
   return createPortal(<div className={['modal-backdrop', section && `${section}-shell`, backdropClassName].filter(Boolean).join(' ')} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
-    <section className={['modal', `modal--${size}`, className].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
+    <section className={['modal', `modal--${size}`, className, section === 'journey' && !className?.split(/\s+/).includes('journey-modal') ? 'journey-modal' : undefined].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       {title && <h2 id={titleId} className="sr-only">{title}</h2>}
       {!title && !labelledBy && <span id={titleId} className="sr-only">Diálogo de WhatPlan</span>}
       <span id={descriptionId} className="sr-only">{description ?? 'Contenido del diálogo.'}</span>

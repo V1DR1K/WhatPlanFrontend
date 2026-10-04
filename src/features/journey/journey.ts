@@ -35,8 +35,12 @@ export type Trip = {
   endsOn: string;
   archived: boolean;
   stages: Stage[];
+  coverPhotoId: string | null;
+  coverPhotoUrl: string | null;
+  maxTripPhotos: number;
+  maxDayPhotos: number;
 };
-export type TripInput = Pick<Trip, "name" | "startsOn" | "endsOn"> & {
+export type TripInput = Pick<Trip, "name" | "startsOn" | "endsOn" | "maxTripPhotos" | "maxDayPhotos"> & {
   stages: { id?: string; cityId: number; startsOn: string; endsOn: string }[];
 };
 export type Section = "FOOD" | "FILM" | "COOK" | "FUN";
@@ -113,8 +117,26 @@ export type JourneyFile = {
   pointId: string | null;
   stayId: string | null;
   movementId: string | null;
+  purpose: "ATTACHMENT" | "TRIP" | "DAY";
+  day: string | null;
+  width: number | null;
+  height: number | null;
+  thumbnailUrl: string | null;
   url: string;
 };
+export type JourneyPhoto = Pick<JourneyFile,
+  "id" | "name" | "url" | "thumbnailUrl" | "width" | "height" | "purpose" | "day">;
+export type JourneySourcePhoto = { id: string; url: string; thumbnailUrl: string; width: number; height: number };
+export type JourneyDayEntry = { id: string; section: Section; date: string; title: string; detail: string; href: string; photos: JourneySourcePhoto[] };
+export type JourneyDay = {
+  date: string;
+  story: string | null;
+  entries: JourneyDayEntry[];
+  specialDates: { id: number; label: string; recurrence: string; href: string }[];
+  photos: JourneyPhoto[];
+  reviews: { id: string; userId: number; author: string; rating: number | null; comment: string | null }[];
+};
+export type JourneyDayIndex = { date: string; destinations: string[] };
 export type Detail = {
   trip: Trip;
   points: Point[];
@@ -189,6 +211,22 @@ export const money = (amount: number | string, currency: string) => {
     )
     .join("");
 };
+export const normalizeAmountInput = (raw: string) => {
+  const value = raw.trim().replace(/\s/g, "").replace(/[^\d,.-]/g, "");
+  if (!value) return "";
+  if (value.includes(",")) return value.replace(/\./g, "").replace(",", ".");
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(value)) return value.replace(/\./g, "");
+  return value;
+};
+export const formatAmountInput = (raw: string) => {
+  const normalized = normalizeAmountInput(raw);
+  if (!normalized || !/^-?\d+(?:\.\d{0,4})?$/.test(normalized)) return raw;
+  const match = /^(-?)(\d+)(?:\.(\d{0,4}))?$/.exec(normalized);
+  if (!match) return raw;
+  const integer = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 0 })
+    .format(BigInt(match[2]));
+  return `${match[1]}${integer}${match[3] ? `,${match[3]}` : ""}`;
+};
 export const sourceHref = (source: Source) =>
   `${{ FOOD: "/app/food/places/", FILM: "/app/films/", COOK: "/app/how-cook/", FUN: "/app/why-fun/" }[source.section]}${source.entityId}`;
 export const getLocationContext = () =>
@@ -223,6 +261,28 @@ export const archiveTrip = (id: string) =>
   api<void>(`/whither-journey/${id}/archive`, { method: "PUT" });
 export const deleteTrip = (id: string) =>
   api<void>(`/whither-journey/${id}`, { method: "DELETE" });
+export const getJourneyDay = (id: string, day: string) =>
+  api<JourneyDay>(`/whither-journey/${id}/days/${day}`);
+export const getJourneyDays = (id: string) =>
+  api<JourneyDayIndex[]>(`/whither-journey/${id}/days`);
+export const saveJourneyDayStory = (id: string, day: string, story: string) =>
+  api<JourneyDay>(`/whither-journey/${id}/days/${day}/story`, {
+    method: "PUT", body: JSON.stringify({ story }),
+  });
+export const saveJourneyDayReview = (id: string, day: string, rating: number | null, comment: string) =>
+  api<JourneyDayReview>(`/whither-journey/${id}/days/${day}/reviews/me`, {
+    method: "PUT", body: JSON.stringify({ rating, comment }),
+  });
+export const deleteJourneyDayReview = (id: string, day: string) =>
+  api<void>(`/whither-journey/${id}/days/${day}/reviews/me`, { method: "DELETE" });
+export const uploadJourneyPhoto = (id: string, file: File, purpose: "TRIP" | "DAY", day?: string) => {
+  const form = new FormData(); form.append("file", file);
+  const query = new URLSearchParams({ purpose }); if (day) query.set("day", day);
+  return api<JourneyPhoto>(`/whither-journey/${id}/photos?${query}`, { method: "POST", body: form });
+};
+export const setJourneyCover = (id: string, fileId: string) =>
+  api<void>(`/whither-journey/${id}/cover/${fileId}`, { method: "PUT" });
+type JourneyDayReview = { id: string; userId: number; author: string; rating: number | null; comment: string | null };
 export const saveResource = <T>(
   tripId: string,
   resource: string,

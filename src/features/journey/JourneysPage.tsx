@@ -3,6 +3,8 @@ import { useQuery } from "../../lib/locationQuery";
 import { Button } from "../../components/ui/Button";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
+import { ExperienceHero } from "../../components/ui/ExperienceHero";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { SectionShell } from "../../components/ui/SectionShell";
 import { JourneyForm } from "./JourneyForm";
 import { getTrips, formatDate, today } from "./journey";
@@ -35,14 +37,16 @@ export function JourneysPage() {
   });
   return (
     <SectionShell className="journey-page" section="journey">
-      <header className="journey-heading">
-        <div>
-          <PlaneIcon />
-          <h1>Whither Journey</h1>
-          <p>Sus próximos destinos, y todo lo que quieren recordar.</p>
-        </div>
+      <ExperienceHero
+        className="journey-hero"
+        eyebrow="WHITHER JOURNEY · VIAJES COMPARTIDOS"
+        title={<>¿Adónde <em>vamos</em>?</>}
+        description="El recorrido, los planes y los recuerdos del viaje en un solo lugar."
+        art={<PlaneIcon />}
+      />
+      <div className="journey-catalog-action">
         <Button onClick={() => setCreating(true)}>Nuevo viaje</Button>
-      </header>
+      </div>
       {trips.isLoading && <LoadingSkeleton variant="catalog" />}
       {trips.error && (
         <p role="alert" className="form-error">
@@ -94,10 +98,9 @@ export function JourneysPage() {
               </>
             }
             image={
-              <div className="journey-trip__art">
-                <PlaneIcon />
-                <span>{trip.stages.length} destinos · {trip.stages.map((s) => s.cityName).join(" → ")}</span>
-              </div>
+              trip.coverPhotoUrl
+                ? <MediaImage className="catalog-media-card__image" src={trip.coverPhotoUrl} alt={`Portada de ${trip.name}`} width={720} height={360} />
+                : <div className="journey-trip__art"><PlaneIcon /><span>{trip.stages.length} destinos · {trip.stages.map((s) => s.cityName).join(" → ")}</span></div>
             }
             orientation="landscape"
             theme="journey"

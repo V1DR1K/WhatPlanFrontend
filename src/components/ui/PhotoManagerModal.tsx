@@ -18,7 +18,9 @@ type GalleryProps = {
   mode: "gallery";
   name: string;
   photos: ExperiencePhoto[];
-  coverPhotoId?: number;
+  coverPhotoId?: number | string;
+  maxPhotos?: number;
+  limitCount?: number;
   coverPending?: boolean;
   onUpload: (files: File[]) => Promise<void>;
   onSetCover?: (photo: ExperiencePhoto) => void;
@@ -65,7 +67,9 @@ export function PhotoManagerModal(props: Props) {
     close();
   };
 
-  const maxFiles = props.mode === "gallery" ? Math.max(0, 4 - props.photos.length) : 1;
+  const photoLimit = props.mode === "gallery" ? props.maxPhotos ?? 4 : 1;
+  const limitCount = props.mode === "gallery" ? props.limitCount ?? props.photos.length : 0;
+  const maxFiles = props.mode === "gallery" ? Math.max(0, photoLimit - limitCount) : 1;
   const selectedFile = props.mode === "attachment" ? props.photo : undefined;
   const heading = props.mode === "gallery" ? `Fotos de ${props.name}` : `Foto ${props.name}`;
 
@@ -86,7 +90,7 @@ export function PhotoManagerModal(props: Props) {
             <Button type="button" disabled={preparing || uploading} onClick={confirmAttachment}>Usar foto</Button>
           </div>
         </> : <>
-          <p className="photo-manager__count">{props.photos.length}/4 fotos guardadas · podés agregar {maxFiles}</p>
+          <p className="photo-manager__count">{limitCount}/{photoLimit} fotos para esta galería · podés agregar {maxFiles}</p>
           {props.photos.length > 0 && <div className="photo-manager__saved" aria-label="Fotos guardadas">
             {props.photos.map((photo, index) => <article className="photo-manager__photo" key={photo.id}>
               <button className="photo-manager__preview" type="button" onClick={() => setViewerIndex(index)} aria-label={`Ampliar foto ${index + 1} de ${props.name}`}><MediaImage src={photo.thumbnailUrl || photo.url} alt={`Foto ${index + 1} de ${props.name}`} width={photo.width} height={photo.height} loading="lazy" /></button>

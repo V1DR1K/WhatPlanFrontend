@@ -64,6 +64,7 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["activities"] }),
         qc.invalidateQueries({ queryKey: ["activity", saved.id] }),
+        qc.invalidateQueries({ queryKey: ["journey-day"] }),
       ]);
       showNotice(photoUploadError ?? (activity
         ? "Actualizamos la actividad compartida."

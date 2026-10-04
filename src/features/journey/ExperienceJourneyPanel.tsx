@@ -24,6 +24,7 @@ export function ExperienceJourneyPanel({
 }) {
   const client = useQueryClient();
   const context = useZoneContext();
+  const placeSensitive = source.section === "FOOD" || source.section === "FUN";
   const [editing, setEditing] = useState(false);
   const [movement, setMovement] = useState<Movement | null>();
   const location = useQuery({
@@ -39,7 +40,7 @@ export function ExperienceJourneyPanel({
   const city = useQuery({
     queryKey: ["city", location.data?.cityId],
     queryFn: () => getCity(location.data!.cityId!),
-    enabled: !!location.data?.cityId,
+    enabled: placeSensitive && !!location.data?.cityId,
   });
   const trip = useQuery({
     queryKey: ["journey", location.data?.journeyId],
@@ -50,7 +51,9 @@ export function ExperienceJourneyPanel({
     Promise.all(
       [
         "experience-location",
-        "journey",
+          "journey",
+        "journey-day",
+        "journey-days",
         "when-dates",
         "when-date",
         "films",
@@ -74,12 +77,13 @@ export function ExperienceJourneyPanel({
       {location.data && (
         <>
           <p>
-            {context.options.find(
-              (o) =>
-                o.stageId === location.data?.stageId &&
-                o.cityId === location.data?.cityId,
-            )?.label ??
-              `${city.data?.name ?? "Ubicación guardada"} · Sin viaje activo`}
+            {placeSensitive
+              ? context.options.find(
+                  (o) =>
+                    o.stageId === location.data?.stageId &&
+                    o.cityId === location.data?.cityId,
+                )?.label ?? `${city.data?.name ?? "Ubicación guardada"} · Sin viaje activo`
+              : "Se incluye en el resumen de los viajes según la fecha registrada."}
           </p>
           {location.data.journeyId && (
             <Link to={`/app/whither-journey/${location.data.journeyId}`}>
@@ -87,16 +91,16 @@ export function ExperienceJourneyPanel({
             </Link>
           )}
           <div className="journey-actions">
-            <Button variant="secondary" onClick={() => setEditing(!editing)}>
+            {placeSensitive && <Button variant="secondary" onClick={() => setEditing(!editing)}>
               Cambiar ubicación / viaje
-            </Button>
+            </Button>}
             {trip.data && !trip.data.trip.archived && (
               <Button variant="secondary" onClick={() => setMovement(null)}>
                 Registrar gasto
               </Button>
             )}
           </div>
-          {editing && (
+          {editing && placeSensitive && (
             <LocationEditor
               key={`${source.experienceId}-${location.data.stageId}`}
               source={source}
@@ -145,6 +149,7 @@ export function ExperienceJourneyPanel({
           detail={trip.data}
           movement={movement ?? undefined}
           initialPointId={location.data?.pointId ?? undefined}
+          initialStageId={location.data?.stageId ?? undefined}
           onClose={() => setMovement(undefined)}
         />
       )}

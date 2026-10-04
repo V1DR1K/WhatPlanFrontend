@@ -25,6 +25,7 @@ export function VisitForm({ placeId, physicalCity, visit, onClose, onSaved, onDe
     mutationFn: () => visit ? updateVisit(visit.id, visitedOn, location.binding) : createVisit(placeId, visitedOn, location.binding),
     onSuccess: async saved => {
       await Promise.all([queryClient.invalidateQueries({queryKey:["journey"]}),queryClient.invalidateQueries({queryKey:["when-dates"]}),queryClient.invalidateQueries({queryKey:["experience-location"]})]);
+      await queryClient.invalidateQueries({ queryKey: ["journey-day"] });
       await invalidate(visit?.id);
       onSaved(saved);
       showNotice(visit ? "Actualizamos la fecha de la visita." : "Visita registrada. Ahora pueden sumar fotos y reseñas.");
@@ -35,6 +36,7 @@ export function VisitForm({ placeId, physicalCity, visit, onClose, onSaved, onDe
     mutationFn: () => deleteVisit(visit!.id),
     onSuccess: async () => {
       await invalidate(visit!.id);
+      await queryClient.invalidateQueries({ queryKey: ["journey-day"] });
       showNotice("Eliminamos la visita, sus fotos y sus reseñas.");
       onDeleted?.();
       onClose();

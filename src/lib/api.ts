@@ -30,8 +30,9 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 let currentZoneFilterId: number | null = null;
 let currentJourneyStageId: string | null = null;
 export const setCurrentJourneyStage = (stageId: string | null) => { currentJourneyStageId = stageId; };
-const zoneFilteredLists = new Set(['/places', '/places/archived', '/films', '/how-cook/recipes', '/how-cook/cookings', '/why-fun/activities', '/why-fun/plans', '/when-dates']);
-const zoneAssignedCreates = new Set(['/places', '/films', '/how-cook/recipes', '/why-fun/activities', '/why-fun/plans']);
+const zoneFilteredLists = new Set(['/places', '/places/archived', '/why-fun/activities', '/why-fun/plans', '/when-dates']);
+const zoneAssignedCreates = new Set(['/places', '/why-fun/activities', '/why-fun/plans']);
+const stageAssignedCreates = new Set(['/films', '/how-cook/recipes']);
 export const setCurrentZoneFilter = (zoneId: number | null) => { currentZoneFilterId = zoneId; };
 type RefreshOutcome = { token: string | null; definitive: boolean };
 const refreshFailed = (definitive = false): RefreshOutcome => ({ token: null, definitive });
@@ -167,11 +168,21 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
       && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId') && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('cityId')) {
     requestPath += `${requestPath.includes('?') ? '&' : '?'}cityId=${currentZoneFilterId}`;
   }
-  if (method === 'POST' && currentZoneFilterId !== null && zoneAssignedCreates.has(apiPath)
+  if (method === 'POST' && (zoneAssignedCreates.has(apiPath) || stageAssignedCreates.has(apiPath))
       && typeof requestBody === 'string' && requestBody.length > 0) {
     try {
       const payload = JSON.parse(requestBody) as Record<string, unknown>;
-      requestBody = JSON.stringify({ ...payload, zoneId: payload.zoneId ?? currentZoneFilterId, stageId: payload.stageId === undefined ? currentJourneyStageId : payload.stageId });
+      requestBody = JSON.stringify({
+        ...payload,
+        ...(zoneAssignedCreates.has(apiPath) && currentZoneFilterId !== null
+          ? { zoneId: payload.zoneId ?? currentZoneFilterId }
+          : {}),
+        ...(payload.stageId !== undefined
+          ? { stageId: payload.stageId }
+          : currentJourneyStageId !== null
+            ? { stageId: currentJourneyStageId }
+            : {}),
+      });
     } catch {
       // Non-JSON requests are not zone-assigned catalog creations.
     }

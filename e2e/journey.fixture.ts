@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
-import type { City, Detail, Trip } from "../src/features/journey/journey";
+import type { City, Detail, JourneyDay, JourneyDayIndex, JourneyFile, Trip } from "../src/features/journey/journey";
 type FixtureBody = Trip &
   City &
   Detail["points"][number] &
@@ -15,12 +15,17 @@ export async function journeyFixture(page: Page, rich = false) {
   ];
   let origin = 1;
   const journeys = new Map<string, Detail>();
+  const dayDetails = new Map<string, JourneyDay>();
   const requests: { path: string; method: string; body: unknown }[] = [];
   const create = (input: Trip) => {
     const trip = {
       ...input,
       id: input.id ?? randomUUID(),
       archived: false,
+      coverPhotoId: input.coverPhotoId ?? null,
+      coverPhotoUrl: input.coverPhotoUrl ?? null,
+      maxTripPhotos: input.maxTripPhotos ?? 20,
+      maxDayPhotos: input.maxDayPhotos ?? 10,
       stages: input.stages.map((s, i) => ({
         ...s,
         id: s.id ?? randomUUID(),
@@ -46,6 +51,18 @@ export async function journeyFixture(page: Page, rich = false) {
       dates: [],
     } as Detail;
     journeys.set(trip.id, detail);
+    const firstDay = trip.startsOn;
+    dayDetails.set(`${trip.id}:${firstDay}`, {
+      date: firstDay,
+      story: rich ? "Empezamos el viaje caminando juntos por San Telmo." : null,
+      entries: rich ? [{
+        id: "FOOD:9", section: "FOOD", date: firstDay, title: "La Cabrera",
+        detail: "Parrilla · Palermo", href: "/app/food/places/7", photos: [],
+      }] : [],
+      specialDates: rich ? [{ id: 1, label: "Nuestro aniversario", recurrence: "ANNUAL", href: `/app/when-dates/1/${firstDay}` }] : [],
+      photos: [],
+      reviews: rich ? [{ id: randomUUID(), userId: 2, author: "avril", rating: 5, comment: "Un día para repetir." }] : [],
+    });
     return detail;
   };
   if (rich) {
@@ -235,6 +252,7 @@ export async function journeyFixture(page: Page, rich = false) {
     let body = {} as FixtureBody;
     if (req.headers()["content-type"]?.includes("application/json"))
       body = req.postDataJSON();
+    const payload = body as unknown as Record<string, unknown>;
     requests.push({ path: url.pathname + url.search, method, body });
     const reply = (value: unknown, status = 200) =>
       route.fulfill({
@@ -305,6 +323,73 @@ export async function journeyFixture(page: Page, rich = false) {
       if (method === "POST") return reply(create(body).trip, 201);
       return reply(Array.from(journeys.values()).map((d) => d.trip));
     }
+    const dayIndex = /^\/whither-journey\/([^/]+)\/days$/.exec(path);
+    if (dayIndex) {
+      const detail = journeys.get(dayIndex[1]);
+      if (!detail) return reply({ detail: "No encontramos este viaje." }, 404);
+      const from = Date.parse(`${detail.trip.startsOn}T00:00:00Z`);
+      const to = Date.parse(`${detail.trip.endsOn}T00:00:00Z`);
+      const result: JourneyDayIndex[] = [];
+      for (let time = from; time <= to; time += 86_400_000) {
+        const date = new Date(time).toISOString().slice(0, 10);
+        result.push({ date, destinations: detail.trip.stages.filter((s) => date >= s.startsOn && date <= s.endsOn).map((s) => s.cityName) });
+      }
+      return reply(result);
+    }
+    const dayRoute = /^\/whither-journey\/([^/]+)\/days\/(\d{4}-\d{2}-\d{2})(?:\/(story|reviews\/me))?$/.exec(path);
+    if (dayRoute) {
+      const detail = journeys.get(dayRoute[1]);
+      if (!detail) return reply({ detail: "No encontramos este viaje." }, 404);
+      const [, tripId, date, action] = dayRoute;
+      const key = `${tripId}:${date}`;
+      let value = dayDetails.get(key) ?? { date, story: null, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
+      if (action === "story" && method === "PUT") {
+        value = { ...value, story: payload.story || null };
+        dayDetails.set(key, value);
+        return reply(value);
+      }
+      if (action === "reviews/me" && method === "PUT") {
+        const review = { id: randomUUID(), userId: 1, author: "tomas", rating: payload.rating ?? null, comment: payload.comment || null };
+        value = { ...value, reviews: [...value.reviews.filter((r) => r.userId !== 1), review] };
+        dayDetails.set(key, value);
+        return reply(review);
+      }
+      if (action === "reviews/me" && method === "DELETE") {
+        value = { ...value, reviews: value.reviews.filter((r) => r.userId !== 1) };
+        dayDetails.set(key, value);
+        return route.fulfill({ status: 204 });
+      }
+      return reply(value);
+    }
+    const journeyPhotos = /^\/whither-journey\/([^/]+)\/photos$/.exec(path);
+    if (journeyPhotos && method === "POST") {
+      const detail = journeys.get(journeyPhotos[1]);
+      if (!detail) return reply({ detail: "No encontramos este viaje." }, 404);
+      const purpose = url.searchParams.get("purpose") === "DAY" ? "DAY" : "TRIP";
+      const day = url.searchParams.get("day") ?? null;
+      const id = randomUUID();
+      const photo = { id, name: "recuerdo.webp", contentType: "image/webp", byteSize: 300, stageId: null, pointId: null, stayId: null, movementId: null, purpose, day, width: 320, height: 240, thumbnailUrl: `/whither-journey/files/${id}/content?thumbnail=true`, url: `/whither-journey/files/${id}/content` } satisfies JourneyFile;
+      detail.files.push(photo);
+      if (purpose === "DAY" && day) {
+        const key = `${journeyPhotos[1]}:${day}`;
+        const value = dayDetails.get(key) ?? { date: day, story: null, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
+        dayDetails.set(key, { ...value, photos: [...value.photos, { id, name: photo.name, url: photo.url, thumbnailUrl: photo.thumbnailUrl, width: photo.width, height: photo.height, purpose, day }] });
+      }
+      if (!detail.trip.coverPhotoId) {
+        detail.trip.coverPhotoId = id;
+        detail.trip.coverPhotoUrl = photo.thumbnailUrl;
+      }
+      return reply(photo, 201);
+    }
+    const coverRoute = /^\/whither-journey\/([^/]+)\/cover\/([^/]+)$/.exec(path);
+    if (coverRoute && method === "PUT") {
+      const detail = journeys.get(coverRoute[1]);
+      if (detail) {
+        detail.trip.coverPhotoId = coverRoute[2];
+        detail.trip.coverPhotoUrl = `/whither-journey/files/${coverRoute[2]}/content?thumbnail=true`;
+      }
+      return route.fulfill({ status: 204 });
+    }
     if (path.startsWith("/whither-journey/catalog/"))
       return reply([
         {
@@ -318,13 +403,16 @@ export async function journeyFixture(page: Page, rich = false) {
     if (path.startsWith("/whither-journey/experiences/"))
       return reply([{ id: 9, date: "2026-08-10", cityId: 2, stageId: null }]);
     const content = /^\/whither-journey\/files\/([^/]+)\/content$/.exec(path);
-    if (content)
+    if (content) {
+      const isJourneyPhoto = Array.from(journeys.values()).some((d) => d.files.some((f) => f.id === content[1] && (f.purpose === "TRIP" || f.purpose === "DAY")));
+      if (isJourneyPhoto) return route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64") });
       return route.fulfill({
         contentType: "application/pdf",
         body: Buffer.from(
           "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Count 0 /Kids [] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF",
         ),
       });
+    }
     const match =
       /^\/whither-journey\/([^/]+)(?:\/(points|stays|packing|movements|reviews|files|dates|archive))?(?:\/([^/]+))?$/.exec(
         path,
@@ -392,6 +480,11 @@ export async function journeyFixture(page: Page, rich = false) {
             pointId: null,
             stayId: null,
             movementId: null,
+            purpose: "ATTACHMENT",
+            day: null,
+            width: null,
+            height: null,
+            thumbnailUrl: null,
             url: "",
           };
           f.url = `/whither-journey/files/${f.id}/content`;

@@ -18,7 +18,10 @@ export function SpecialDatesManager() {
   const [draft, setDraft] = useState<SpecialDateInput>(emptyDraft);
   const [editing, setEditing] = useState<SpecialDate | null>();
   const [deleting, setDeleting] = useState<SpecialDate>();
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['special-dates'] });
+  const refresh = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['special-dates'] }),
+    queryClient.invalidateQueries({ queryKey: ['journey-day'] }),
+  ]);
   const closeForm = () => {
     setEditing(undefined);
     setDraft(emptyDraft);

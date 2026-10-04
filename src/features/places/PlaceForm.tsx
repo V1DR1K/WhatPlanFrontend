@@ -70,6 +70,7 @@ export function PlaceForm({
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["places"] }),
         qc.invalidateQueries({ queryKey: ["place", saved.id] }),
+        qc.invalidateQueries({ queryKey: ["journey-day"] }),
       ]);
       showNotice(photoUploadError ?? (place
         ? "Actualizamos el lugar compartido."

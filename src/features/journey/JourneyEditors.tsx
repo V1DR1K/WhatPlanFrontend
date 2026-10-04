@@ -24,6 +24,8 @@ import {
   type Movement,
   type Section,
   type Review,
+  normalizeAmountInput,
+  formatAmountInput,
 } from "./journey";
 export function useJourneyRefresh(id: string) {
   const client = useQueryClient();
@@ -32,6 +34,8 @@ export function useJourneyRefresh(id: string) {
       [
         "journey",
         "journeys",
+        "journey-day",
+        "journey-days",
         "location-context",
         "experience-location",
         "when-dates",
@@ -126,7 +130,11 @@ export function PointEditor({
   const [search, setSearch] = useState("");
   const catalog = useQuery({
     queryKey: ["journey-sources", section, stage.cityId, search],
-    queryFn: () => getSources(section as Section, stage.cityId, search),
+    queryFn: () => getSources(
+      section as Section,
+      section === "FOOD" || section === "FUN" ? stage.cityId : undefined,
+      search,
+    ),
     enabled: !!section,
   });
   const experiences = useQuery({
@@ -178,6 +186,7 @@ export function PointEditor({
     : "";
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       size="wide"
       confirmDiscard
@@ -387,15 +396,17 @@ export function PointEditor({
 export function StayEditor({
   detail,
   stay,
+  initialStageId,
   onClose,
 }: {
   detail: Detail;
   stay?: Stay;
+  initialStageId?: string;
   onClose: () => void;
 }) {
   const refresh = useJourneyRefresh(detail.trip.id);
   const [stageId, setStageId] = useState(
-    stay?.stageId ?? detail.trip.stages[0].id,
+    stay?.stageId ?? initialStageId ?? (detail.trip.stages.length === 1 ? detail.trip.stages[0].id : ""),
   );
   const stage = detail.trip.stages.find((s) => s.id === stageId)!;
   const save = useMutation({
@@ -409,7 +420,7 @@ export function StayEditor({
           startsOn: text(form, "startsOn")!,
           endsOn: text(form, "endsOn")!,
           address: text(form, "address"),
-          price: text(form, "price"),
+          price: normalizeAmountInput(text(form, "price") ?? "") || null,
           currency: text(form, "currency"),
           source: text(form, "source"),
           bookingUrl: text(form, "bookingUrl"),
@@ -426,6 +437,7 @@ export function StayEditor({
   });
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       size="wide"
       confirmDiscard
@@ -486,11 +498,13 @@ export function StayEditor({
           <label>
             Precio del alojamiento
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               name="price"
               min="0"
               step="0.0001"
               defaultValue={stay?.price ?? ""}
+              onBlur={(e) => { e.currentTarget.value = formatAmountInput(e.currentTarget.value); }}
             />
           </label>
           <label>
@@ -546,17 +560,19 @@ export function MovementEditor({
   detail,
   movement,
   initialPointId,
+  initialStageId,
   onClose,
 }: {
   detail: Detail;
   movement?: Movement;
   initialPointId?: string;
+  initialStageId?: string;
   onClose: () => void;
 }) {
   const refresh = useJourneyRefresh(detail.trip.id);
   const initialPoint = detail.points.find((p) => p.id === initialPointId);
   const [stageId, setStageId] = useState(
-    movement?.stageId ?? initialPoint?.stageId ?? "",
+    movement?.stageId ?? initialPoint?.stageId ?? initialStageId ?? (detail.trip.stages.length === 1 ? detail.trip.stages[0].id : ""),
   );
   const [pointId, setPointId] = useState(
     movement?.pointId ?? initialPointId ?? "",
@@ -573,7 +589,7 @@ export function MovementEditor({
           stayId: stayId || null,
           kind: text(form, "kind") as Movement["kind"],
           description: text(form, "description")!,
-          amount: text(form, "amount")!,
+          amount: normalizeAmountInput(text(form, "amount") ?? ""),
           currency: text(form, "currency")!,
           occurredOn: text(form, "occurredOn")!,
         },
@@ -587,6 +603,7 @@ export function MovementEditor({
   });
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       size="wide"
       confirmDiscard
@@ -623,12 +640,14 @@ export function MovementEditor({
             Importe
             <input
               name="amount"
-              type="number"
+              type="text"
+              inputMode="decimal"
               required
               min="0.0001"
               max="99999999999999.9999"
               step="0.0001"
               defaultValue={movement?.amount}
+              onBlur={(e) => { e.currentTarget.value = formatAmountInput(e.currentTarget.value); }}
             />
           </label>
           <label>
@@ -740,6 +759,7 @@ export function ReviewEditor({
   });
   return (
     <Modal
+      className="journey-modal"
       onClose={onClose}
       confirmDiscard
       pending={save.isPending}
@@ -807,6 +827,7 @@ export function JourneyDateEditor({
   });
   return (
     <Modal
+      className="journey-modal"
       title="Vincular fecha importante"
       onClose={onClose}
       pending={save.isPending}

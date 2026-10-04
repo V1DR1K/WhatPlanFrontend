@@ -23,15 +23,15 @@ for (const viewport of [
       .getByLabel("Fecha de inicio", { exact: true })
       .fill("2026-08-10");
     await dialog.getByLabel("Fecha de fin", { exact: true }).fill("2026-08-12");
-    let stage = dialog.locator("fieldset").first();
+    let stage = dialog.locator(".journey-stage-form").first();
     await stage.getByLabel("Lugar").fill("Buenos Aires");
     await stage.getByLabel("Llegada").fill("2026-08-10");
     await stage.getByLabel("Salida").fill("2026-08-11");
     await dialog.getByRole("button", { name: "Agregar otro destino" }).click();
-    stage = dialog.locator("fieldset").nth(1);
+    stage = dialog.locator(".journey-stage-form").nth(1);
     await stage.getByLabel("País").selectOption("UY");
     await stage.getByLabel("Lugar").fill("Montevideo");
-    await stage.getByLabel("Llegada").fill("2026-08-11");
+    await stage.getByLabel("Llegada").fill("2026-08-12");
     await stage.getByLabel("Salida").fill("2026-08-12");
     await dialog.getByRole("button", { name: "Guardar viaje" }).click();
     await expect(
@@ -41,6 +41,7 @@ for (const viewport of [
       }),
     ).toBeVisible();
     expect(fixture.journeys.size).toBe(1);
+    await page.getByRole("tab", { name: "Agenda", exact: true }).click();
     await page
       .getByRole("button", { name: "Agregar punto", exact: true })
       .click();
@@ -166,6 +167,8 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
         exact: true,
       }),
     ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "La Cabrera", exact: true })).toBeVisible();
     await page.getByRole("tab", { name: "Agenda", exact: true }).focus();
     await page.keyboard.press("ArrowRight");
     await expect(
@@ -176,7 +179,7 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       "animation-name",
       "none",
     );
-    for (const tab of ["Agenda", "Estadías", "Valijas", "Dinero"]) {
+    for (const tab of ["Resumen", "Agenda", "Archivos", "Estadías", "Valijas", "Dinero"]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await page.evaluate(() => window.scrollTo(0, 0));
       expect(
@@ -214,7 +217,7 @@ test("journey form protects changed drafts and cannot close while saving", async
   await page.getByRole("button", { name: "Editar viaje", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Nombre del viaje").fill("Cambio pendiente");
-  await dialog.getByRole("button", { name: "Cerrar", exact: true }).click();
+  await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
   await expect(
     page.getByRole("alertdialog", { name: "Descartar cambios" }),
   ).toBeVisible();
@@ -247,4 +250,52 @@ test("journey form protects changed drafts and cannot close while saving", async
   await expect(
     page.getByRole("heading", { name: "Cambio pendiente", exact: true }),
   ).toBeVisible();
+});
+
+test("daily summary saves a shared story, personal review, day photo and cover", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await journeyFixture(page, true);
+  await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
+  await expect(page.getByText("Nuestro aniversario", { exact: false })).toBeVisible();
+
+  await page.getByRole("button", { name: "Editar relato", exact: true }).click();
+  let dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Relato compartido").fill("Nos quedamos con la caminata y la cena.");
+  await dialog.getByRole("button", { name: "Guardar relato", exact: true }).click();
+  await expect(page.getByText("Nos quedamos con la caminata y la cena.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Agregar mi reseña", exact: true }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Comentario (opcional)").fill("La mejor caminata del viaje.");
+  await dialog.getByRole("button", { name: "Guardar reseña", exact: true }).click();
+  await expect(page.getByText("La mejor caminata del viaje.")).toBeVisible();
+
+  const dayGallery = page.locator(".journey-day-photos");
+  await dayGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: "caminata.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
+  });
+  await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
+  await expect(dialog.locator(".photo-manager__saved img")).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
+
+  const tripGallery = page.locator(".journey-trip-gallery");
+  await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+  dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("Foto de portada", { exact: true })).toBeVisible();
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: "cena.png",
+    mimeType: "image/png",
+    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
+  });
+  await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
+  const photos = dialog.locator(".photo-manager__photo");
+  await expect(photos).toHaveCount(2);
+  await photos.nth(1).getByRole("button", { name: "Hacer portada", exact: true }).click();
+  await expect(photos.nth(1).getByText("Foto de portada", { exact: true })).toBeVisible();
+  await expect(page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).resolves.toBeLessThanOrEqual(2);
 });

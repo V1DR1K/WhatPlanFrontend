@@ -55,6 +55,7 @@ export function FunVenueDetailPage() {
     qc.invalidateQueries({ queryKey: ["activities"] }),
     qc.invalidateQueries({ queryKey: ["activity", id] }),
     qc.invalidateQueries({ queryKey: ["activity-visits", id] }),
+    qc.invalidateQueries({ queryKey: ["journey-day"] }),
   ]);
   const removeActivity = useMutation({
     mutationFn: () => deleteActivity(id),
@@ -156,7 +157,7 @@ export function FunVenueDetailPage() {
             </label>
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}
           </div>
-          {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" manageInModal name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(photo.id)} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
+          {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" manageInModal name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(Number(photo.id))} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
         </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
       {current?.id && <ExperienceJourneyPanel key={current?.id} source={{section:"FUN",entityId:id,experienceId:current?.id}} physicalCity={value.zoneId} />}
@@ -164,7 +165,7 @@ export function FunVenueDetailPage() {
       {editingVisit !== undefined && <ActivityVisitForm activity={value} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} />}
       {reviewing !== undefined && current && <ActivityReviewForm activityId={value.id} visit={current} review={reviewing ?? undefined} onClose={() => setReviewing(undefined)} />}
       {confirmingDelete && <ConfirmDialog title="¿Borrar esta actividad?" message={removeActivity.error ? removeActivity.error.message : "También se eliminarán sus salidas, fotos y reseñas."} confirmLabel="Borrar actividad" pending={removeActivity.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => removeActivity.mutate()} />}
-      {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de esta salida." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(deletingPhoto.id)} />}
+      {deletingPhoto && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se eliminará definitivamente de esta salida." confirmLabel="Quitar foto" pending={removePhoto.isPending} onClose={() => setDeletingPhoto(undefined)} onConfirm={() => removePhoto.mutate(Number(deletingPhoto.id))} />}
     </section>
   );
 }
