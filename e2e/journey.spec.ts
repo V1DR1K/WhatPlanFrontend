@@ -2,13 +2,12 @@ import { test, expect } from "@playwright/test";
 import { journeyFixture } from "./journey.fixture";
 import { mkdir } from "node:fs/promises";
 
-test("dashboard presents Whither Journey first", async ({ page }) => {
+test("dashboard presents Whither Journey beside WhenDates at the end", async ({ page }) => {
   await journeyFixture(page);
   await page.goto("/app");
-  await expect(page.locator(".module-picker > a").first()).toHaveAttribute(
-    "href",
-    "/app/whither-journey",
-  );
+  const modules = page.locator(".module-picker > a");
+  await expect(modules.last()).toHaveAttribute("href", "/app/whither-journey");
+  await expect(modules.nth(4)).toHaveAttribute("href", "/app/when-dates");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/app/whither-journey");
   const firstWordLines = await page.locator(".journey-hero h1").evaluate((heading) => {
@@ -323,13 +322,15 @@ test("daily summary saves a shared story, personal review, day photo and cover",
   let dialog = page.getByRole("dialog");
   await dialog.getByLabel("Relato compartido").fill("Nos quedamos con la caminata y la cena.");
   await dialog.getByRole("button", { name: "Guardar relato", exact: true }).click();
-  await expect(page.getByText("Nos quedamos con la caminata y la cena.")).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator(".journey-day-story")).toHaveText("Nos quedamos con la caminata y la cena.");
 
   await page.getByRole("button", { name: "Agregar mi reseña", exact: true }).click();
   dialog = page.getByRole("dialog");
   await dialog.getByLabel("Comentario (opcional)").fill("La mejor caminata del viaje.");
   await dialog.getByRole("button", { name: "Guardar reseña", exact: true }).click();
-  await expect(page.getByText("La mejor caminata del viaje.")).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.locator(".journey-day-review-list")).toContainText("La mejor caminata del viaje.");
 
   const dayGallery = page.locator(".journey-day-photos");
   await dayGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
