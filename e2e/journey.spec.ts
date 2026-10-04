@@ -82,7 +82,9 @@ for (const viewport of [
     await expect(
       page.getByRole("heading", { name: "Paseo por San Telmo" }),
     ).toBeVisible();
-    await expect(page.getByText("Traslado", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("tabpanel", { name: "Agenda" }).getByText("Traslado", { exact: true }),
+    ).toBeVisible();
     const maps = page.getByRole("link", { name: /Google Maps/ });
     await expect(maps).toHaveAttribute("href", /maps\.google\.com/);
     await expect(maps).toHaveClass(/button--primary/);
