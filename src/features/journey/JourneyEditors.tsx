@@ -20,6 +20,7 @@ import {
   today,
   type Detail,
   type Point,
+  type PointCategory,
   type Stay,
   type Movement,
   type Section,
@@ -116,6 +117,9 @@ export function PointEditor({
   const [section, setSection] = useState<Section | "">(
     point?.source?.section ?? "",
   );
+  const [category, setCategory] = useState<PointCategory>(
+    point?.source?.section ?? point?.category ?? "GENERAL",
+  );
   const [entityId, setEntityId] = useState(point?.source?.entityId ?? 0);
   const [experienceId, setExperienceId] = useState(
     point?.source?.experienceId ?? 0,
@@ -167,6 +171,7 @@ export function PointEditor({
           mapsUrl: text(form, "mapsUrl"),
           position: point?.position ?? detail.points.length,
           status,
+          category,
           source:
             section && entityId
               ? { section, entityId, experienceId: experienceId || null }
@@ -216,17 +221,34 @@ export function PointEditor({
         <StageSelect detail={detail} value={stageId} onChange={setStageId} />
         <div className="form-columns">
           <label>
-            Sección
+            Tipo de punto
+            <select
+              value={category}
+              disabled={linked}
+              onChange={(e) => setCategory(e.target.value as PointCategory)}
+            >
+              <option value="GENERAL">Actividad general</option>
+              <option value="FOOD">WhereFood · comida</option>
+              <option value="FILM">WhichMovie · cine</option>
+              <option value="COOK">WhoCook · cocina</option>
+              <option value="FUN">WhyFun · actividad</option>
+              <option value="TRANSFER">Traslado</option>
+            </select>
+          </label>
+          <label>
+            Vincular ficha existente
             <select
               value={section}
               disabled={linked}
               onChange={(e) => {
-                setSection(e.target.value as Section | "");
+                const selected = e.target.value as Section | "";
+                setSection(selected);
                 setEntityId(0);
                 setExperienceId(0);
+                if (selected) setCategory(selected);
               }}
             >
-              <option value="">Punto libre</option>
+              <option value="">Sin ficha vinculada</option>
               {Object.entries(sections).map(([k, v]) => (
                 <option key={k} value={k}>
                   {v}
@@ -503,7 +525,7 @@ export function StayEditor({
               name="price"
               min="0"
               step="0.0001"
-              defaultValue={stay?.price ?? ""}
+              defaultValue={stay?.price == null ? "" : formatAmountInput(String(stay.price))}
               onBlur={(e) => { e.currentTarget.value = formatAmountInput(e.currentTarget.value); }}
             />
           </label>
@@ -646,7 +668,7 @@ export function MovementEditor({
               min="0.0001"
               max="99999999999999.9999"
               step="0.0001"
-              defaultValue={movement?.amount}
+              defaultValue={movement?.amount == null ? "" : formatAmountInput(String(movement.amount))}
               onBlur={(e) => { e.currentTarget.value = formatAmountInput(e.currentTarget.value); }}
             />
           </label>

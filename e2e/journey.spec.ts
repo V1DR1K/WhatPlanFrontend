@@ -2,6 +2,26 @@ import { test, expect } from "@playwright/test";
 import { journeyFixture } from "./journey.fixture";
 import { mkdir } from "node:fs/promises";
 
+test("dashboard presents Whither Journey first", async ({ page }) => {
+  await journeyFixture(page);
+  await page.goto("/app");
+  await expect(page.locator(".module-picker > a").first()).toHaveAttribute(
+    "href",
+    "/app/whither-journey",
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app/whither-journey");
+  const firstWordLines = await page.locator(".journey-hero h1").evaluate((heading) => {
+    const text = heading.firstChild;
+    if (!text || text.nodeType !== Node.TEXT_NODE) return 0;
+    const word = document.createRange();
+    word.setStart(text, 0);
+    word.setEnd(text, 7);
+    return word.getClientRects().length;
+  });
+  expect(firstWordLines).toBe(1);
+});
+
 for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
@@ -42,18 +62,30 @@ for (const viewport of [
     ).toBeVisible();
     expect(fixture.journeys.size).toBe(1);
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+    await expect(page.locator(".journey-day-picker input[type=date]")).toHaveCount(0);
+    await expect(page.getByText(/10 de agosto de 2026/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Día anterior" })).toBeDisabled();
+    await page.getByRole("button", { name: "Día siguiente" }).click();
+    await expect(page.getByText(/11 de agosto de 2026/)).toBeVisible();
+    await page.getByRole("button", { name: "Día anterior" }).click();
     await page
       .getByRole("button", { name: "Agregar punto", exact: true })
       .click();
     dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Tipo de punto").selectOption("TRANSFER");
     await dialog
       .getByLabel("Actividad", { exact: true })
       .fill("Paseo por San Telmo");
     await dialog.getByLabel("Hora", { exact: true }).fill("09:30");
+    await dialog.getByLabel("Google Maps").fill("https://maps.google.com/?q=San+Telmo");
     await dialog.getByRole("button", { name: "Guardar punto" }).click();
     await expect(
       page.getByRole("heading", { name: "Paseo por San Telmo" }),
     ).toBeVisible();
+    await expect(page.getByText("Traslado", { exact: true })).toBeVisible();
+    const maps = page.getByRole("link", { name: /Google Maps/ });
+    await expect(maps).toHaveAttribute("href", /maps\.google\.com/);
+    await expect(maps).toHaveClass(/button--primary/);
     await page
       .getByRole("button", { name: "Registrar gasto", exact: true })
       .click();
@@ -63,11 +95,17 @@ for (const viewport of [
     ).not.toHaveValue("");
     await dialog.getByLabel("Descripción").fill("Desayuno");
     await dialog.getByLabel("Importe").fill("1500.25");
+    await dialog.getByLabel("Moneda").focus();
+    await expect(dialog.getByLabel("Importe")).toHaveValue("1.500,25");
     await dialog.getByRole("button", { name: "Guardar movimiento" }).click();
     await page
       .getByRole("button", { name: "Marcar realizado", exact: true })
       .click();
     await expect(page.getByText("1 de 1 puntos realizados")).toBeVisible();
+    await page.getByRole("button", { name: "Volver a pendiente", exact: true }).click();
+    await expect(page.getByText("0 de 1 puntos realizados")).toBeVisible();
+    await expect(page.getByText("Pendiente", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Marcar realizado", exact: true }).click();
     await page
       .getByRole("button", { name: "Cancelar punto", exact: true })
       .click();
@@ -78,8 +116,10 @@ for (const viewport of [
     await page.getByRole("button", { name: "Agregar alojamiento" }).click();
     dialog = page.getByRole("dialog");
     await dialog.getByLabel("Nombre", { exact: true }).fill("Hotel del Centro");
-    await dialog.getByLabel("Precio del alojamiento").fill("220");
+    await dialog.getByLabel("Precio del alojamiento").fill("2200000.50");
     await dialog.getByLabel("Moneda").fill("USD");
+    await dialog.getByLabel("Moneda").focus();
+    await expect(dialog.getByLabel("Precio del alojamiento")).toHaveValue("2.200.000,50");
     await dialog.getByRole("button", { name: "Guardar alojamiento" }).click();
     await expect(
       page.getByRole("heading", { name: "Hotel del Centro" }),
@@ -120,6 +160,11 @@ for (const viewport of [
         (r) => r.method === "POST" && r.path.endsWith("/movements"),
       )?.body,
     ).toMatchObject({ amount: "1500.25" });
+    expect(
+      fixture.requests.find(
+        (r) => r.method === "POST" && r.path.endsWith("/points"),
+      )?.body,
+    ).toMatchObject({ category: "TRANSFER" });
     expect(errors).toEqual([]);
     expect(
       fixture.requests.some(
@@ -167,6 +212,7 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
         exact: true,
       }),
     ).toBeVisible();
+    await expect(page.locator(".journey-detail-hero.has-cover img")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "La Cabrera", exact: true })).toBeVisible();
     await page.getByRole("tab", { name: "Agenda", exact: true }).focus();
@@ -206,6 +252,18 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       .getByRole("dialog")
       .getByRole("button", { name: "Cerrar", exact: true })
       .click();
+  }
+  for (const [name, size] of [
+    ["desktop", { width: 1440, height: 1000 }],
+    ["mobile", { width: 390, height: 844 }],
+  ] as const) {
+    await page.setViewportSize(size);
+    await page.goto("/app/whither-journey");
+    await expect(page.getByRole("heading", { name: "¿Adónde vamos?" })).toBeVisible();
+    await page.screenshot({
+      path: `.impeccable/review/${name}-catalog.png`,
+      fullPage: true,
+    });
   }
 });
 

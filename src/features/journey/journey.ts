@@ -44,6 +44,15 @@ export type TripInput = Pick<Trip, "name" | "startsOn" | "endsOn" | "maxTripPhot
   stages: { id?: string; cityId: number; startsOn: string; endsOn: string }[];
 };
 export type Section = "FOOD" | "FILM" | "COOK" | "FUN";
+export type PointCategory = Section | "GENERAL" | "TRANSFER";
+export const pointCategoryLabels: Record<PointCategory, string> = {
+  GENERAL: "Actividad",
+  FOOD: "WhereFood",
+  FILM: "WhichMovie",
+  COOK: "WhoCook",
+  FUN: "WhyFun",
+  TRANSFER: "Traslado",
+};
 export type Source = {
   section: Section;
   entityId: number;
@@ -59,6 +68,7 @@ export type Point = {
   mapsUrl: string | null;
   position: number;
   status: "PENDING" | "COMPLETED" | "CANCELLED";
+  category: PointCategory;
   source: Source | null;
 };
 export type Stay = {
@@ -184,6 +194,23 @@ export const formatDate = (value: string) =>
     month: "short",
     year: "numeric",
   }).format(new Date(value + "T12:00:00"));
+export const offsetJourneyDate = (value: string, days: number) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  return [
+    shifted.getUTCFullYear(),
+    String(shifted.getUTCMonth() + 1).padStart(2, "0"),
+    String(shifted.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+};
+export const formatJourneyDay = (value: string) =>
+  new Intl.DateTimeFormat("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${value}T12:00:00Z`));
 export const money = (amount: number | string, currency: string) => {
   const formatter = new Intl.NumberFormat("es-AR", {
     style: "currency",

@@ -22,6 +22,9 @@ import {
   money,
   sourceHref,
   today,
+  formatJourneyDay,
+  offsetJourneyDate,
+  pointCategoryLabels,
   setJourneyCover,
   type Point,
   type Stay,
@@ -48,6 +51,8 @@ import {
   downloadFile,
 } from "./JourneyFiles";
 const tabs = ["Resumen", "Agenda", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
+const displayPointCategory = (point: Point) =>
+  point.source?.section ?? point.category ?? "GENERAL";
 export function JourneyDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -149,10 +154,13 @@ export function JourneyDetailPage() {
   const trip = value.trip;
   const editable = !trip.archived;
   const selectedDay =
-    day ||
-    (today() >= trip.startsOn && today() <= trip.endsOn
-      ? today()
-      : trip.startsOn);
+    day === "unscheduled"
+      ? day
+      : day >= trip.startsOn && day <= trip.endsOn
+        ? day
+        : today() >= trip.startsOn && today() <= trip.endsOn
+          ? today()
+          : trip.startsOn;
   const points = value.points
     .filter((p) =>
       selectedDay === "unscheduled"
@@ -176,6 +184,20 @@ export function JourneyDetailPage() {
     !value.reviews.length &&
     !value.dates?.length;
   const completed = value.points.filter((p) => p.status === "COMPLETED").length;
+  const tripDayCount =
+    Math.round(
+      (Date.parse(`${trip.endsOn}T00:00:00Z`) -
+        Date.parse(`${trip.startsOn}T00:00:00Z`)) /
+        86_400_000,
+    ) + 1;
+  const selectedDayNumber =
+    selectedDay === "unscheduled"
+      ? 0
+      : Math.round(
+          (Date.parse(`${selectedDay}T00:00:00Z`) -
+            Date.parse(`${trip.startsOn}T00:00:00Z`)) /
+            86_400_000,
+        ) + 1;
   const requestDelete = (resource: string, itemId: string, title: string) => {
     remove.reset();
     setConfirm({ resource, id: itemId, title });
@@ -190,8 +212,16 @@ export function JourneyDetailPage() {
       <Link className="journey-back" to="/app/whither-journey">
         ← Todos sus viajes
       </Link>
-      <header className="journey-heading">
-        <div>
+      <header className={`journey-detail-hero${trip.coverPhotoUrl ? " has-cover" : ""}`}>
+        {trip.coverPhotoUrl && (
+          <MediaImage
+            className="journey-detail-hero__image"
+            src={trip.coverPhotoUrl}
+            alt={`Foto de portada de ${trip.name}`}
+            loading="eager"
+          />
+        )}
+        <div className="journey-detail-hero__content">
           <PlaneIcon />
           <h1>{trip.name}</h1>
           <p>
@@ -200,7 +230,11 @@ export function JourneyDetailPage() {
           </p>
         </div>
         {editable && (
-          <Button variant="secondary" onClick={() => setEditTrip(true)}>
+          <Button
+            className="journey-detail-hero__edit"
+            variant="secondary"
+            onClick={() => setEditTrip(true)}
+          >
             Editar viaje
           </Button>
         )}
@@ -348,18 +382,47 @@ export function JourneyDetailPage() {
               )}
             </div>
             <div className="journey-day-picker">
-              <label>
-                Día del recorrido
-                <input
-                  type="date"
-                  min={trip.startsOn}
-                  max={trip.endsOn}
-                  value={
-                    selectedDay === "unscheduled" ? trip.startsOn : selectedDay
+              <div className="journey-day-stepper" aria-label="Días del viaje">
+                <Button
+                  variant="icon"
+                  aria-label="Día anterior"
+                  disabled={
+                    selectedDay === "unscheduled" ||
+                    selectedDay <= trip.startsOn
                   }
-                  onChange={(e) => setDay(e.target.value)}
-                />
-              </label>
+                  onClick={() => setDay(offsetJourneyDate(selectedDay, -1))}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m15 18-6-6 6-6" />
+                  </svg>
+                </Button>
+                <div className="journey-day-stepper__date" aria-live="polite">
+                  <span>Día del recorrido</span>
+                  <strong>
+                    {selectedDay === "unscheduled"
+                      ? "Sin día asignado"
+                      : formatJourneyDay(selectedDay)}
+                  </strong>
+                  {selectedDay !== "unscheduled" && (
+                    <small>
+                      {selectedDayNumber} de {tripDayCount}
+                    </small>
+                  )}
+                </div>
+                <Button
+                  variant="icon"
+                  aria-label="Día siguiente"
+                  disabled={
+                    selectedDay === "unscheduled" ||
+                    selectedDay >= trip.endsOn
+                  }
+                  onClick={() => setDay(offsetJourneyDate(selectedDay, 1))}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </Button>
+              </div>
               <Button
                 variant="secondary"
                 aria-pressed={selectedDay === "unscheduled"}
@@ -396,6 +459,11 @@ export function JourneyDetailPage() {
                       {trip.stages.find((s) => s.id === p.stageId)?.cityName}
                     </p>
                     <h3>{p.title}</h3>
+                    <span
+                      className={`journey-point-category journey-point-category--${displayPointCategory(p).toLowerCase()}`}
+                    >
+                      {pointCategoryLabels[displayPointCategory(p)]}
+                    </span>
                     <span className="journey-status">
                       {p.status === "COMPLETED"
                         ? "Realizado"
@@ -413,11 +481,6 @@ export function JourneyDetailPage() {
                           Abrir ficha
                         </Link>
                       )}
-                      {p.mapsUrl && (
-                        <a href={p.mapsUrl} target="_blank" rel="noreferrer">
-                          Google Maps ↗
-                        </a>
-                      )}
                       {editable && (
                         <>
                           <Button
@@ -430,7 +493,20 @@ export function JourneyDetailPage() {
                           >
                             Editar
                           </Button>
-                          {p.status !== "COMPLETED" && (
+                          {p.status === "COMPLETED" ? (
+                            <Button
+                              variant="secondary"
+                              disabled={change.isPending}
+                              onClick={() =>
+                                change.mutate({
+                                  type: "point",
+                                  value: { ...p, status: "PENDING" },
+                                })
+                              }
+                            >
+                              Volver a pendiente
+                            </Button>
+                          ) : (
                             <Button
                               disabled={change.isPending}
                               onClick={() => {
@@ -501,6 +577,16 @@ export function JourneyDetailPage() {
                             Quitar
                           </Button>
                         </>
+                      )}
+                      {p.mapsUrl && (
+                        <a
+                          className="button button--primary journey-map-action"
+                          href={p.mapsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Google Maps <span aria-hidden="true">↗</span>
+                        </a>
                       )}
                     </div>
                   </div>

@@ -95,6 +95,25 @@ export async function journeyFixture(page: Page, rich = false) {
       ],
     } as Trip);
     const stage = a.trip.stages[0].id;
+    const coverId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    a.trip.coverPhotoId = coverId;
+    a.trip.coverPhotoUrl = `/whither-journey/files/${coverId}/content?thumbnail=true`;
+    a.files.push({
+      id: coverId,
+      name: "portada.webp",
+      contentType: "image/webp",
+      byteSize: 300,
+      stageId: null,
+      pointId: null,
+      stayId: null,
+      movementId: null,
+      purpose: "TRIP",
+      day: null,
+      width: 320,
+      height: 240,
+      thumbnailUrl: a.trip.coverPhotoUrl,
+      url: `/whither-journey/files/${coverId}/content`,
+    });
     a.points = [
       {
         id: randomUUID(),
@@ -106,6 +125,7 @@ export async function journeyFixture(page: Page, rich = false) {
         mapsUrl: "https://maps.google.com/",
         position: 0,
         status: "COMPLETED",
+        category: "FOOD",
         source: null,
       },
       {
@@ -118,6 +138,7 @@ export async function journeyFixture(page: Page, rich = false) {
         mapsUrl: null,
         position: 1,
         status: "PENDING",
+        category: "FILM",
         source: { section: "FILM", entityId: 7 },
       },
     ];
