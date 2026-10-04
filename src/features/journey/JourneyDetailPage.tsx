@@ -27,6 +27,8 @@ import {
   offsetJourneyDate,
   pointCategoryLabels,
   setJourneyCover,
+  addPackingForBoth,
+  reorderPacking,
   type Point,
   type Stay,
   type Movement,
@@ -87,12 +89,13 @@ export function JourneyDetailPage() {
     title: string;
   }>();
   const [notice, setNotice] = useState("");
-  const [packingUser, setPackingUser] = useState<number>(0);
+  const [packingUser, setPackingUser] = useState<number | "BOTH">(0);
   const change = useMutation({
     mutationFn: async (action: {
       type: string;
       value?: Point | Packing;
       ids?: string[];
+      userId?: number;
     }) => {
       if (action.type === "point")
         return saveResource<Point>(
@@ -105,9 +108,16 @@ export function JourneyDetailPage() {
         return saveResource<Packing>(
           id,
           "packing",
-          action.value as Packing,
+          {
+            userId: (action.value as Packing).userId,
+            description: (action.value as Packing).description,
+            quantity: (action.value as Packing).quantity,
+            packed: (action.value as Packing).packed,
+          },
           (action.value as Packing).id,
         );
+      if (action.type === "packing-order")
+        return reorderPacking(id, action.userId!, action.ids ?? []);
       if (action.type === "order")
         return api(`/whither-journey/${id}/points/order`, {
           method: "PUT",
@@ -130,14 +140,18 @@ export function JourneyDetailPage() {
       showNotice("Cambio guardado.");
     },
   });
-  const addPacking = useMutation({
-    mutationFn: (form: FormData) =>
-      saveResource<Packing>(id, "packing", {
+  const addPacking = useMutation<Packing | Packing[], Error, FormData>({
+    mutationFn: (form: FormData) => {
+      const description = String(form.get("description"));
+      const quantity = Number(form.get("quantity"));
+      if (packingUser === "BOTH") return addPackingForBoth(id, description, quantity);
+      return saveResource<Packing>(id, "packing", {
         userId: packingUser || detail.data!.members[0].id,
-        description: String(form.get("description")),
-        quantity: Number(form.get("quantity")),
+        description,
+        quantity,
         packed: false,
-      }),
+      });
+    },
     onSuccess: refresh,
   });
   if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
@@ -706,13 +720,20 @@ export function JourneyDetailPage() {
                   Valija
                   <select
                     value={packingUser || value.members[0]?.id || ""}
-                    onChange={(e) => setPackingUser(Number(e.target.value))}
+                    onChange={(e) =>
+                      setPackingUser(
+                        e.target.value === "BOTH" ? "BOTH" : Number(e.target.value),
+                      )
+                    }
                   >
                     {value.members.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.username}
                       </option>
                     ))}
+                    {value.members.length === 2 && (
+                      <option value="BOTH">Ambos</option>
+                    )}
                   </select>
                 </label>
                 <label>
@@ -740,9 +761,14 @@ export function JourneyDetailPage() {
             )}
             <div className="journey-packing">
               {value.members.map((member) => {
-                const items = value.packing.filter(
-                  (p) => p.userId === member.id,
-                );
+                const items = value.packing
+                  .filter((p) => p.userId === member.id)
+                  .sort(
+                    (a, b) =>
+                      Number(a.packed) - Number(b.packed) ||
+                      a.position - b.position ||
+                      a.id.localeCompare(b.id),
+                  );
                 const done = items.filter((p) => p.packed).length;
                 return (
                   <section key={member.id}>
@@ -761,7 +787,34 @@ export function JourneyDetailPage() {
                       </p>
                     )}
                     <ul>
-                      {items.map((item) => (
+                      {items.map((item) => {
+                        const sameStatus = items.filter(
+                          (candidate) => candidate.packed === item.packed,
+                        );
+                        const statusIndex = sameStatus.findIndex(
+                          (candidate) => candidate.id === item.id,
+                        );
+                        const move = (direction: -1 | 1) => {
+                          const currentIndex = items.findIndex(
+                            (candidate) => candidate.id === item.id,
+                          );
+                          const target = sameStatus[statusIndex + direction];
+                          if (!target) return;
+                          const targetIndex = items.findIndex(
+                            (candidate) => candidate.id === target.id,
+                          );
+                          const reordered = [...items];
+                          [reordered[currentIndex], reordered[targetIndex]] = [
+                            reordered[targetIndex],
+                            reordered[currentIndex],
+                          ];
+                          change.mutate({
+                            type: "packing-order",
+                            userId: member.id,
+                            ids: reordered.map((candidate) => candidate.id),
+                          });
+                        };
+                        return (
                         <li key={item.id}>
                           <label className="journey-checkbox">
                             <input
@@ -781,29 +834,57 @@ export function JourneyDetailPage() {
                             </span>
                           </label>
                           {editable && (
-                            <Button
-                              variant="secondary"
-                              onClick={() => setPackingEdit(item)}
-                            >
-                              Editar
-                            </Button>
-                          )}
-                          {editable && (
-                            <Button
-                              variant="destructive"
-                              onClick={() =>
-                                requestDelete(
-                                  "packing",
-                                  item.id,
-                                  "¿Quitar de la valija?",
-                                )
-                              }
-                            >
-                              Quitar
-                            </Button>
+                            <div className="journey-packing-item-actions">
+                              <div className="journey-packing-order">
+                                <Button
+                                  type="button"
+                                  variant="icon"
+                                  icon={<JourneyIcon name="UP" />}
+                                  aria-label={`Subir ${item.description}`}
+                                  title="Subir"
+                                  disabled={change.isPending || statusIndex === 0}
+                                  onClick={() => move(-1)}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="icon"
+                                  icon={<JourneyIcon name="DOWN" />}
+                                  aria-label={`Bajar ${item.description}`}
+                                  title="Bajar"
+                                  disabled={
+                                    change.isPending || statusIndex === sameStatus.length - 1
+                                  }
+                                  onClick={() => move(1)}
+                                />
+                              </div>
+                              <div className="journey-packing-item-manage">
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  icon={<JourneyIcon name="EDIT" />}
+                                  onClick={() => setPackingEdit(item)}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  icon={<JourneyIcon name="DELETE" />}
+                                  onClick={() =>
+                                    requestDelete(
+                                      "packing",
+                                      item.id,
+                                      "¿Quitar de la valija?",
+                                    )
+                                  }
+                                >
+                                  Quitar
+                                </Button>
+                              </div>
+                            </div>
                           )}
                         </li>
-                      ))}
+                      );})}
                     </ul>
                   </section>
                 );

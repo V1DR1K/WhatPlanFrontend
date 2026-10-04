@@ -46,6 +46,12 @@ for (const viewport of [
     await stage.getByLabel("Lugar").fill("Buenos Aires");
     await stage.getByLabel("Llegada").fill("2026-08-10");
     await stage.getByLabel("Salida").fill("2026-08-11");
+    await dialog.locator('input[type="file"]').setInputFiles({
+      name: "portada.png",
+      mimeType: "image/png",
+      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
+    });
+    await expect(dialog.locator(".photo-picker img")).toBeVisible();
     await dialog.getByRole("button", { name: "Agregar otro destino" }).click();
     stage = dialog.locator(".journey-stage-form").nth(1);
     await stage.getByLabel("País").selectOption("UY");
@@ -59,7 +65,16 @@ for (const viewport of [
         exact: true,
       }),
     ).toBeVisible();
+    await expect(page.locator(".journey-detail-hero img")).toBeVisible();
     expect(fixture.journeys.size).toBe(1);
+    expect(fixture.requests.some((request) =>
+      request.method === "POST"
+      && request.path.includes("/photos?purpose=TRIP")
+      && request.contentType?.startsWith("multipart/form-data; boundary="),
+    )).toBeTruthy();
+    expect(fixture.requests.some((request) =>
+      request.method === "PUT" && /\/cover\/[0-9a-f-]+$/.test(request.path),
+    )).toBeTruthy();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
     await expect(page.locator(".journey-day-picker input[type=date]")).toHaveCount(0);
     await expect(page.getByText(/10 de agosto de 2026/)).toBeVisible();
@@ -214,6 +229,18 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       }),
     ).toBeVisible();
     await expect(page.locator(".journey-detail-hero.has-cover img")).toBeVisible();
+    const fullWidth = await page.evaluate(() => {
+      const page = document.querySelector(".journey-page")!;
+      const destinations = document.querySelector(".journey-destinations")!;
+      const overview = document.querySelector(".journey-overview")!;
+      return {
+        page: page.getBoundingClientRect().width,
+        destinations: destinations.getBoundingClientRect().width,
+        overview: overview.getBoundingClientRect().width,
+      };
+    });
+    expect(fullWidth.destinations).toBeGreaterThan(fullWidth.page * 0.9);
+    expect(fullWidth.overview).toBeGreaterThan(fullWidth.page * 0.9);
     await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "La Cabrera", exact: true })).toBeVisible();
     await page.getByRole("tab", { name: "Agenda", exact: true }).focus();
@@ -222,6 +249,20 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       page.getByRole("tab", { name: "Archivos", exact: true }),
     ).toBeFocused();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+    const pointLayout = await page.locator(".journey-route__point").first().evaluate((point) => {
+      const content = point.lastElementChild!;
+      const actions = content.querySelector<HTMLElement>(".journey-actions--point")!;
+      const link = actions.querySelector<HTMLElement>(".journey-action-link");
+      return {
+        point: point.getBoundingClientRect().width,
+        content: content.getBoundingClientRect().width,
+        actions: actions.getBoundingClientRect().width,
+        link: link?.getBoundingClientRect().width ?? 0,
+      };
+    });
+    expect(pointLayout.content).toBeGreaterThan(pointLayout.point * 0.8);
+    expect(pointLayout.actions).toBeGreaterThan(pointLayout.content * 0.9);
+    expect(pointLayout.link).toBeGreaterThan(0);
     await expect(page.locator(".journey-route__marker").first()).toHaveCSS(
       "animation-name",
       "none",
@@ -241,6 +282,7 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
         fullPage: true,
       });
     }
+
     await page
       .getByRole("button", { name: "Editar viaje", exact: true })
       .click();
@@ -266,6 +308,54 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       fullPage: true,
     });
   }
+});
+
+test("packing adds items to both partners, keeps unchecked first, and allows custom order", async ({ page }) => {
+  const fixture = await journeyFixture(page, true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  await page.getByRole("tab", { name: "Valijas", exact: true }).click();
+
+  const tomas = page.locator(".journey-packing > section").first();
+  await expect(tomas.locator("li").first()).toContainText("Cargador del teléfono");
+  await expect(tomas.locator("li").last()).toContainText("Pasaporte y documentos");
+  const manage = tomas.locator(".journey-packing-item-manage").first();
+  await expect(manage.getByRole("button", { name: "Editar" })).toHaveClass(/button--secondary/);
+  await expect(manage.getByRole("button", { name: "Quitar" })).toHaveClass(/button--destructive/);
+
+  await tomas.getByRole("checkbox", { name: "Cargador del teléfono" }).click();
+  await expect(tomas.locator("li").last()).toContainText("Cargador del teléfono");
+
+  await page.locator(".journey-packing-add select").selectOption("BOTH");
+  await page.getByLabel("Qué llevar", { exact: true }).fill("Auriculares");
+  await page.getByRole("button", { name: "Agregar", exact: true }).click();
+  await expect(page.locator(".journey-packing li", { hasText: "Auriculares" })).toHaveCount(2);
+  expect(
+    fixture.requests.some(
+      (request) => request.method === "POST" && request.path.endsWith("/packing/both"),
+    ),
+  ).toBeTruthy();
+
+  await page.locator(".journey-packing-add select").selectOption("1");
+  await page.getByLabel("Qué llevar", { exact: true }).fill("Adaptador");
+  await page.getByRole("button", { name: "Agregar", exact: true }).click();
+  await expect(tomas.getByText("Adaptador", { exact: false })).toBeVisible();
+  await tomas.getByRole("button", { name: "Subir Adaptador" }).click();
+  const itemOrder = await tomas.locator("li").evaluateAll((rows) =>
+    rows.map((row) => row.textContent ?? ""),
+  );
+  expect(itemOrder.findIndex((text) => text.includes("Adaptador"))).toBeLessThan(
+    itemOrder.findIndex((text) => text.includes("Auriculares")),
+  );
+  const orderRequest = fixture.requests.find(
+    (request) => request.method === "PUT" && request.path.endsWith("/packing/order"),
+  );
+  expect(orderRequest?.body).toMatchObject({ userId: 1 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(2);
 });
 
 test("journey form protects changed drafts and cannot close while saving", async ({

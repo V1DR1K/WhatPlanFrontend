@@ -101,6 +101,7 @@ export type Packing = {
   description: string;
   quantity: number;
   packed: boolean;
+  position: number;
 };
 export type Movement = {
   id: string;
@@ -329,15 +330,27 @@ export const uploadJourneyPhoto = (id: string, file: File, purpose: "TRIP" | "DA
 export const setJourneyCover = (id: string, fileId: string) =>
   api<void>(`/whither-journey/${id}/cover/${fileId}`, { method: "PUT" });
 type JourneyDayReview = { id: string; userId: number; author: string; rating: number | null; comment: string | null };
+type ResourceInput<T> = Omit<T, "id" | "position"> &
+  Partial<Pick<T, Extract<keyof T, "position">>>;
 export const saveResource = <T>(
   tripId: string,
   resource: string,
-  input: Omit<T, "id">,
+  input: ResourceInput<T>,
   id?: string,
 ) =>
   api<T>(`/whither-journey/${tripId}/${resource}${id ? `/${id}` : ""}`, {
     method: id ? "PUT" : "POST",
     body: JSON.stringify(input),
+  });
+export const addPackingForBoth = (tripId: string, description: string, quantity: number) =>
+  api<Packing[]>(`/whither-journey/${tripId}/packing/both`, {
+    method: "POST",
+    body: JSON.stringify({ description, quantity }),
+  });
+export const reorderPacking = (tripId: string, userId: number, itemIds: string[]) =>
+  api<void>(`/whither-journey/${tripId}/packing/order`, {
+    method: "PUT",
+    body: JSON.stringify({ userId, itemIds }),
   });
 export const deleteResource = (resource: string, id: string) =>
   api<void>(`/whither-journey/${resource}/${id}`, { method: "DELETE" });

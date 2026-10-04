@@ -16,7 +16,7 @@ export async function journeyFixture(page: Page, rich = false) {
   let origin = 1;
   const journeys = new Map<string, Detail>();
   const dayDetails = new Map<string, JourneyDay>();
-  const requests: { path: string; method: string; body: unknown }[] = [];
+  const requests: { path: string; method: string; body: unknown; contentType?: string }[] = [];
   const pointTypes: JourneyPointType[] = [
     { code: "GENERAL", name: "Actividad", icon: "ACTIVITY", color: "#B9DCE9", position: 0, builtIn: true },
     { code: "FOOD", name: "WhereFood", icon: "FOOD", color: "#FF8A00", position: 1, builtIn: true },
@@ -159,6 +159,7 @@ export async function journeyFixture(page: Page, rich = false) {
         description: "Pasaporte y documentos",
         quantity: 1,
         packed: true,
+        position: 0,
       },
       {
         id: randomUUID(),
@@ -166,6 +167,7 @@ export async function journeyFixture(page: Page, rich = false) {
         description: "Cargador del teléfono",
         quantity: 1,
         packed: false,
+        position: 1,
       },
       {
         id: randomUUID(),
@@ -173,6 +175,7 @@ export async function journeyFixture(page: Page, rich = false) {
         description: "Abrigo para la noche",
         quantity: 1,
         packed: true,
+        position: 0,
       },
     ];
     a.stays = [
@@ -284,7 +287,7 @@ export async function journeyFixture(page: Page, rich = false) {
     if (req.headers()["content-type"]?.includes("application/json"))
       body = req.postDataJSON();
     const payload = body as unknown as Record<string, unknown>;
-    requests.push({ path: url.pathname + url.search, method, body });
+    requests.push({ path: url.pathname + url.search, method, body, contentType: req.headers()["content-type"] });
     const reply = (value: unknown, status = 200) =>
       route.fulfill({
         status,
@@ -441,6 +444,30 @@ export async function journeyFixture(page: Page, rich = false) {
       }
       return route.fulfill({ status: 204 });
     }
+    const packingBoth = /^\/whither-journey\/([^/]+)\/packing\/both$/.exec(path);
+    if (packingBoth && method === "POST") {
+      const detail = journeys.get(packingBoth[1]);
+      if (!detail) return reply({ detail: "No encontramos este viaje." }, 404);
+      const created = detail.members.map((member) => {
+        const item = {
+          id: randomUUID(),
+          userId: member.id,
+          description: String(payload.description),
+          quantity: Number(payload.quantity),
+          packed: false,
+          position:
+            Math.max(
+              -1,
+              ...detail.packing
+                .filter((p) => p.userId === member.id)
+                .map((p) => p.position ?? 0),
+            ) + 1,
+        };
+        detail.packing.push(item);
+        return item;
+      });
+      return reply(created, 201);
+    }
     if (path.startsWith("/whither-journey/catalog/"))
       return reply([
         {
@@ -543,7 +570,18 @@ export async function journeyFixture(page: Page, rich = false) {
           d.files.push(f);
           return reply(f);
         }
-        if (match[3] === "order") return route.fulfill({ status: 204 });
+        if (match[3] === "order") {
+          if (resource === "packing") {
+            const itemIds = (payload.itemIds as string[]) ?? [];
+            itemIds.forEach((id, position) => {
+              const item = d.packing.find(
+                (candidate) => candidate.id === id && candidate.userId === payload.userId,
+              );
+              if (item) item.position = position;
+            });
+          }
+          return route.fulfill({ status: 204 });
+        }
         const rows = d[
           resource as "points" | "stays" | "packing" | "movements"
         ] as (
@@ -554,6 +592,19 @@ export async function journeyFixture(page: Page, rich = false) {
         )[];
         const entity = { id: match[3] ?? randomUUID(), ...body };
         const index = rows.findIndex((v) => v.id === entity.id);
+        if (resource === "packing") {
+          const old = d.packing.find((item) => item.id === entity.id);
+          entity.position =
+            Number.isInteger(payload.position)
+              ? Number(payload.position)
+              : old?.position ??
+                Math.max(
+                  -1,
+                  ...d.packing
+                    .filter((item) => item.userId === Number(payload.userId))
+                    .map((item) => item.position ?? 0),
+                ) + 1;
+        }
         if (index < 0) rows.push(entity);
         else rows[index] = entity;
         return reply(entity);

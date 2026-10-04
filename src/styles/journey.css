@@ -172,13 +172,18 @@
   margin-top: 32px;
 }
 .journey-destinations {
-  display: flex;
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  align-items: stretch;
   gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
 }
 .journey-destinations button {
-  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   text-align: left;
   border: 1px solid #467488;
   background: #12232d;
@@ -201,10 +206,15 @@
   background: #183e4d;
 }
 .journey-overview {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 24px 0 32px;
 }
 .journey-overview > progress {
-  width: min(320px, 100%);
+  display: block;
+  width: 100%;
+  max-width: none;
 }
 .journey-balances {
   display: flex;
@@ -320,16 +330,24 @@
   font-variant-numeric: tabular-nums;
 }
 .journey-route {
+  width: 100%;
+  min-width: 0;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 .journey-route__point {
   display: grid;
+  width: 100%;
+  box-sizing: border-box;
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 16px;
   position: relative;
   padding-bottom: 36px;
+}
+.journey-route__point > div:last-child {
+  width: 100%;
+  min-width: 0;
 }
 .journey-route__point:not(:last-child):before {
   content: "";
@@ -388,7 +406,7 @@
 .journey-point-category--fun { --point-accent: #ffd166; }
 .journey-point-category--transfer { --point-accent: #a978ff; }
 .journey-route__point p {
-  max-width: 65ch;
+  max-width: none;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -428,18 +446,22 @@
   display: grid;
   align-items: stretch;
   gap: 12px;
-  width: min(100%, 700px);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 .journey-external-actions {
   display: grid;
-  justify-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  align-items: stretch;
+  justify-items: stretch;
   gap: 8px;
   width: 100%;
 }
 .journey-actions--point .journey-action-link {
   display: inline-flex;
-  width: fit-content;
-  min-width: min(210px, 100%);
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
   min-height: 44px;
   align-items: center;
@@ -656,18 +678,39 @@
   list-style: none;
 }
 .journey-packing li {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
-  justify-content: space-between;
   align-items: center;
   padding: 14px 0;
   border-bottom: 1px solid #345666;
 }
 .journey-checkbox {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px !important;
   cursor: pointer;
+}
+.journey-packing-item-actions,
+.journey-packing-order,
+.journey-packing-item-manage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.journey-packing-item-actions {
+  justify-content: flex-end;
+}
+.journey-packing-item-actions .button--icon {
+  width: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px;
+}
+.journey-packing-item-actions .button__icon svg {
+  width: 18px;
+  height: 18px;
 }
 .journey-checkbox input {
   width: 20px !important;
@@ -855,11 +898,27 @@
   .journey-packing-add {
     grid-template-columns: 1fr 90px;
   }
+  .journey-packing-add label {
+    min-width: 0;
+  }
   .journey-packing-add label:first-child {
     grid-column: 1/-1;
   }
   .journey-packing-add .button {
     grid-column: 1/-1;
+  }
+  .journey-packing li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .journey-packing-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  .journey-packing-item-manage .button {
+    min-height: 40px;
+    padding: 8px 10px;
   }
   .journey-file-list li,
   .journey-money-list li {
@@ -1059,13 +1118,18 @@
 .journey-point-type-preview svg { width: 22px; height: 22px; }
 .journey-point-action-editor__row > strong { color: #b9dce9; }
 .journey-trip-gallery {
+  width: 100%;
+  min-width: 0;
   margin-bottom: clamp(32px, 6vw, 76px);
 }
 .journey-trip-gallery .experience-gallery {
+  width: 100%;
   margin-top: 12px;
 }
 .journey-day-summary {
   display: grid;
+  width: 100%;
+  min-width: 0;
   gap: 36px;
 }
 .journey-day-route,
