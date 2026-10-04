@@ -347,15 +347,16 @@ test("daily summary saves a shared story, personal review, day photo and cover",
   await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
   dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Foto de portada", { exact: true })).toBeVisible();
+  const photos = dialog.locator(".photo-manager__photo");
+  await expect(photos).toHaveCount(2); // Portada actual y foto diaria en la galería general.
   await dialog.locator('input[type="file"]').setInputFiles({
     name: "cena.png",
     mimeType: "image/png",
     buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
   });
   await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
-  const photos = dialog.locator(".photo-manager__photo");
-  await expect(photos).toHaveCount(2);
-  await photos.nth(1).getByRole("button", { name: "Hacer portada", exact: true }).click();
-  await expect(photos.nth(1).getByText("Foto de portada", { exact: true })).toBeVisible();
+  await expect(photos).toHaveCount(3);
+  await photos.nth(2).getByRole("button", { name: "Hacer portada", exact: true }).click();
+  await expect(photos.nth(2).getByText("Foto de portada", { exact: true })).toBeVisible();
   await expect(page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).resolves.toBeLessThanOrEqual(2);
 });
