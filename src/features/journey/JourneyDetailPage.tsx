@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useQuery } from "../../lib/locationQuery";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -14,6 +14,7 @@ import { api } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import {
   getTrip,
+  getJourneyPointTypes,
   archiveTrip,
   deleteTrip,
   saveResource,
@@ -32,6 +33,7 @@ import {
   type JourneyFile,
   type Packing,
 } from "./journey";
+import { JourneyIcon } from "./JourneyIcon";
 import { JourneyForm } from "./JourneyForm";
 import { JourneyDaySummary } from "./JourneyDaySummary";
 import { PlaneIcon } from "./JourneysPage";
@@ -62,6 +64,7 @@ export function JourneyDetailPage() {
     queryFn: () => getTrip(id),
     enabled: /^[0-9a-f-]{36}$/i.test(id),
   });
+  const pointTypes = useQuery({ queryKey: ["journey-point-types"], queryFn: getJourneyPointTypes });
   const refresh = useJourneyRefresh(id);
   const [tab, setTab] = useState<(typeof tabs)[number]>("Resumen");
   const [day, setDay] = useState("");
@@ -445,8 +448,10 @@ export function JourneyDetailPage() {
               </p>
             )}
             <ol className="journey-route">
-              {points.map((p, index) => (
-                <li
+              {points.map((p, index) => {
+                const category = displayPointCategory(p);
+                const categoryType = pointTypes.data?.find((type) => type.code === category);
+                return <li
                   key={p.id}
                   className={`journey-route__point is-${p.status.toLowerCase()}`}
                 >
@@ -459,10 +464,9 @@ export function JourneyDetailPage() {
                       {trip.stages.find((s) => s.id === p.stageId)?.cityName}
                     </p>
                     <h3>{p.title}</h3>
-                    <span
-                      className={`journey-point-category journey-point-category--${displayPointCategory(p).toLowerCase()}`}
-                    >
-                      {pointCategoryLabels[displayPointCategory(p)]}
+                    <span className="journey-point-category" style={{ "--point-accent": categoryType?.color ?? "#B9DCE9" } as CSSProperties}>
+                      <JourneyIcon name={categoryType?.icon ?? "ACTIVITY"} />
+                      {categoryType?.name ?? pointCategoryLabels[category] ?? category}
                     </span>
                     <span className="journey-status">
                       {p.status === "COMPLETED"
@@ -471,127 +475,54 @@ export function JourneyDetailPage() {
                           ? "Cancelado"
                           : "Pendiente"}
                     </span>
-                    {p.notes && <p>{p.notes}</p>}
-                    <div className="journey-actions">
-                      {p.source && (
-                        <Link
-                          to={sourceHref(p.source)}
-                          onClick={() => context.selectLocation(p.stageId)}
-                        >
-                          Abrir ficha
-                        </Link>
-                      )}
-                      {editable && (
-                        <>
-                          <Button
-                            variant="secondary"
-                            disabled={change.isPending}
-                            onClick={() => {
-                              setPoint(p);
-                              setCompleting(false);
-                            }}
+                    {p.notes && <details className="journey-point-note">
+                      <summary><JourneyIcon name="INFO" /> Nota <span aria-hidden="true" /></summary>
+                      <p>{p.notes}</p>
+                    </details>}
+                    <div className="journey-actions journey-actions--point" style={{ "--point-accent": categoryType?.color ?? "#B9DCE9" } as CSSProperties}>
+                      <div className="journey-external-actions" aria-label={`Enlaces de ${p.title}`}>
+                        {p.source && (
+                          <Link
+                            className={`button button--secondary journey-action-link journey-action-link--source journey-action-link--${p.source.section.toLowerCase()}`}
+                            to={sourceHref(p.source)}
+                            onClick={() => context.selectLocation(p.stageId)}
                           >
-                            Editar
-                          </Button>
-                          {p.status === "COMPLETED" ? (
-                            <Button
-                              variant="secondary"
-                              disabled={change.isPending}
-                              onClick={() =>
-                                change.mutate({
-                                  type: "point",
-                                  value: { ...p, status: "PENDING" },
-                                })
-                              }
-                            >
-                              Volver a pendiente
-                            </Button>
-                          ) : (
-                            <Button
-                              disabled={change.isPending}
-                              onClick={() => {
-                                if (p.source && !p.source.experienceId) {
-                                  setPoint(p);
-                                  setCompleting(true);
-                                } else
-                                  change.mutate({
-                                    type: "point",
-                                    value: { ...p, status: "COMPLETED" },
-                                  });
-                              }}
-                            >
-                              Marcar realizado
-                            </Button>
-                          )}
-                          {p.status !== "CANCELLED" && (
-                            <Button
-                              variant="secondary"
-                              disabled={change.isPending}
-                              onClick={() =>
-                                change.mutate({
-                                  type: "point",
-                                  value: { ...p, status: "CANCELLED" },
-                                })
-                              }
-                            >
-                              Cancelar punto
-                            </Button>
-                          )}
-                          <Button
-                            variant="secondary"
-                            onClick={() => {
-                              setMovementPoint(p.id);
-                              setMovement(null);
-                            }}
-                          >
-                            Registrar gasto
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={change.isPending || index === 0}
-                            aria-label={`Mover ${p.title} hacia arriba`}
-                            onClick={() => reorder(index, -1)}
-                          >
-                            ↑
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            disabled={
-                              change.isPending || index === points.length - 1
-                            }
-                            aria-label={`Mover ${p.title} hacia abajo`}
-                            onClick={() => reorder(index, 1)}
-                          >
-                            ↓
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() =>
-                              requestDelete(
-                                "points",
-                                p.id,
-                                "¿Quitar este punto?",
-                              )
-                            }
-                          >
-                            Quitar
-                          </Button>
-                        </>
-                      )}
-                      {p.mapsUrl && (
-                        <a
-                          className="button button--primary journey-map-action"
-                          href={p.mapsUrl}
+                            <JourneyIcon name={p.source.section} /> Abrir ficha <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                          </Link>
+                        )}
+                        {p.extraActions?.map((action, actionIndex) => <a
+                          className="button button--secondary journey-action-link journey-action-link--custom"
+                          href={action.url}
+                          key={`${p.id}-${actionIndex}`}
                           target="_blank"
                           rel="noreferrer"
                         >
-                          Google Maps <span aria-hidden="true">↗</span>
-                        </a>
-                      )}
+                          <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                        </a>)}
+                        {p.mapsUrl && <a className="button button--primary journey-action-link journey-map-action" href={p.mapsUrl} target="_blank" rel="noreferrer">
+                          <JourneyIcon name="MAPS" /> Google Maps <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                        </a>}
+                      </div>
+                      {editable && <div className="journey-management-actions">
+                        <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} disabled={change.isPending} onClick={() => { setPoint(p); setCompleting(false); }}>Editar</Button>
+                        {p.status === "COMPLETED" ? (
+                          <Button variant="secondary" icon={<JourneyIcon name="PENDING" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "PENDING" } })}>Volver a pendiente</Button>
+                        ) : (
+                          <Button icon={<JourneyIcon name="CHECK" />} disabled={change.isPending} onClick={() => {
+                            if (p.source && !p.source.experienceId) { setPoint(p); setCompleting(true); }
+                            else change.mutate({ type: "point", value: { ...p, status: "COMPLETED" } });
+                          }}>Marcar realizado</Button>
+                        )}
+                        {p.status !== "CANCELLED" && <Button variant="secondary" icon={<JourneyIcon name="CANCEL" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "CANCELLED" } })}>Cancelar punto</Button>}
+                        <Button variant="secondary" icon={<JourneyIcon name="MONEY" />} onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>
+                        <Button variant="secondary" icon={<JourneyIcon name="UP" />} disabled={change.isPending || index === 0} aria-label={`Mover ${p.title} hacia arriba`} onClick={() => reorder(index, -1)}>Subir</Button>
+                        <Button variant="secondary" icon={<JourneyIcon name="DOWN" />} disabled={change.isPending || index === points.length - 1} aria-label={`Mover ${p.title} hacia abajo`} onClick={() => reorder(index, 1)}>Bajar</Button>
+                        <Button variant="destructive" icon={<JourneyIcon name="DELETE" />} onClick={() => requestDelete("points", p.id, "¿Quitar este punto?")}>Quitar</Button>
+                      </div>}
                     </div>
                   </div>
-                </li>
-              ))}
+                </li>;
+              })}
             </ol>
           </>
         )}

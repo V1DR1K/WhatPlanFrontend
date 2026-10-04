@@ -33,8 +33,8 @@
   animation: modal-arrive var(--motion-overlay) var(--motion-arrive) both;
 }
 
-.modal-discard {
-  animation: modal-backdrop-arrive var(--motion-feedback) ease-out both;
+.modal-discard-backdrop {
+  animation: discard-backdrop-arrive var(--motion-feedback) ease-out both;
 }
 
 .modal-discard > div {
@@ -44,6 +44,11 @@
 @keyframes modal-backdrop-arrive {
   from { background-color: transparent; }
   to { background-color: #080708bb; }
+}
+
+@keyframes discard-backdrop-arrive {
+  from { background-color: transparent; }
+  to { background-color: #080708e8; }
 }
 
 @keyframes modal-arrive {
@@ -138,6 +143,7 @@
   .page-stage,
   .modal-backdrop,
   .modal,
+  .modal-discard-backdrop,
   .modal-discard,
   .modal-discard > div,
   .flash-notice,

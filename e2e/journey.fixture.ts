@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Page } from "@playwright/test";
-import type { City, Detail, JourneyDay, JourneyDayIndex, JourneyFile, Trip } from "../src/features/journey/journey";
+import type { City, Detail, JourneyDay, JourneyDayIndex, JourneyFile, JourneyPointType, Trip } from "../src/features/journey/journey";
 type FixtureBody = Trip &
   City &
   Detail["points"][number] &
@@ -17,6 +17,14 @@ export async function journeyFixture(page: Page, rich = false) {
   const journeys = new Map<string, Detail>();
   const dayDetails = new Map<string, JourneyDay>();
   const requests: { path: string; method: string; body: unknown }[] = [];
+  const pointTypes: JourneyPointType[] = [
+    { code: "GENERAL", name: "Actividad", icon: "ACTIVITY", color: "#B9DCE9", position: 0, builtIn: true },
+    { code: "FOOD", name: "WhereFood", icon: "FOOD", color: "#FF8A00", position: 1, builtIn: true },
+    { code: "FILM", name: "WhichMovie", icon: "FILM", color: "#B8ADFF", position: 2, builtIn: true },
+    { code: "COOK", name: "WhoCook", icon: "COOK", color: "#D4EF55", position: 3, builtIn: true },
+    { code: "FUN", name: "WhyFun", icon: "FUN", color: "#FFD166", position: 4, builtIn: true },
+    { code: "TRANSFER", name: "Traslado", icon: "TRANSFER", color: "#83D8F5", position: 5, builtIn: true },
+  ];
   const create = (input: Trip) => {
     const trip = {
       ...input,
@@ -127,6 +135,7 @@ export async function journeyFixture(page: Page, rich = false) {
         status: "COMPLETED",
         category: "FOOD",
         source: null,
+        extraActions: [],
       },
       {
         id: randomUUID(),
@@ -140,6 +149,7 @@ export async function journeyFixture(page: Page, rich = false) {
         status: "PENDING",
         category: "FILM",
         source: { section: "FILM", entityId: 7 },
+        extraActions: [],
       },
     ];
     a.packing = [
@@ -340,6 +350,26 @@ export async function journeyFixture(page: Page, rich = false) {
     if (/^\/cities\/\d+$/.test(path))
       return reply(cities.find((c) => c.id === Number(path.split("/").pop())));
     if (path === "/special-dates") return reply([]);
+    if (path === "/whither-journey/point-types") {
+      if (method === "POST") {
+        const type = { code: `CUSTOM_${randomUUID().replaceAll("-", "").toUpperCase()}`, ...payload, position: pointTypes.length, builtIn: false } satisfies JourneyPointType;
+        pointTypes.push(type);
+        return reply(type, 201);
+      }
+      return reply(pointTypes);
+    }
+    const pointTypeRoute = /^\/whither-journey\/point-types\/([^/]+)$/.exec(path);
+    if (pointTypeRoute) {
+      const index = pointTypes.findIndex((type) => type.code === decodeURIComponent(pointTypeRoute[1]));
+      if (method === "PUT" && index >= 0) {
+        pointTypes[index] = { ...pointTypes[index], ...payload };
+        return reply(pointTypes[index]);
+      }
+      if (method === "DELETE" && index >= 0) {
+        pointTypes.splice(index, 1);
+        return route.fulfill({ status: 204 });
+      }
+    }
     if (path === "/whither-journey") {
       if (method === "POST") return reply(create(body).trip, 201);
       return reply(Array.from(journeys.values()).map((d) => d.trip));
@@ -419,6 +449,7 @@ export async function journeyFixture(page: Page, rich = false) {
           title: "Una película para compartir",
           cityId: 1,
           href: "/app/films/7",
+          thumbnailUrl: null,
         },
       ]);
     if (path.startsWith("/whither-journey/experiences/"))

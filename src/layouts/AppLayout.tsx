@@ -59,7 +59,7 @@ export function AppLayout() {
 
   const section = inFood ? 'food' : inFilms ? 'film' : inCook ? 'cook' : inFun ? 'fun' : inDates ? 'dates' : inJourney ? 'journey' : undefined;
   const sectionShell = section ? `${section}-shell` : '';
-  const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates && isAdmin ? '/app/when-dates/settings' : undefined;
+  const sectionSettingsLink = inFood ? '/app/food/categories' : inFilms ? '/app/films/platforms' : inFun ? '/app/why-fun/categories' : inDates && isAdmin ? '/app/when-dates/settings' : inJourney ? '/app/whither-journey/settings' : undefined;
   const outsideSection = !inFood && !inFilms && !inCook && !inFun && !inDates && !inJourney;
 
   return <SectionThemeContext value={section}>
@@ -78,7 +78,7 @@ export function AppLayout() {
             <Link className={buttonClassName('icon', 'round round--section-home')} to="/app" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>
             <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
           </>}
-          {canManageSection && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
+          {(canManageSection || inJourney) && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
           {(!isAdmin || outsideSection) && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración" title="Configuración">⚙️</Link>}
           <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
         </div>

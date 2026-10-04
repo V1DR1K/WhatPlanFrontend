@@ -116,6 +116,13 @@ test('closing a dirty form protects changes', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Comentario' }).fill('Cambio sin guardar');
   await page.getByRole('button', { name: 'Cerrar' }).click();
   await expect(page.getByRole('alertdialog', { name: 'Descartar cambios' })).toBeVisible();
+  const discardBackdrop = page.locator('.modal-discard-backdrop');
+  const viewport = page.viewportSize();
+  await expect.poll(async () => {
+    const box = await discardBackdrop.boundingBox();
+    return box && viewport ? [box.x, box.y, box.width, box.height] : [];
+  }).toEqual([0, 0, viewport!.width, viewport!.height]);
+  await expect(page.locator('.modal-discard-backdrop')).toHaveCSS('position', 'fixed');
   await page.getByRole('button', { name: 'Seguir editando' }).click();
   await expect(page.getByRole('alertdialog')).toHaveCount(0);
   await page.getByRole('button', { name: 'Cerrar' }).click();

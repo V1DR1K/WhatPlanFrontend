@@ -28,6 +28,8 @@ export function getFocusableElements(container: HTMLElement) {
 
 export function Modal({ children, className, backdropClassName, size = 'standard', describedBy, description, labelledBy, onClose, confirmDiscard = false, pending = false, title }: PropsWithChildren<ModalProps>) {
   const dialog = useRef<HTMLElement>(null);
+  const discardDialog = useRef<HTMLDivElement>(null);
+  const discardReturnFocus = useRef<HTMLElement | null>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const requestCloseRef = useRef<() => void>(() => undefined);
   const id = useId().replace(/:/g, '');
@@ -35,6 +37,8 @@ export function Modal({ children, className, backdropClassName, size = 'standard
   const descriptionId = `${id}-description`;
   const [dirty, setDirty] = useState(false);
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  const confirmingDiscardRef = useRef(confirmingDiscard);
+  confirmingDiscardRef.current = confirmingDiscard;
   const section = useContext(SectionThemeContext);
   useDocumentScrollLock(true);
 
@@ -42,6 +46,7 @@ export function Modal({ children, className, backdropClassName, size = 'standard
     if (pending) return;
     const shouldConfirmDiscard = confirmDiscard || Boolean(dialog.current?.querySelector('form'));
     if (shouldConfirmDiscard && dirty) {
+      discardReturnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setConfirmingDiscard(true);
       return;
     }
@@ -54,7 +59,10 @@ export function Modal({ children, className, backdropClassName, size = 'standard
     if (!target.closest('form')) return;
     if (event.type === 'click') {
       const button = target.closest('button');
-      if (button) return;
+      if (button) {
+        if (button.hasAttribute('data-modal-dirty')) setDirty(true);
+        return;
+      }
     }
     setDirty(true);
   };
@@ -68,8 +76,13 @@ export function Modal({ children, className, backdropClassName, size = 'standard
   }, [labelledBy, titleId]);
 
   useLayoutEffect(() => {
-    if (!confirmingDiscard || !dialog.current) return;
-    getFocusableElements(dialog.current.querySelector<HTMLElement>('.modal-discard') ?? dialog.current)[0]?.focus();
+    if (!confirmingDiscard) {
+      if (discardReturnFocus.current?.isConnected) discardReturnFocus.current.focus();
+      discardReturnFocus.current = null;
+      return;
+    }
+    if (!dialog.current) return;
+    getFocusableElements(discardDialog.current ?? dialog.current)[0]?.focus();
   }, [confirmingDiscard]);
 
   useEffect(() => {
@@ -84,7 +97,7 @@ export function Modal({ children, className, backdropClassName, size = 'standard
         return;
       }
       if (event.key !== 'Tab' || !dialog.current) return;
-       const focusRoot = dialog.current.querySelector<HTMLElement>('.modal-discard') ?? dialog.current;
+       const focusRoot = confirmingDiscardRef.current && discardDialog.current ? discardDialog.current : dialog.current;
        const focusable = getFocusableElements(focusRoot);
       if (!focusable.length) return;
       const first = focusable[0];
@@ -106,16 +119,20 @@ export function Modal({ children, className, backdropClassName, size = 'standard
     };
   }, []);
 
-  return createPortal(<div className={['modal-backdrop', section && `${section}-shell`, backdropClassName].filter(Boolean).join(' ')} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
-    <section className={['modal', `modal--${size}`, className, section === 'journey' && !className?.split(/\s+/).includes('journey-modal') ? 'journey-modal' : undefined].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
+  return <>
+    {createPortal(<div className={['modal-backdrop', section && `${section}-shell`, backdropClassName].filter(Boolean).join(' ')} style={section ? sectionThemeStyle(section) : undefined} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) requestClose(); }}>
+    <section className={['modal', `modal--${size}`, className, section === 'journey' && !className?.split(/\s+/).includes('journey-modal') ? 'journey-modal' : undefined].filter(Boolean).join(' ')} ref={dialog} role="dialog" aria-modal="true" aria-hidden={confirmingDiscard} aria-labelledby={labelledBy ?? titleId} aria-describedby={describedBy ?? descriptionId} tabIndex={-1} onMouseDown={event => event.stopPropagation()} onInputCapture={markDirty} onChangeCapture={markDirty} onClickCapture={markDirty}>
       {title && <h2 id={titleId} className="sr-only">{title}</h2>}
       {!title && !labelledBy && <span id={titleId} className="sr-only">Diálogo de WhatPlan</span>}
       <span id={descriptionId} className="sr-only">{description ?? 'Contenido del diálogo.'}</span>
       <div className="modal__topbar"><Button className="close" icon="✕" type="button" variant="icon" onClick={requestClose} disabled={pending} aria-label="Cerrar" title="Cerrar" /></div>
       <div className="modal__content">{children}</div>
-      {confirmingDiscard && <div className="modal-discard" role="alertdialog" aria-modal="true" aria-label="Descartar cambios">
-        <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><div className="modal-discard__actions"><Button variant="secondary" icon="✏️" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="🗑️" type="button" onClick={onClose}>Descartar</Button></div></div>
-      </div>}
     </section>
-  </div>, document.body);
+    </div>, document.body)}
+    {confirmingDiscard && createPortal(<div className="modal-discard-backdrop" role="presentation">
+      <div className="modal-discard" ref={discardDialog} role="alertdialog" aria-modal="true" aria-label="Descartar cambios" tabIndex={-1}>
+        <div><strong>¿Descartar cambios?</strong><p>Lo que cargaste en este formulario no se guardará.</p><div className="modal-discard__actions"><Button variant="secondary" icon="✏️" type="button" onClick={() => setConfirmingDiscard(false)}>Seguir editando</Button><Button variant="destructive" icon="🗑️" type="button" onClick={onClose}>Descartar</Button></div></div>
+      </div>
+    </div>, document.body)}
+  </>;
 }

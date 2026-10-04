@@ -6,6 +6,7 @@ import { useQuery } from "../../lib/locationQuery";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { MediaImage } from "../../components/ui/MediaImage";
 import { StarRating } from "../../components/ui/StarRating";
 import { useZoneContext } from "../../lib/zoneContext";
 import { session } from "../../lib/api";
@@ -13,6 +14,7 @@ import { showNotice } from "../../lib/flash";
 import {
   getSources,
   getExperiences,
+  getJourneyPointTypes,
   saveResource,
   saveReview,
   sections,
@@ -21,6 +23,7 @@ import {
   type Detail,
   type Point,
   type PointCategory,
+  type JourneyPointAction,
   type Stay,
   type Movement,
   type Section,
@@ -28,6 +31,8 @@ import {
   normalizeAmountInput,
   formatAmountInput,
 } from "./journey";
+import { JourneyIcon } from "./JourneyIcon";
+import { journeyPointIconOptions } from "./journeyPointIcons";
 export function useJourneyRefresh(id: string) {
   const client = useQueryClient();
   return () =>
@@ -131,13 +136,13 @@ export function PointEditor({
   const [scheduledOn, setScheduledOn] = useState(
     point?.scheduledOn ?? day ?? "",
   );
-  const [search, setSearch] = useState("");
+  const [extraActions, setExtraActions] = useState<JourneyPointAction[]>(point?.extraActions ?? []);
+  const pointTypes = useQuery({ queryKey: ["journey-point-types"], queryFn: getJourneyPointTypes });
   const catalog = useQuery({
-    queryKey: ["journey-sources", section, stage.cityId, search],
+    queryKey: ["journey-sources", section, stage.cityId],
     queryFn: () => getSources(
       section as Section,
       section === "FOOD" || section === "FUN" ? stage.cityId : undefined,
-      search,
     ),
     enabled: !!section,
   });
@@ -172,6 +177,7 @@ export function PointEditor({
           position: point?.position ?? detail.points.length,
           status,
           category,
+          extraActions,
           source:
             section && entityId
               ? { section, entityId, experienceId: experienceId || null }
@@ -189,6 +195,15 @@ export function PointEditor({
   const register = point?.source
     ? `${sourceHref(point.source)}?${new URLSearchParams({ journeyPoint: point.id, journeyStage: point.stageId, journeySection: point.source.section, journeyEntity: String(point.source.entityId), journeyDate: point.scheduledOn ?? today(), journeyAction: "register" })}`
     : "";
+  const selectedSource = catalog.data?.find((source) => source.entityId === entityId)
+    ?? (point?.source && point.source.entityId === entityId ? {
+      section: point.source.section,
+      entityId,
+      title: point.title,
+      cityId: stage.cityId,
+      href: sourceHref(point.source),
+      thumbnailUrl: null,
+    } : undefined);
   return (
     <Modal
       className="journey-modal"
@@ -219,22 +234,21 @@ export function PointEditor({
               : "Agregar al recorrido"}
         </h2>
         <StageSelect detail={detail} value={stageId} onChange={setStageId} />
-        <div className="form-columns">
-          <label>
+        <section className="journey-point-link-editor" aria-labelledby="journey-point-link-title">
+          <h3 id="journey-point-link-title">Tipo y ficha relacionada</h3>
+          <label className="journey-point-type-select">
             Tipo de punto
             <select
               value={category}
-              disabled={linked}
+              disabled={pointTypes.isLoading}
               onChange={(e) => setCategory(e.target.value as PointCategory)}
             >
-              <option value="GENERAL">Actividad general</option>
-              <option value="FOOD">WhereFood · comida</option>
-              <option value="FILM">WhichMovie · cine</option>
-              <option value="COOK">WhoCook · cocina</option>
-              <option value="FUN">WhyFun · actividad</option>
-              <option value="TRANSFER">Traslado</option>
+              {(pointTypes.data ?? []).map((type) => (
+                <option key={type.code} value={type.code}>{type.name}</option>
+              ))}
             </select>
           </label>
+          {pointTypes.error && <FormError error={pointTypes.error} />}
           <label>
             Vincular ficha existente
             <select
@@ -249,14 +263,12 @@ export function PointEditor({
               }}
             >
               <option value="">Sin ficha vinculada</option>
-              {Object.entries(sections).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
+              {Object.entries(sections).map(([key, name]) => (
+                <option key={key} value={key}>{name}</option>
               ))}
             </select>
           </label>
-          {!!section && (
+          {!!section && <>
             <label>
               Ficha
               <select
@@ -267,41 +279,44 @@ export function PointEditor({
                   const id = Number(e.target.value);
                   setEntityId(id);
                   setExperienceId(0);
-                  if (!title)
-                    setTitle(
-                      catalog.data?.find((s) => s.entityId === id)?.title ?? "",
-                    );
+                  if (!title) setTitle(catalog.data?.find((source) => source.entityId === id)?.title ?? "");
                 }}
               >
                 <option value="">Elegí una ficha</option>
-                {point?.source &&
-                  !catalog.data?.some(
-                    (s) => s.entityId === point.source?.entityId,
-                  ) && (
-                    <option value={point.source.entityId}>{point.title}</option>
-                  )}
-                {catalog.data?.map((s) => (
-                  <option key={s.entityId} value={s.entityId}>
-                    {s.title}
-                  </option>
-                ))}
+                {point?.source && !catalog.data?.some((source) => source.entityId === point.source?.entityId) && (
+                  <option value={point.source.entityId}>{point.title}</option>
+                )}
+                {catalog.data?.map((source) => <option key={source.entityId} value={source.entityId}>{source.title}</option>)}
               </select>
             </label>
-          )}
-        </div>
-        {!!section && !linked && (
-          <label>
-            Buscar una ficha
-            <input
-              type="search"
-              value={search}
-              maxLength={160}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nombre de la ficha"
-            />
-          </label>
-        )}
-        <FormError error={catalog.error} />
+            {selectedSource && <div className="journey-source-preview">
+              {selectedSource.thumbnailUrl
+                ? <MediaImage src={selectedSource.thumbnailUrl} alt={`Vista previa de ${selectedSource.title}`} width={88} height={88} loading="eager" />
+                : <span className={`journey-source-preview__icon journey-source-preview__icon--${section.toLowerCase()}`}><JourneyIcon name={section} /></span>}
+              <div><small>{sections[section]} · {detail.trip.stages.find((item) => item.cityId === selectedSource.cityId)?.cityName ?? "Ficha compartida"}</small><strong>{selectedSource.title}</strong></div>
+            </div>}
+            {!entityId && <p className="journey-source-preview__empty">Elegí una ficha para ver su vista previa.</p>}
+            {!!entityId && <>
+              <label>
+                Experiencia vinculada
+                <select
+                  value={experienceId || ""}
+                  required={status === "COMPLETED"}
+                  disabled={linked || experiences.isLoading}
+                  onChange={(e) => setExperienceId(Number(e.target.value))}
+                >
+                  <option value="">Todavía no registrada</option>
+                  {experiences.data?.filter((experience) => experience.date >= stage.startsOn && experience.date <= stage.endsOn && (!experience.stageId || experience.stageId === stageId)).map((experience) => (
+                    <option key={experience.id} value={experience.id}>{experience.date} · #{experience.id}</option>
+                  ))}
+                </select>
+              </label>
+              {experiences.data?.length === 0 && <small>Todavía no hay experiencias registradas para esta ficha y período.</small>}
+            </>}
+          </>}
+          <FormError error={catalog.error} />
+          <FormError error={experiences.error} />
+        </section>
         <label>
           Actividad
           <input
@@ -349,6 +364,28 @@ export function PointEditor({
             defaultValue={point?.mapsUrl ?? ""}
           />
         </label>
+        <fieldset className="journey-point-action-editor">
+          <legend>Botones adicionales</legend>
+          <div className="journey-point-action-editor__heading">
+            <p>Agreguen enlaces útiles al recorrido, como reservas, entradas o menús.</p>
+            <Button
+              variant="secondary"
+              icon={<JourneyIcon name="LINK" />}
+              type="button"
+              data-modal-dirty
+              disabled={extraActions.length >= 8}
+              onClick={() => setExtraActions([...extraActions, { label: "", icon: "LINK", url: "" }])}
+            >Agregar enlace</Button>
+          </div>
+          {extraActions.map((action, index) => <div className="journey-point-action-editor__row" key={index}>
+            <strong>Botón {index + 1}</strong>
+            <label>Nombre<input required maxLength={40} value={action.label} onChange={(event) => setExtraActions(extraActions.map((value, i) => i === index ? { ...value, label: event.target.value } : value))} placeholder="Por ejemplo, Reservar" /></label>
+            <label>Ícono<select value={action.icon} onChange={(event) => setExtraActions(extraActions.map((value, i) => i === index ? { ...value, icon: event.target.value } : value))}>{journeyPointIconOptions.map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></label>
+            <label>Enlace<input required type="url" maxLength={1000} value={action.url} onChange={(event) => setExtraActions(extraActions.map((value, i) => i === index ? { ...value, url: event.target.value } : value))} placeholder="https://…" /></label>
+            <Button className="journey-point-action-editor__remove" variant="tertiary" icon={<JourneyIcon name="DELETE" />} type="button" data-modal-dirty aria-label={`Quitar botón ${index + 1}`} onClick={() => setExtraActions(extraActions.filter((_, i) => i !== index))}>Quitar</Button>
+          </div>)}
+          {extraActions.length === 8 && <small>Pueden agregar hasta ocho enlaces por punto.</small>}
+        </fieldset>
         <label>
           Estado
           <select
@@ -360,31 +397,6 @@ export function PointEditor({
             <option value="CANCELLED">Cancelado</option>
           </select>
         </label>
-        {!!section && !!entityId && (
-          <label>
-            Experiencia vinculada
-            <select
-              value={experienceId || ""}
-              required={status === "COMPLETED"}
-              disabled={linked}
-              onChange={(e) => setExperienceId(Number(e.target.value))}
-            >
-              <option value="">Todavía no registrada</option>
-              {experiences.data
-                ?.filter(
-                  (e) =>
-                    e.date >= stage.startsOn &&
-                    e.date <= stage.endsOn &&
-                    (!e.stageId || e.stageId === stageId),
-                )
-                .map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.date} · #{e.id}
-                  </option>
-                ))}
-            </select>
-          </label>
-        )}
         {status === "COMPLETED" &&
           section &&
           !experienceId &&

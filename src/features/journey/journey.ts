@@ -44,8 +44,8 @@ export type TripInput = Pick<Trip, "name" | "startsOn" | "endsOn" | "maxTripPhot
   stages: { id?: string; cityId: number; startsOn: string; endsOn: string }[];
 };
 export type Section = "FOOD" | "FILM" | "COOK" | "FUN";
-export type PointCategory = Section | "GENERAL" | "TRANSFER";
-export const pointCategoryLabels: Record<PointCategory, string> = {
+export type PointCategory = string;
+export const pointCategoryLabels: Record<string, string> = {
   GENERAL: "Actividad",
   FOOD: "WhereFood",
   FILM: "WhichMovie",
@@ -53,6 +53,15 @@ export const pointCategoryLabels: Record<PointCategory, string> = {
   FUN: "WhyFun",
   TRANSFER: "Traslado",
 };
+export type JourneyPointType = {
+  code: string;
+  name: string;
+  icon: string;
+  color: string;
+  position: number;
+  builtIn: boolean;
+};
+export type JourneyPointAction = { label: string; icon: string; url: string };
 export type Source = {
   section: Section;
   entityId: number;
@@ -70,6 +79,7 @@ export type Point = {
   status: "PENDING" | "COMPLETED" | "CANCELLED";
   category: PointCategory;
   source: Source | null;
+  extraActions: JourneyPointAction[];
 };
 export type Stay = {
   id: string;
@@ -171,6 +181,7 @@ export type CatalogSource = {
   title: string;
   cityId: number;
   href: string;
+  thumbnailUrl: string | null;
 };
 export type Experience = {
   id: number;
@@ -279,6 +290,14 @@ export const saveCity = (name: string, countryCode: string) =>
 export const getTrips = (page = 0) =>
   api<Trip[]>(`/whither-journey?page=${page}&size=20`);
 export const getTrip = (id: string) => api<Detail>(`/whither-journey/${id}`);
+export const getJourneyPointTypes = () => api<JourneyPointType[]>("/whither-journey/point-types");
+export const saveJourneyPointType = (input: Pick<JourneyPointType, "name" | "icon" | "color">, code?: string) =>
+  api<JourneyPointType>(`/whither-journey/point-types${code ? `/${encodeURIComponent(code)}` : ""}`, {
+    method: code ? "PUT" : "POST",
+    body: JSON.stringify(input),
+  });
+export const deleteJourneyPointType = (code: string) =>
+  api<void>(`/whither-journey/point-types/${encodeURIComponent(code)}`, { method: "DELETE" });
 export const saveTrip = (input: TripInput, id?: string) =>
   api<Trip>(`/whither-journey${id ? `/${id}` : ""}`, {
     method: id ? "PUT" : "POST",

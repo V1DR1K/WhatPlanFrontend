@@ -551,15 +551,19 @@ a {
 .review-comment {
   white-space: pre-wrap;
 }
-.modal-discard {
-  position: absolute;
-  z-index: 2;
+.modal-discard-backdrop {
+  position: fixed;
+  z-index: 110;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 20px;
-  border-radius: inherit;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   background: #080708e8;
+}
+.modal-discard {
+  width: min(420px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
 }
 .modal-discard > div {
   width: min(360px, 100%);

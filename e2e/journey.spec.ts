@@ -311,6 +311,49 @@ test("journey form protects changed drafts and cannot close while saving", async
   ).toBeVisible();
 });
 
+test("point types are shared settings and extra itinerary links get clear previews", async ({ page }) => {
+  await mkdir(".impeccable/review", { recursive: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await journeyFixture(page, true);
+  await page.goto("/app/whither-journey/settings");
+  await expect(page.getByRole("heading", { name: "Tipos de punto" })).toBeVisible();
+  await page.getByRole("button", { name: "Agregar tipo" }).click();
+  let dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Nombre").fill("Compras");
+  await dialog.getByLabel("Ícono").selectOption("SHOP");
+  await dialog.getByRole("button", { name: "Guardar tipo" }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Compras", exact: true })).toBeVisible();
+
+  await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+  await page.getByRole("button", { name: "Agregar punto", exact: true }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Vincular ficha existente").selectOption("FILM");
+  await dialog.locator(".journey-point-link-editor select").nth(2).selectOption("7");
+  await expect(dialog.locator(".journey-source-preview")).toContainText("Una película para compartir");
+  await dialog.getByLabel("Experiencia vinculada").selectOption("9");
+  await dialog.getByLabel("Tipo de punto").selectOption({ label: "Compras" });
+  await dialog.getByLabel("Actividad", { exact: true }).fill("Noche de cine");
+  await dialog.getByLabel("Notas", { exact: true }).fill("Anotar entradas y horario.");
+  await dialog.getByLabel("Google Maps").fill("https://maps.google.com/?q=cinema");
+  await dialog.getByRole("button", { name: "Agregar enlace" }).click();
+  const action = dialog.locator(".journey-point-action-editor__row");
+  await action.getByLabel("Nombre").fill("Reservar");
+  await action.getByLabel("Ícono").selectOption("TICKET");
+  await action.getByRole("textbox", { name: "Enlace" }).fill("https://example.com/reservar");
+  await page.screenshot({ path: ".impeccable/review/mobile-point-editor.png" });
+  await dialog.getByRole("button", { name: "Guardar punto" }).click();
+
+  const point = page.locator(".journey-route__point").filter({ has: page.getByRole("heading", { name: "Noche de cine" }) });
+  await expect(point.getByRole("link", { name: /Abrir ficha/ })).toHaveClass(/journey-action-link/);
+  await expect(point.getByRole("link", { name: /Reservar/ })).toHaveAttribute("href", "https://example.com/reservar");
+  await expect(point.getByRole("link", { name: /Google Maps/ })).toHaveClass(/journey-map-action/);
+  await expect(point.locator("details.journey-point-note")).not.toHaveAttribute("open", "");
+  await point.locator("summary").click();
+  await expect(point.getByText("Anotar entradas y horario.")).toBeVisible();
+});
+
 test("daily summary saves a shared story, personal review, day photo and cover", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await journeyFixture(page, true);
