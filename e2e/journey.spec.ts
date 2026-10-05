@@ -316,6 +316,11 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
     const menu = firstPoint.locator(".journey-point-overflow");
     await page.locator(".journey-point-overflow > summary").first().click();
     await expect(menu).toHaveAttribute("open", "");
+    await expect.poll(() => firstPoint.evaluate((point) => {
+      const next = point.nextElementSibling;
+      return next instanceof HTMLElement
+        && Number(getComputedStyle(point).zIndex) > Number(getComputedStyle(next).zIndex);
+    })).toBe(true);
     const pointLayout = await firstPoint.evaluate((point) => {
       const content = point.lastElementChild!;
       const actions = content.querySelector<HTMLElement>(".journey-actions--point")!;
