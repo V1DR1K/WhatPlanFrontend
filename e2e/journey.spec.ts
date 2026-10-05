@@ -113,8 +113,8 @@ for (const viewport of [
     await expect(page.locator(".journey-detail-cover img")).toHaveCount(0);
     await page.getByRole("button", { name: "Elegir portada", exact: true }).click();
     await page.getByRole("tab", { name: "Galería", exact: true }).click();
-    const tripGallery = page.locator(".journey-gallery-owned");
-    await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+    const tripGallery = page.locator(".journey-gallery");
+    await tripGallery.getByRole("button", { name: "Administrar fotos generales", exact: true }).click();
     dialog = page.getByRole("dialog");
     await dialog.locator('input[type="file"]').setInputFiles({
       name: "portada.png",
@@ -543,10 +543,14 @@ test("journey summary stays focused and gallery manages trip, daily and linked p
   await expect(page.locator(".journey-day-review-list")).toContainText("La mejor caminata del viaje.");
 
   await page.getByRole("tab", { name: "Galería", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Fotos de sus secciones", exact: true })).toBeVisible();
-  await expect(page.locator(".journey-gallery-linked")).toContainText("La Cabrera");
-  const dayGallery = page.locator(".journey-gallery-days");
-  await dayGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+  const gallery = page.locator(".journey-gallery");
+  await expect(page.getByRole("heading", { name: "Galería del viaje", exact: true })).toBeVisible();
+  await expect(gallery).toContainText("1 propias · 1 vinculadas");
+  await gallery.getByRole("tab", { name: "Ver foto 2", exact: true }).click();
+  await expect(gallery).toContainText("Vinculada · WhereFood");
+  await expect(gallery).toContainText("La Cabrera");
+  await expect(gallery.getByRole("link", { name: "Abrir ficha" })).toHaveAttribute("href", "/app/food/places/7");
+  await gallery.getByRole("button", { name: "Administrar fotos del día", exact: true }).click();
   dialog = page.getByRole("dialog");
   await dialog.locator('input[type="file"]').setInputFiles({
     name: "caminata.png",
@@ -557,8 +561,8 @@ test("journey summary stays focused and gallery manages trip, daily and linked p
   await expect(dialog.locator(".photo-manager__saved img")).toHaveCount(1);
   await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
 
-  const tripGallery = page.locator(".journey-gallery-owned");
-  await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+  const tripGallery = page.locator(".journey-gallery");
+  await tripGallery.getByRole("button", { name: "Administrar fotos generales", exact: true }).click();
   dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Foto de portada", { exact: true })).toBeVisible();
   const photos = dialog.locator(".photo-manager__photo");

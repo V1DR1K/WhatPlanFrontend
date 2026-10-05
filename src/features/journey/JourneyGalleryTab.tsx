@@ -3,10 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useQuery } from "../../lib/locationQuery";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
-import { MediaImage } from "../../components/ui/MediaImage";
+import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
-import { formatDate, getJourneyGallery, offsetJourneyDate, uploadJourneyPhoto, setJourneyCover, deleteResource, type Detail, type JourneyFile, type JourneySourcePhoto } from "./journey";
+import { formatDate, getJourneyGallery, offsetJourneyDate, uploadJourneyPhoto, setJourneyCover, deleteResource, type Detail, type JourneyFile } from "./journey";
 import type { ExperiencePhoto } from "../../types/domain";
 
 const sectionNames: Record<string, string> = {
@@ -15,6 +15,13 @@ const sectionNames: Record<string, string> = {
   COOK: "WhoCook",
   FUN: "WhyFun",
 };
+
+type PhotoOrigin =
+  | { kind: "trip" }
+  | { kind: "day"; date: string }
+  | { kind: "linked"; date: string; section: string; title: string; href: string };
+
+type GalleryItem = { photo: ExperiencePhoto; origin: PhotoOrigin; date: string; position: number };
 
 function galleryPhoto(file: JourneyFile, position: number): ExperiencePhoto {
   return {
@@ -35,6 +42,10 @@ function dayList(from: string, to: string) {
   return result;
 }
 
+function appHref(href: string) {
+  return href.startsWith("/app/") ? href : `/app${href}`;
+}
+
 export function JourneyGalleryTab({ detail, editable, onRefresh }: {
   detail: Detail;
   editable: boolean;
@@ -44,7 +55,8 @@ export function JourneyGalleryTab({ detail, editable, onRefresh }: {
   const [selectedDay, setSelectedDay] = useState(detail.trip.startsOn);
   const [removing, setRemoving] = useState<JourneyFile>();
   const tripPhotos = detail.files.filter((file) => file.purpose === "TRIP");
-  const dayPhotos = detail.files.filter((file) => file.purpose === "DAY" && file.day === selectedDay);
+  const dayPhotos = detail.files.filter((file) => file.purpose === "DAY");
+  const selectedDayPhotos = dayPhotos.filter((file) => file.day === selectedDay);
   const dates = useMemo(() => dayList(detail.trip.startsOn, detail.trip.endsOn), [detail.trip.startsOn, detail.trip.endsOn]);
   const linked = useQuery({
     // Source sections already invalidate this prefix when their experiences or photos change.
@@ -73,63 +85,128 @@ export function JourneyGalleryTab({ detail, editable, onRefresh }: {
       setRemoving(undefined);
     },
   });
-  const ownTripPhotos = tripPhotos.map(galleryPhoto);
-  const ownDayPhotos = dayPhotos.map(galleryPhoto);
+  const items = useMemo(() => {
+    const result: GalleryItem[] = [];
+    let position = 0;
+    for (const file of tripPhotos) {
+      result.push({ photo: galleryPhoto(file, position++), origin: { kind: "trip" }, date: "", position });
+    }
+    for (const file of dayPhotos) {
+      if (!file.day) continue;
+      result.push({ photo: galleryPhoto(file, position++), origin: { kind: "day", date: file.day }, date: file.day, position });
+    }
+    for (const entry of linked.data ?? []) {
+      for (const [photoIndex, photo] of entry.photos.entries()) {
+        result.push({
+          photo: {
+            id: `source:${photo.id}`,
+            url: photo.url,
+            thumbnailUrl: photo.thumbnailUrl || photo.url,
+            width: photo.width || 640,
+            height: photo.height || 480,
+            position: position++,
+            createdBy: "",
+            createdAt: "",
+          },
+          origin: { kind: "linked", date: entry.date, section: entry.section, title: entry.title, href: entry.href },
+          date: entry.date,
+          position: photoIndex,
+        });
+      }
+    }
+    return result.sort((left, right) => {
+      if (!left.date && right.date) return -1;
+      if (left.date && !right.date) return 1;
+      return left.date.localeCompare(right.date) || left.position - right.position;
+    });
+  }, [tripPhotos, dayPhotos, linked.data]);
+  const origins = useMemo(() => new Map(items.map((item) => [String(item.photo.id), item.origin])), [items]);
+  const ownFiles = useMemo(() => new Map([...tripPhotos, ...dayPhotos].map((file) => [file.id, file])), [tripPhotos, dayPhotos]);
+  const linkedCount = items.filter((item) => item.origin.kind === "linked").length;
+  const ownedCount = items.length - linkedCount;
+  const galleryPhotos = items.map((item) => item.photo);
+
+  const photoDetails = (photo: ExperiencePhoto) => {
+    const origin = origins.get(String(photo.id));
+    if (!origin) return null;
+    const isCover = photo.id === detail.trip.coverPhotoId;
+    if (origin.kind === "linked") return <div className="journey-gallery-origin" aria-live="polite">
+      <div className="journey-gallery-origin__badges">
+        <span className="journey-gallery-origin__badge journey-gallery-origin__badge--linked">Vinculada · {sectionNames[origin.section] ?? origin.section}</span>
+        <time dateTime={origin.date}>{formatDate(origin.date)}</time>
+      </div>
+      <div className="journey-gallery-origin__description">
+        <strong>{origin.title}</strong>
+        <Link to={appHref(origin.href)}>Abrir ficha <span aria-hidden="true">↗</span></Link>
+      </div>
+    </div>;
+    if (origin.kind === "day") return <div className="journey-gallery-origin" aria-live="polite">
+      <div className="journey-gallery-origin__badges">
+        <span className="journey-gallery-origin__badge">Foto propia · extra del día</span>
+        <time dateTime={origin.date}>{formatDate(origin.date)}</time>
+        {isCover && <span className="journey-gallery-origin__badge journey-gallery-origin__badge--cover">Portada</span>}
+      </div>
+      <strong>Agregada a la galería del día</strong>
+    </div>;
+    return <div className="journey-gallery-origin" aria-live="polite">
+      <div className="journey-gallery-origin__badges">
+        <span className="journey-gallery-origin__badge">Foto propia · todo el viaje</span>
+        {isCover && <span className="journey-gallery-origin__badge journey-gallery-origin__badge--cover">Portada</span>}
+      </div>
+      <strong>Recuerdo general del viaje</strong>
+    </div>;
+  };
+
+  const askToRemove = (photo: ExperiencePhoto) => {
+    const file = ownFiles.get(String(photo.id));
+    if (file) setRemoving(file);
+  };
 
   return <div className="journey-gallery-tab">
-    <section className="journey-gallery-owned" aria-labelledby="journey-gallery-own-title">
+    <section className="journey-gallery" aria-labelledby="journey-gallery-title">
       <div className="journey-panel__heading">
-        <div><p className="eyebrow">FOTOS PROPIAS</p><h2 id="journey-gallery-own-title">Recuerdos del viaje</h2><p className="muted">Fotos generales y extras que agregaron ustedes.</p></div>
+        <div>
+          <h2 id="journey-gallery-title">Galería del viaje</h2>
+          <p className="muted">Recuerdos propios y fotos vinculadas a sus experiencias, ordenados por fecha.</p>
+        </div>
+        <div className="journey-gallery__totals" aria-label="Resumen de fotos">
+          <strong>{items.length} {items.length === 1 ? "foto" : "fotos"}</strong>
+          <span>{ownedCount} propias · {linkedCount} vinculadas</span>
+        </div>
       </div>
-      <ExperienceGallery accentLabel="FOTOS DEL VIAJE" emptyIcon="✦" name={detail.trip.name}
-        photos={ownTripPhotos} coverPhotoId={detail.trip.coverPhotoId ?? undefined}
-        maxPhotos={detail.trip.maxTripPhotos} limitCount={tripPhotos.length} manageInModal
-        onUpload={editable ? (files) => upload(files, "TRIP") : undefined}
+      {linked.isLoading && <p className="muted" role="status">Buscando fotos de las secciones…</p>}
+      {linked.error && <div className="journey-gallery__error"><p className="form-error" role="alert">No pudimos cargar las fotos vinculadas: {linked.error.message}</p><Button variant="secondary" onClick={() => void linked.refetch()}>Reintentar</Button></div>}
+      <ExperienceGallery
+        accentLabel="GALERÍA COMPARTIDA"
+        emptyIcon="✦"
+        emptyMessage="Todavía no hay recuerdos. Agregá fotos del viaje o vinculá experiencias con imágenes."
+        name={detail.trip.name}
+        photos={galleryPhotos}
+        coverPhotoId={detail.trip.coverPhotoId ?? undefined}
+        photoDetails={photoDetails}
+        metaLabel={`${items.length} fotos · ${ownedCount} propias · ${linkedCount} vinculadas`}
         onSetCover={editable ? cover : undefined}
-        onDelete={editable ? (photo) => {
-          const file = tripPhotos.find((item) => item.id === photo.id);
-          if (file) setRemoving(file);
-        } : undefined} />
-    </section>
-
-    <section className="journey-gallery-days" aria-labelledby="journey-gallery-days-title">
-      <div className="journey-panel__heading">
-        <div><p className="eyebrow">FOTOS POR DÍA</p><h2 id="journey-gallery-days-title">Extras de cada día</h2><p className="muted">Elegí una fecha para ver o sumar sus fotos.</p></div>
-        <label className="journey-gallery-day-select">Día del viaje
-          <select value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)}>
-            {dates.map((date) => <option value={date} key={date}>{formatDate(date)}</option>)}
-          </select>
-        </label>
-      </div>
-      <ExperienceGallery accentLabel={`FOTOS DEL ${formatDate(selectedDay).toUpperCase()}`} emptyIcon="✦" name={`${detail.trip.name} · ${formatDate(selectedDay)}`}
-        photos={ownDayPhotos} coverPhotoId={detail.trip.coverPhotoId ?? undefined}
-        maxPhotos={detail.trip.maxDayPhotos} limitCount={dayPhotos.length} manageInModal
-        onUpload={editable ? (files) => upload(files, "DAY", selectedDay) : undefined}
-        onSetCover={editable ? cover : undefined}
-        onDelete={editable ? (photo) => {
-          const file = dayPhotos.find((item) => item.id === photo.id);
-          if (file) setRemoving(file);
-        } : undefined} />
-    </section>
-
-    <section className="journey-gallery-linked" aria-labelledby="journey-gallery-linked-title">
-      <div className="journey-panel__heading">
-        <div><p className="eyebrow">RECOPILADO</p><h2 id="journey-gallery-linked-title">Fotos de sus secciones</h2><p className="muted">Imágenes de experiencias vinculadas al viaje, agrupadas por día y sección.</p></div>
-        <span className="journey-gallery-linked__count">{(linked.data ?? []).reduce((count, entry) => count + entry.photos.length, 0)} fotos</span>
-      </div>
-      {linked.isLoading && <p className="muted" role="status">Buscando fotos vinculadas…</p>}
-      {linked.error && <div className="journey-gallery-linked__error"><p className="form-error" role="alert">{linked.error.message}</p><Button variant="secondary" onClick={() => void linked.refetch()}>Reintentar</Button></div>}
-      {linked.data?.length === 0 && <p className="journey-empty">Todavía no hay fotos en las experiencias vinculadas a este viaje.</p>}
-      {linked.data && linked.data.length > 0 && <div className="journey-gallery-linked__groups">
-        {linked.data.map((entry, entryIndex) => <article className="journey-gallery-linked__group" key={`${entry.date}:${entry.section}:${entry.title}:${entryIndex}`}>
-          <header><span className="journey-gallery-linked__section">{sectionNames[entry.section] ?? entry.section}</span><time dateTime={entry.date}>{formatDate(entry.date)}</time><Link to={entry.href.startsWith("/app/") ? entry.href : `/app${entry.href}`}>{entry.title} ↗</Link></header>
-          <div className="journey-gallery-linked__photos">
-            {entry.photos.map((photo: JourneySourcePhoto) => <a href={entry.href.startsWith("/app/") ? entry.href : `/app${entry.href}`} key={photo.id} aria-label={`Abrir ${entry.title}`}>
-              <MediaImage src={photo.thumbnailUrl || photo.url} fallbackSrc={photo.url} alt={`Foto de ${entry.title}`} width={photo.width || 320} height={photo.height || 200} loading="lazy" />
-            </a>)}
+        canSetCover={(photo) => ownFiles.has(String(photo.id))}
+        onDelete={editable ? askToRemove : undefined}
+        canDelete={(photo) => ownFiles.has(String(photo.id))}
+        afterActions={editable ? <div className="journey-gallery-controls" aria-label="Administrar fotos del viaje">
+          <div className="journey-gallery-controls__manager">
+            <div><strong>Fotos generales</strong><span>{tripPhotos.length} de {detail.trip.maxTripPhotos} · todo el viaje</span></div>
+            <PhotoManagerModal mode="gallery" name={`${detail.trip.name} · todo el viaje`} manageLabel="Administrar fotos generales" photos={tripPhotos.map(galleryPhoto)} coverPhotoId={detail.trip.coverPhotoId ?? undefined} maxPhotos={detail.trip.maxTripPhotos} limitCount={tripPhotos.length} onUpload={(files) => upload(files, "TRIP")} onSetCover={cover} onDelete={askToRemove} />
           </div>
-        </article>)}
-      </div>}
+          <div className="journey-gallery-controls__manager journey-gallery-controls__manager--day">
+            <label className="journey-gallery-day-select">Fotos extra de un día
+              <select value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)}>
+                {dates.map((date) => <option value={date} key={date}>{formatDate(date)}</option>)}
+              </select>
+            </label>
+            <div className="journey-gallery-controls__day-action">
+              <span>{selectedDayPhotos.length} de {detail.trip.maxDayPhotos} fotos</span>
+              <PhotoManagerModal mode="gallery" name={`${detail.trip.name} · ${formatDate(selectedDay)}`} manageLabel="Administrar fotos del día" photos={selectedDayPhotos.map(galleryPhoto)} coverPhotoId={detail.trip.coverPhotoId ?? undefined} maxPhotos={detail.trip.maxDayPhotos} limitCount={selectedDayPhotos.length} onUpload={(files) => upload(files, "DAY", selectedDay)} onSetCover={cover} onDelete={askToRemove} />
+            </div>
+          </div>
+        </div> : undefined}
+      />
     </section>
 
     {removing && <ConfirmDialog title="¿Quitar esta foto?" message="La foto se quitará del viaje." confirmLabel="Quitar foto" pending={removePhoto.isPending}

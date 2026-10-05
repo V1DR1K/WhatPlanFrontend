@@ -17,6 +17,7 @@ type AttachmentProps = {
 type GalleryProps = {
   mode: "gallery";
   name: string;
+  manageLabel?: string;
   photos: ExperiencePhoto[];
   coverPhotoId?: number | string;
   maxPhotos?: number;
@@ -75,7 +76,7 @@ export function PhotoManagerModal(props: Props) {
 
   return <>
     <Button type="button" variant="secondary" icon={props.mode === "gallery" ? "🖼️" : "📷"} onClick={() => { setFiles(props.mode === "attachment" && props.photo ? [props.photo] : []); setError(undefined); setOpen(true); }}>
-      {props.mode === "gallery" ? "Administrar fotos" : selectedFile ? "Cambiar foto" : "Agregar foto"}
+      {props.mode === "gallery" ? props.manageLabel ?? "Administrar fotos" : selectedFile ? "Cambiar foto" : "Agregar foto"}
     </Button>
     {open && <Modal size="wide" className="photo-manager-modal" onClose={close} pending={uploading || preparing} title={`Administrar ${heading.toLowerCase()}`}>
       <div className="photo-manager">
