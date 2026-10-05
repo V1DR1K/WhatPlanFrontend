@@ -447,8 +447,10 @@
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 16px;
   position: relative;
+  z-index: 0;
   padding-bottom: 36px;
 }
+.journey-route__point:has(.journey-point-overflow[open]) { z-index: 10; }
 .journey-route__point > div:last-child {
   width: 100%;
   min-width: 0;
@@ -573,7 +575,7 @@
   white-space: normal;
   line-height: 1.2;
 }
-.journey-point-overflow { position: relative; z-index: 3; min-width: 0; }
+.journey-point-overflow { position: relative; z-index: 1; min-width: 0; }
 .journey-point-overflow > summary {
   display: grid;
   width: 46px;
@@ -592,6 +594,7 @@
 .journey-point-overflow > summary:focus-visible { outline: 2px solid #83d8f5; outline-offset: 2px; }
 .journey-point-overflow__menu {
   position: absolute;
+  z-index: 20;
   top: calc(100% + 8px);
   right: 0;
   display: grid;
@@ -674,7 +677,9 @@
 .journey-management-actions .button__icon { display: inline-flex; width: 20px; height: 20px; flex: 0 0 20px; align-items: center; justify-content: center; }
 .journey-management-actions svg { width: 18px; height: 18px; }
 .journey-point-note {
-  width: min(100%, 680px);
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   margin: 12px 0 4px;
   border: 1px solid #345666;
   border-radius: 11px;

@@ -102,12 +102,7 @@ for (const viewport of [
     const stage = dialog.locator(".journey-stage-form").first();
     await stage.getByLabel("Lugar").fill("Buenos Aires");
     await expect(dialog.getByRole("button", { name: "Agregar otro destino" })).toHaveCount(0);
-    await dialog.locator('input[type="file"]').setInputFiles({
-      name: "portada.png",
-      mimeType: "image/png",
-      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
-    });
-    await expect(dialog.locator(".photo-picker img")).toBeVisible();
+    await expect(dialog.locator('input[type="file"]')).toHaveCount(0);
     await dialog.getByRole("button", { name: "Guardar viaje" }).click();
     await expect(
       page.getByRole("heading", {
@@ -115,16 +110,30 @@ for (const viewport of [
         exact: true,
       }),
     ).toBeVisible();
+    await expect(page.locator(".journey-detail-cover img")).toHaveCount(0);
+    await page.getByRole("button", { name: "Elegir portada", exact: true }).click();
+    await page.getByRole("tab", { name: "Galería", exact: true }).click();
+    const tripGallery = page.locator(".journey-gallery-owned");
+    await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
+    dialog = page.getByRole("dialog");
+    await dialog.locator('input[type="file"]').setInputFiles({
+      name: "portada.png",
+      mimeType: "image/png",
+      buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
+    });
+    await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
+    await expect(dialog.locator(".photo-manager__saved img")).toHaveCount(1);
+    await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
     await expect(page.locator(".journey-detail-cover img")).toBeVisible();
     expect(fixture.journeys.size).toBe(1);
-    expect(fixture.requests.some((request) =>
+    expect(fixture.requests.filter((request) =>
       request.method === "POST"
       && request.path.includes("/photos?purpose=TRIP")
       && request.contentType?.startsWith("multipart/form-data; boundary="),
-    )).toBeTruthy();
+    )).toHaveLength(1);
     expect(fixture.requests.some((request) =>
       request.method === "PUT" && /\/cover\/[0-9a-f-]+$/.test(request.path),
-    )).toBeTruthy();
+    )).toBeFalsy();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
     await expect(page.locator(".journey-day-picker input[type=date]")).toHaveCount(0);
     await expect(page.getByText(/10 de agosto de 2026/)).toBeVisible();
@@ -173,6 +182,7 @@ for (const viewport of [
     await expect(page.getByText("0 de 1 puntos realizados")).toBeVisible();
     await expect(page.getByText("Pendiente", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Marcar realizado", exact: true }).click();
+    await page.locator(".journey-point-overflow > summary").first().click();
     await page
       .getByRole("button", { name: "Cancelar punto", exact: true })
       .click();
@@ -302,21 +312,32 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       page.getByRole("tab", { name: "Galería", exact: true }),
     ).toBeFocused();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+    const firstPoint = page.locator(".journey-route__point").first();
+    const menu = firstPoint.locator(".journey-point-overflow");
     await page.locator(".journey-point-overflow > summary").first().click();
-    const pointLayout = await page.locator(".journey-route__point").first().evaluate((point) => {
+    await expect(menu).toHaveAttribute("open", "");
+    const pointLayout = await firstPoint.evaluate((point) => {
       const content = point.lastElementChild!;
       const actions = content.querySelector<HTMLElement>(".journey-actions--point")!;
       const link = actions.querySelector<HTMLElement>(".journey-action-link");
+      const note = content.querySelector<HTMLElement>(".journey-point-note")!;
       return {
         point: point.getBoundingClientRect().width,
         content: content.getBoundingClientRect().width,
         actions: actions.getBoundingClientRect().width,
         link: link?.getBoundingClientRect().width ?? 0,
+        note: note.getBoundingClientRect().width,
+        openRowLayer: getComputedStyle(point).zIndex,
+        nextRowLayer: getComputedStyle(point.nextElementSibling!).zIndex,
       };
     });
     expect(pointLayout.content).toBeGreaterThan(pointLayout.point * 0.8);
     expect(pointLayout.actions).toBeGreaterThan(pointLayout.content * 0.9);
     expect(pointLayout.link).toBeGreaterThan(0);
+    expect(pointLayout.note).toBeGreaterThan(pointLayout.content * 0.9);
+    expect(Number(pointLayout.openRowLayer)).toBeGreaterThan(Number(pointLayout.nextRowLayer));
+    await firstPoint.locator(".journey-point-status-action").focus();
+    await expect(menu).not.toHaveAttribute("open", "");
     await expect(page.locator(".journey-route__marker").first()).toHaveCSS(
       "animation-name",
       "none",

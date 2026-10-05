@@ -4,14 +4,40 @@ export const specialDateRecurrenceLabel: Record<SpecialDateRecurrence, string> =
   ONCE: 'Única',
   ANNUAL: 'Anual',
   MONTHLY: 'Mensual',
+  DAILY: 'Diaria',
 };
 
 export const specialDateDisplay = (date: string) => date.split('-').reverse().join('/');
 
+const dateInUtc = (value: string) => Date.parse(`${value}T00:00:00Z`);
+const dateString = (year: number, month: number, day: number) => {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.toISOString().slice(0, 10);
+};
+const daysBetween = (from: string, to: string) => Math.round((dateInUtc(to) - dateInUtc(from)) / 86_400_000);
+const recurringStart = (year: number, month: number, day: number) =>
+  dateString(year, month, Math.min(day, new Date(Date.UTC(year, month, 0)).getUTCDate()));
+
 const matchesDate = (date: string, specialDate: SpecialDate) => {
-  if (specialDate.recurrence === 'ANNUAL') return specialDate.date.slice(5) === date.slice(5);
-  if (specialDate.recurrence === 'MONTHLY') return specialDate.date.slice(-2) === date.slice(-2);
-  return date >= specialDate.date && date <= (specialDate.endsOn ?? specialDate.date);
+  const end = specialDate.endsOn ?? specialDate.date;
+  if (specialDate.recurrence === 'ONCE') return date >= specialDate.date && date <= end;
+  if (specialDate.recurrence === 'DAILY') return true;
+
+  const duration = daysBetween(specialDate.date, end);
+  const target = dateInUtc(date);
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const anchorMonth = Number(specialDate.date.slice(5, 7));
+  const anchorDay = Number(specialDate.date.slice(8, 10));
+  const starts = specialDate.recurrence === 'ANNUAL'
+    ? [recurringStart(year, anchorMonth, anchorDay), recurringStart(year - 1, anchorMonth, anchorDay)]
+    : [0, 1].map((offset) => {
+      const previousMonth = new Date(Date.UTC(year, month - 1 - offset, 1));
+      return recurringStart(previousMonth.getUTCFullYear(), previousMonth.getUTCMonth() + 1, anchorDay);
+    });
+
+  return starts.some((start) => target >= dateInUtc(start)
+    && target <= dateInUtc(start) + duration * 86_400_000);
 };
 
 export function matchingSpecialDates(date: string | undefined, specialDates: SpecialDate[]) {

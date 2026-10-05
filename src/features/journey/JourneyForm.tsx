@@ -4,7 +4,6 @@ import { useQuery } from "../../lib/locationQuery";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
-import { PhotoPicker } from "../../components/ui/PhotoPicker";
 import { showNotice } from "../../lib/flash";
 import {
   getCities,
@@ -14,8 +13,6 @@ import {
   type City,
   type Trip,
   today,
-  uploadJourneyPhoto,
-  setJourneyCover,
 } from "./journey";
 export type CityDraft = { id?: number; name: string; countryCode: string };
 export function CityPicker({
@@ -104,7 +101,6 @@ export function JourneyForm({
   const [endsOn, setEndsOn] = useState(trip?.endsOn ?? today());
   const [maxTripPhotos, setMaxTripPhotos] = useState(trip?.maxTripPhotos ?? 20);
   const [maxDayPhotos, setMaxDayPhotos] = useState(trip?.maxDayPhotos ?? 10);
-  const [coverFile, setCoverFile] = useState<File>();
   const initialStage = trip?.stages[0];
   const [stageId] = useState(initialStage?.id);
   const [city, setCity] = useState<CityDraft>(initialStage
@@ -133,20 +129,6 @@ export function JourneyForm({
       );
     },
     onSuccess: async (saved) => {
-      try {
-        if (coverFile) {
-          const photo = await uploadJourneyPhoto(saved.id, coverFile, "TRIP");
-          await setJourneyCover(saved.id, photo.id);
-        }
-      } catch (reason) {
-        showNotice(reason instanceof Error
-          ? `El viaje se guardó, pero no pudimos subir la portada: ${reason.message}`
-          : "El viaje se guardó, pero no pudimos subir la portada.");
-        await client.invalidateQueries({ queryKey: ["journey", saved.id] });
-        onClose();
-        navigate(`/app/whither-journey/${saved.id}`);
-        return;
-      }
       await Promise.all([
         client.invalidateQueries({ queryKey: ["journeys"] }),
         client.invalidateQueries({ queryKey: ["journey", saved.id] }),
@@ -186,12 +168,11 @@ export function JourneyForm({
           <label>Límite de fotos del viaje<input type="number" min="1" max="100" required value={maxTripPhotos} onChange={(e) => setMaxTripPhotos(Number(e.target.value))} /></label>
           <label>Límite de fotos por día<input type="number" min="1" max="100" required value={maxDayPhotos} onChange={(e) => setMaxDayPhotos(Number(e.target.value))} /></label>
         </div>
-        <fieldset className="journey-cover-picker">
-          <legend>Foto de portada</legend>
-          <PhotoPicker maxFiles={1} onChange={(files) => setCoverFile(files[0])} selectLabel="Elegir foto de portada" />
-          {coverFile && <p>Vista previa de {coverFile.name}</p>}
-          {trip?.coverPhotoUrl && !coverFile && <small>La portada actual se conserva si no elegís otra.</small>}
-        </fieldset>
+        <p className="journey-form__cover-help">
+          {trip?.coverPhotoUrl
+            ? "La portada se cambia desde Galería, eligiendo una foto que ya forma parte del viaje."
+            : "Después de guardar, agregá o elegí una foto en Galería para usarla como portada."}
+        </p>
         <label>
           Nombre del viaje
           <input

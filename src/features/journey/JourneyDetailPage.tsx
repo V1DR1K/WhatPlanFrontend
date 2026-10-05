@@ -258,6 +258,7 @@ export function JourneyDetailPage() {
         }
         actions={editable ? (
           <div className="detail-actions">
+            <Button variant="secondary" onClick={() => setTab("Galería")}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
             <Button variant="secondary" onClick={() => setEditTrip(true)}>Editar viaje</Button>
           </div>
         ) : null}
@@ -483,7 +484,13 @@ export function JourneyDetailPage() {
                           }}>{p.status === "COMPLETED" ? "Marcar pendiente" : p.status === "CANCELLED" ? "Reactivar punto" : "Marcar realizado"}</Button>}
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
-                        {(editable || p.source || p.extraActions?.length || p.mapsUrl) && <details className="journey-point-overflow">
+                        {(editable || p.source || p.extraActions?.length || p.mapsUrl) && <details className="journey-point-overflow"
+                          onBlur={(event) => {
+                            const next = event.relatedTarget;
+                            if (!(next instanceof Node) || !event.currentTarget.contains(next)) {
+                              event.currentTarget.open = false;
+                            }
+                          }}>
                           <summary aria-label={`Más acciones de ${p.title}`} title="Más acciones"><span aria-hidden="true">•••</span></summary>
                           <div className="journey-point-overflow__menu">
                             {p.source && <Link className={`button button--secondary journey-action-link journey-action-link--source journey-action-link--${p.source.section.toLowerCase()}`}

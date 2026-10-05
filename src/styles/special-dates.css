@@ -141,6 +141,21 @@
   line-height: 1.45;
 }
 
+.special-dates-range-toggle {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  color: var(--text);
+}
+
+.special-dates-range-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--section-accent);
+}
+
 .special-dates-settings__empty {
   margin: 18px 0;
   padding: 18px;

@@ -15,7 +15,7 @@ import { getWhenDates } from './whenDates';
 import { useZoneContext } from '../../lib/zoneContext';
 
 const displayDate = (date: string) => date.split('-').reverse().join('/');
-const recurrenceLabel: Record<string, string> = { ONCE: 'Única', ANNUAL: 'Anual', MONTHLY: 'Mensual' };
+const recurrenceLabel: Record<string, string> = { ONCE: 'Única', ANNUAL: 'Anual', MONTHLY: 'Mensual', DAILY: 'Diaria' };
 
 export function WhenDatesPage() {
   useInAppBackGuard('/app');
