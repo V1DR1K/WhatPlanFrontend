@@ -3,7 +3,7 @@ on: {push: {branches: [main]}, pull_request: {branches: [main]}}
 permissions: {contents: read, packages: write}
 concurrency:
   group: whatplan-frontend-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
