@@ -65,7 +65,7 @@ export async function journeyFixture(page: Page, rich = false) {
       story: rich ? "Empezamos el viaje caminando juntos por San Telmo." : null,
       entries: rich ? [{
         id: "FOOD:9", section: "FOOD", date: firstDay, title: "La Cabrera",
-        detail: "Parrilla · Palermo", href: "/app/food/places/7", photos: [],
+        detail: "Parrilla · Palermo", href: "/app/food/places/7", photos: [{ id: "FOOD:VISIT:77", url: "/place-visit-photos/77", thumbnailUrl: "/place-visit-photos/77?thumbnail=true", width: 320, height: 240 }],
       }] : [],
       specialDates: rich ? [{ id: 1, label: "Nuestro aniversario", recurrence: "ANNUAL", href: `/app/when-dates/1/${firstDay}` }] : [],
       photos: [],
@@ -103,6 +103,7 @@ export async function journeyFixture(page: Page, rich = false) {
       ],
     } as Trip);
     const stage = a.trip.stages[0].id;
+    a.dates.push({ specialDateId: 1, date: a.trip.startsOn, endsOn: a.trip.endsOn, label: "Nuestro aniversario", stageId: stage });
     const coverId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
     a.trip.coverPhotoId = coverId;
     a.trip.coverPhotoUrl = `/whither-journey/files/${coverId}/content?thumbnail=true`;
@@ -353,6 +354,13 @@ export async function journeyFixture(page: Page, rich = false) {
     if (/^\/cities\/\d+$/.test(path))
       return reply(cities.find((c) => c.id === Number(path.split("/").pop())));
     if (path === "/special-dates") return reply([]);
+    const galleryRoute = /^\/whither-journey\/([^/]+)\/gallery$/.exec(path);
+    if (galleryRoute) {
+      const items = Array.from(dayDetails.entries())
+        .filter(([key]) => key.startsWith(`${galleryRoute[1]}:`))
+        .flatMap(([, day]) => day.entries.filter((entry) => entry.photos.length > 0).map((entry) => ({ date: entry.date, section: entry.section, title: entry.title, href: entry.href, photos: entry.photos })));
+      return reply(items);
+    }
     if (path === "/whither-journey/point-types") {
       if (method === "POST") {
         const type = { code: `CUSTOM_${randomUUID().replaceAll("-", "").toUpperCase()}`, ...payload, position: pointTypes.length, builtIn: false } satisfies JourneyPointType;
@@ -522,6 +530,8 @@ export async function journeyFixture(page: Page, rich = false) {
         ),
       });
     }
+    if (/\/(place-visit-photos|why-fun\/activity-visit-photos|films\/\d+\/photo)\//.test(path) || path.startsWith("/place-visit-photos/"))
+      return route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64") });
     const match =
       /^\/whither-journey\/([^/]+)(?:\/(points|stays|packing|movements|reviews|files|dates|archive))?(?:\/([^/]+))?$/.exec(
         path,
@@ -560,6 +570,7 @@ export async function journeyFixture(page: Page, rich = false) {
             specialDateId: 1,
             label: body.label,
             date: body.date,
+            endsOn: body.endsOn,
             stageId: body.stageId,
           };
           d.dates.push(date);

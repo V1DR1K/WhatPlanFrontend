@@ -132,7 +132,7 @@ export function JourneysPage() {
         className="journey-hero"
         eyebrow="WHITHER JOURNEY · VIAJES COMPARTIDOS"
         title={<>¿Adónde <em>vamos</em>?</>}
-        description="El recorrido, los planes y los recuerdos del viaje en un solo lugar."
+        description="Los planes, las experiencias y los recuerdos del viaje en un solo lugar."
         art={<PlaneIcon />}
       />
       <div className="journey-catalog-action">
@@ -278,7 +278,7 @@ export function JourneysPage() {
             >
               <p className="catalog-media-card__note">
                 {trip.archived
-                  ? "El recorrido y sus recuerdos siguen guardados."
+                  ? "El viaje y sus recuerdos siguen guardados."
                   : trip.endsOn < today()
                     ? "Un viaje para recordar."
                     : "Agenda, destinos y recuerdos en un solo lugar."}

@@ -37,6 +37,7 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
   await page.getByLabel("Buscar viajes").fill("Buenos Aires");
   await page.getByLabel("Filtrar por destino").selectOption("2");
   await page.getByLabel("Fecha desde").fill("2026-08-01");
+  await expect(page.getByLabel("Fecha desde")).toHaveValue("2026-08-01");
   await page.getByLabel("Fecha hasta").fill("2026-09-30");
   await page.locator(".catalog-filter").getByRole("button", { name: "Finalizados" }).click();
   await page.getByLabel("Ordenar viajes").selectOption("name-asc");
@@ -64,6 +65,19 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
   await expect(cards.first().locator(".catalog-media-card__badge")).toContainText("ARCHIVADO");
 });
 
+test("important dates linked from a journey cover its complete date range", async ({ page }) => {
+  const fixture = await journeyFixture(page, true);
+  await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+  await page.getByRole("button", { name: "Vincular fecha importante" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Rango del viaje")).toContainText("10 de ago de 2026");
+  await expect(dialog.getByLabel("Rango del viaje")).toContainText("12 de ago de 2026");
+  await dialog.getByLabel("Nombre", { exact: true }).fill("Escapada compartida");
+  await dialog.getByRole("button", { name: "Vincular fecha", exact: true }).click();
+  const request = fixture.requests.find((item) => item.method === "POST" && item.path.endsWith("/dates"));
+  expect(request?.body).toMatchObject({ date: "2026-08-10", endsOn: "2026-08-12", label: "Escapada compartida" });
+});
+
 for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
@@ -80,31 +94,24 @@ for (const viewport of [
     let dialog = page.getByRole("dialog");
     await dialog
       .getByLabel("Nombre del viaje")
-      .fill("Buenos Aires y Montevideo");
+      .fill("Buenos Aires en pareja");
     await dialog
       .getByLabel("Fecha de inicio", { exact: true })
       .fill("2026-08-10");
     await dialog.getByLabel("Fecha de fin", { exact: true }).fill("2026-08-12");
-    let stage = dialog.locator(".journey-stage-form").first();
+    const stage = dialog.locator(".journey-stage-form").first();
     await stage.getByLabel("Lugar").fill("Buenos Aires");
-    await stage.getByLabel("Llegada").fill("2026-08-10");
-    await stage.getByLabel("Salida").fill("2026-08-11");
+    await expect(dialog.getByRole("button", { name: "Agregar otro destino" })).toHaveCount(0);
     await dialog.locator('input[type="file"]').setInputFiles({
       name: "portada.png",
       mimeType: "image/png",
       buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
     });
     await expect(dialog.locator(".photo-picker img")).toBeVisible();
-    await dialog.getByRole("button", { name: "Agregar otro destino" }).click();
-    stage = dialog.locator(".journey-stage-form").nth(1);
-    await stage.getByLabel("País").selectOption("UY");
-    await stage.getByLabel("Lugar").fill("Montevideo");
-    await stage.getByLabel("Llegada").fill("2026-08-12");
-    await stage.getByLabel("Salida").fill("2026-08-12");
     await dialog.getByRole("button", { name: "Guardar viaje" }).click();
     await expect(
       page.getByRole("heading", {
-        name: "Buenos Aires y Montevideo",
+        name: "Buenos Aires en pareja",
         exact: true,
       }),
     ).toBeVisible();
@@ -142,6 +149,7 @@ for (const viewport of [
     await expect(
       page.getByRole("tabpanel", { name: "Agenda" }).getByText("Traslado", { exact: true }),
     ).toBeVisible();
+    await page.locator(".journey-point-overflow > summary").first().click();
     const maps = page.getByRole("link", { name: /Google Maps/ });
     await expect(maps).toHaveAttribute("href", /maps\.google\.com/);
     await expect(maps).toHaveClass(/button--primary/);
@@ -161,7 +169,7 @@ for (const viewport of [
       .getByRole("button", { name: "Marcar realizado", exact: true })
       .click();
     await expect(page.getByText("1 de 1 puntos realizados")).toBeVisible();
-    await page.getByRole("button", { name: "Volver a pendiente", exact: true }).click();
+    await page.getByRole("button", { name: "Marcar pendiente", exact: true }).click();
     await expect(page.getByText("0 de 1 puntos realizados")).toBeVisible();
     await expect(page.getByText("Pendiente", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Marcar realizado", exact: true }).click();
@@ -232,7 +240,7 @@ for (const viewport of [
     ).toBeTruthy();
     await page.goto("/app/whither-journey");
     const tripCard = page.getByRole("link", {
-      name: "Ver viaje Buenos Aires y Montevideo",
+      name: "Ver viaje Buenos Aires en pareja",
     });
     await expect(tripCard).toHaveClass(/catalog-media-card-link--journey/);
     await expect(
@@ -272,26 +280,29 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       }),
     ).toBeVisible();
     await expect(page.locator(".journey-detail-cover__image")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "La Cabrera", exact: true })).toBeVisible();
+    await page.getByRole("tab", { name: "Agenda", exact: true }).click();
     const fullWidth = await page.evaluate(() => {
       const page = document.querySelector(".journey-page")!;
-      const destinations = document.querySelector(".journey-destinations")!;
+      const stepper = document.querySelector(".journey-day-stepper")!;
       const overview = document.querySelector(".journey-overview")!;
       return {
         page: page.getBoundingClientRect().width,
-        destinations: destinations.getBoundingClientRect().width,
+        stepper: stepper.getBoundingClientRect().width,
         overview: overview.getBoundingClientRect().width,
       };
     });
-    expect(fullWidth.destinations).toBeGreaterThan(fullWidth.page * 0.9);
+    expect(fullWidth.stepper).toBeGreaterThan(fullWidth.page * 0.9);
     expect(fullWidth.overview).toBeGreaterThan(fullWidth.page * 0.9);
-    await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: "La Cabrera", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Un día a la vez", exact: true })).toBeVisible();
     await page.getByRole("tab", { name: "Agenda", exact: true }).focus();
     await page.keyboard.press("ArrowRight");
     await expect(
-      page.getByRole("tab", { name: "Archivos", exact: true }),
+      page.getByRole("tab", { name: "Galería", exact: true }),
     ).toBeFocused();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+    await page.locator(".journey-point-overflow > summary").first().click();
     const pointLayout = await page.locator(".journey-route__point").first().evaluate((point) => {
       const content = point.lastElementChild!;
       const actions = content.querySelector<HTMLElement>(".journey-actions--point")!;
@@ -310,7 +321,7 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
       "animation-name",
       "none",
     );
-    for (const tab of ["Resumen", "Agenda", "Archivos", "Estadías", "Valijas", "Dinero"]) {
+    for (const tab of ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"]) {
       await page.getByRole("tab", { name: tab, exact: true }).click();
       await page.evaluate(() => window.scrollTo(0, 0));
       expect(
@@ -480,15 +491,16 @@ test("point types are shared settings and extra itinerary links get clear previe
   await dialog.getByRole("button", { name: "Guardar punto" }).click();
 
   const point = page.locator(".journey-route__point").filter({ has: page.getByRole("heading", { name: "Noche de cine" }) });
+  await point.locator(".journey-point-overflow > summary").click();
   await expect(point.getByRole("link", { name: /Abrir ficha/ })).toHaveClass(/journey-action-link/);
   await expect(point.getByRole("link", { name: /Reservar/ })).toHaveAttribute("href", "https://example.com/reservar");
   await expect(point.getByRole("link", { name: /Google Maps/ })).toHaveClass(/journey-map-action/);
   await expect(point.locator("details.journey-point-note")).not.toHaveAttribute("open", "");
-  await point.locator("summary").click();
+  await point.locator(".journey-point-note > summary").click();
   await expect(point.getByText("Anotar entradas y horario.")).toBeVisible();
 });
 
-test("daily summary saves a shared story, personal review, day photo and cover", async ({ page }) => {
+test("journey summary stays focused and gallery manages trip, daily and linked photos", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await journeyFixture(page, true);
   await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
@@ -509,7 +521,10 @@ test("daily summary saves a shared story, personal review, day photo and cover",
   await expect(dialog).toHaveCount(0);
   await expect(page.locator(".journey-day-review-list")).toContainText("La mejor caminata del viaje.");
 
-  const dayGallery = page.locator(".journey-day-photos");
+  await page.getByRole("tab", { name: "Galería", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Fotos de sus secciones", exact: true })).toBeVisible();
+  await expect(page.locator(".journey-gallery-linked")).toContainText("La Cabrera");
+  const dayGallery = page.locator(".journey-gallery-days");
   await dayGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
   dialog = page.getByRole("dialog");
   await dialog.locator('input[type="file"]').setInputFiles({
@@ -521,20 +536,20 @@ test("daily summary saves a shared story, personal review, day photo and cover",
   await expect(dialog.locator(".photo-manager__saved img")).toHaveCount(1);
   await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
 
-  const tripGallery = page.locator(".journey-trip-gallery");
+  const tripGallery = page.locator(".journey-gallery-owned");
   await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
   dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Foto de portada", { exact: true })).toBeVisible();
   const photos = dialog.locator(".photo-manager__photo");
-  await expect(photos).toHaveCount(2); // Portada actual y foto diaria en la galería general.
+  await expect(photos).toHaveCount(1);
   await dialog.locator('input[type="file"]').setInputFiles({
     name: "cena.png",
     mimeType: "image/png",
     buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
   });
   await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
-  await expect(photos).toHaveCount(3);
-  await photos.nth(2).getByRole("button", { name: "Hacer portada", exact: true }).click();
-  await expect(photos.nth(2).getByText("Foto de portada", { exact: true })).toBeVisible();
+  await expect(photos).toHaveCount(2);
+  await photos.nth(1).getByRole("button", { name: "Hacer portada", exact: true }).click();
+  await expect(photos.nth(1).getByText("Foto de portada", { exact: true })).toBeVisible();
   await expect(page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).resolves.toBeLessThanOrEqual(2);
 });

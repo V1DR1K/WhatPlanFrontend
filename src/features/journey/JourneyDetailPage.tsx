@@ -11,7 +11,7 @@ import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { useZoneContext } from "../../lib/zoneContext";
-import { api } from "../../lib/api";
+import { api, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import {
   getTrip,
@@ -27,7 +27,6 @@ import {
   formatJourneyDay,
   offsetJourneyDate,
   pointCategoryLabels,
-  setJourneyCover,
   addPackingForBoth,
   reorderPacking,
   type Point,
@@ -39,6 +38,7 @@ import {
 import { JourneyIcon } from "./JourneyIcon";
 import { JourneyForm } from "./JourneyForm";
 import { JourneyDaySummary } from "./JourneyDaySummary";
+import { JourneyGalleryTab } from "./JourneyGalleryTab";
 import { PlaneIcon } from "./JourneysPage";
 import {
   JourneyDateEditor,
@@ -55,7 +55,7 @@ import {
   fileLabel,
   downloadFile,
 } from "./JourneyFiles";
-const tabs = ["Resumen", "Agenda", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
+const tabs = ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 const displayPointCategory = (point: Point) =>
   point.source?.section ?? point.category ?? "GENERAL";
 export function JourneyDetailPage() {
@@ -253,7 +253,7 @@ export function JourneyDetailPage() {
         metadata={
           <div className="journey-detail__metadata">
             <p>{formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}{trip.archived ? " · Archivado" : ""}</p>
-            <p className="journey-detail__route">{trip.stages.map((stage) => stage.cityName).join(" → ")}</p>
+            <p className="journey-detail__route">{trip.stages[0]?.cityName ?? "Destino del viaje"}</p>
           </div>
         }
         actions={editable ? (
@@ -262,27 +262,6 @@ export function JourneyDetailPage() {
           </div>
         ) : null}
       />
-      <div className="journey-destinations" aria-label="Destinos del viaje">
-        {trip.stages.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            disabled={!editable}
-            className={context.selectedStageId === s.id ? "is-selected" : ""}
-            onClick={() => {
-              context.selectLocation(s.id);
-              setDay(s.startsOn);
-              setTab("Agenda");
-            }}
-          >
-            <strong>{s.cityName}</strong>
-            <span>
-              {s.countryCode} · {formatDate(s.startsOn)} —{" "}
-              {formatDate(s.endsOn)}
-            </span>
-          </button>
-        ))}
-      </div>
       <div className="journey-overview">
         <p>
           {completed} de {value.points.length} puntos realizados
@@ -302,13 +281,14 @@ export function JourneyDetailPage() {
         </div>
         {value.dates?.length > 0 && (
           <div className="journey-linked-dates">
-            <strong>Fechas para compartir</strong>
+            <strong>Fechas importantes</strong>
             {value.dates.map((d) => (
               <Link
                 key={`${d.specialDateId}-${d.date}`}
                 to={`/app/when-dates/${d.specialDateId}/${d.date}`}
+                title={`Ver ${d.label} en WhenDates`}
               >
-                {d.label} · {formatDate(d.date)}
+                {d.label} ↗
               </Link>
             ))}
           </div>
@@ -318,21 +298,18 @@ export function JourneyDetailPage() {
             Vincular fecha importante
           </Button>
         )}
-        <div className="journey-review-summary">
-          {value.reviews
-            .filter((r) => !r.stayId)
-            .map((r) => (
-              <div key={r.id}>
-                <strong>{r.author}</strong>
-                <RatingStars label="Viaje" value={r.rating} />
-                <p>{r.comment}</p>
-              </div>
+        <div className="journey-review-summary" aria-labelledby="journey-review-title">
+          <div className="journey-panel__heading"><div><p className="eyebrow">RESEÑAS</p><h2 id="journey-review-title">¿Cómo estuvo el viaje?</h2></div>
+            {editable && <Button variant="secondary" onClick={() => setReview(null)}>{value.reviews.some((r) => !r.stayId && r.author === session.get()?.username) ? "Editar mi reseña" : "Escribir mi reseña"}</Button>}
+          </div>
+          {value.reviews.filter((r) => !r.stayId).length ? <div className="journey-review-summary__list">
+            {value.reviews.filter((r) => !r.stayId).map((r) => (
+              <article className="journey-review-card" key={r.id}>
+                <span className="journey-review-card__avatar" aria-hidden="true">{r.author.slice(0, 1).toLocaleUpperCase()}</span>
+                <div><strong>{r.author}</strong><RatingStars label={`Reseña de ${r.author}`} value={r.rating} />{r.comment && <p>{r.comment}</p>}</div>
+              </article>
             ))}
-          {editable && (
-            <Button variant="secondary" onClick={() => setReview(null)}>
-              Mi reseña del viaje
-            </Button>
-          )}
+          </div> : <p className="journey-empty">Todavía no hay reseñas para este viaje.</p>}
         </div>
       </div>
       <div className="journey-tabs" role="tablist" aria-label="Organizar viaje">
@@ -381,12 +358,6 @@ export function JourneyDetailPage() {
             date={selectedDay === "unscheduled" ? trip.startsOn : selectedDay}
             onDateChange={setDay}
             editable={editable}
-            tripPhotos={value.files.filter((f) => f.purpose === "TRIP" || f.purpose === "DAY")}
-            coverPhotoId={trip.coverPhotoId ?? undefined}
-            onCover={async (fileId) => {
-              await setJourneyCover(id, fileId);
-              await refresh();
-            }}
           />
         )}
         {tab === "Agenda" && (
@@ -420,7 +391,7 @@ export function JourneyDetailPage() {
                   </svg>
                 </Button>
                 <div className="journey-day-stepper__date" aria-live="polite">
-                  <span>Día del recorrido</span>
+                  <span>Día del viaje</span>
                   <strong>
                     {selectedDay === "unscheduled"
                       ? "Sin día asignado"
@@ -500,45 +471,42 @@ export function JourneyDetailPage() {
                       <p>{p.notes}</p>
                     </details>}
                     <div className="journey-actions journey-actions--point" style={{ "--point-accent": categoryType?.color ?? "#B9DCE9" } as CSSProperties}>
-                      <div className="journey-external-actions" aria-label={`Enlaces de ${p.title}`}>
-                        {p.source && (
-                          <Link
-                            className={`button button--secondary journey-action-link journey-action-link--source journey-action-link--${p.source.section.toLowerCase()}`}
-                            to={sourceHref(p.source)}
-                            onClick={() => context.selectLocation(p.stageId)}
-                          >
-                            <JourneyIcon name={p.source.section} /> Abrir ficha <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
-                          </Link>
-                        )}
-                        {p.extraActions?.map((action, actionIndex) => <a
-                          className="button button--secondary journey-action-link journey-action-link--custom"
-                          href={action.url}
-                          key={`${p.id}-${actionIndex}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
-                        </a>)}
-                        {p.mapsUrl && <a className="button button--primary journey-action-link journey-map-action" href={p.mapsUrl} target="_blank" rel="noreferrer">
-                          <JourneyIcon name="MAPS" /> Google Maps <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
-                        </a>}
+                      <div className="journey-point-primary-actions" aria-label={`Acciones principales de ${p.title}`}>
+                        {editable && <Button className="journey-point-status-action" variant={p.status === "COMPLETED" ? "secondary" : undefined}
+                          icon={<JourneyIcon name={p.status === "COMPLETED" ? "PENDING" : "CHECK"} />} disabled={change.isPending}
+                          onClick={() => {
+                            if (p.status === "COMPLETED" || p.status === "CANCELLED") {
+                              change.mutate({ type: "point", value: { ...p, status: "PENDING" } });
+                            } else if (p.source && !p.source.experienceId) {
+                              setPoint(p); setCompleting(true);
+                            } else change.mutate({ type: "point", value: { ...p, status: "COMPLETED" } });
+                          }}>{p.status === "COMPLETED" ? "Marcar pendiente" : p.status === "CANCELLED" ? "Reactivar punto" : "Marcar realizado"}</Button>}
+                        {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
+                          onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
+                        {(editable || p.source || p.extraActions?.length || p.mapsUrl) && <details className="journey-point-overflow">
+                          <summary aria-label={`Más acciones de ${p.title}`} title="Más acciones"><span aria-hidden="true">•••</span></summary>
+                          <div className="journey-point-overflow__menu">
+                            {p.source && <Link className={`button button--secondary journey-action-link journey-action-link--source journey-action-link--${p.source.section.toLowerCase()}`}
+                              to={sourceHref(p.source)} onClick={() => context.selectLocation(p.stageId)}>
+                              <JourneyIcon name={p.source.section} /> Abrir ficha <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                            </Link>}
+                            {p.extraActions?.map((action, actionIndex) => <a className="button button--secondary journey-action-link journey-action-link--custom"
+                              href={action.url} key={`${p.id}-${actionIndex}`} target="_blank" rel="noreferrer">
+                              <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                            </a>)}
+                            {p.mapsUrl && <a className="button button--primary journey-action-link journey-map-action" href={p.mapsUrl} target="_blank" rel="noreferrer">
+                              <JourneyIcon name="MAPS" /> Google Maps <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                            </a>}
+                            {editable && <>
+                              <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} disabled={change.isPending} onClick={() => { setPoint(p); setCompleting(false); }}>Editar punto</Button>
+                              {p.status !== "CANCELLED" && <Button variant="secondary" icon={<JourneyIcon name="CANCEL" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "CANCELLED" } })}>Cancelar punto</Button>}
+                              <Button variant="secondary" icon={<JourneyIcon name="UP" />} disabled={change.isPending || index === 0} aria-label={`Mover ${p.title} hacia arriba`} onClick={() => reorder(index, -1)}>Subir</Button>
+                              <Button variant="secondary" icon={<JourneyIcon name="DOWN" />} disabled={change.isPending || index === points.length - 1} aria-label={`Mover ${p.title} hacia abajo`} onClick={() => reorder(index, 1)}>Bajar</Button>
+                              <Button variant="destructive" icon={<JourneyIcon name="DELETE" />} onClick={() => requestDelete("points", p.id, "¿Quitar este punto?")}>Quitar punto</Button>
+                            </>}
+                          </div>
+                        </details>}
                       </div>
-                      {editable && <div className="journey-management-actions">
-                        <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} disabled={change.isPending} onClick={() => { setPoint(p); setCompleting(false); }}>Editar</Button>
-                        {p.status === "COMPLETED" ? (
-                          <Button variant="secondary" icon={<JourneyIcon name="PENDING" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "PENDING" } })}>Volver a pendiente</Button>
-                        ) : (
-                          <Button icon={<JourneyIcon name="CHECK" />} disabled={change.isPending} onClick={() => {
-                            if (p.source && !p.source.experienceId) { setPoint(p); setCompleting(true); }
-                            else change.mutate({ type: "point", value: { ...p, status: "COMPLETED" } });
-                          }}>Marcar realizado</Button>
-                        )}
-                        {p.status !== "CANCELLED" && <Button variant="secondary" icon={<JourneyIcon name="CANCEL" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "CANCELLED" } })}>Cancelar punto</Button>}
-                        <Button variant="secondary" icon={<JourneyIcon name="MONEY" />} onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>
-                        <Button variant="secondary" icon={<JourneyIcon name="UP" />} disabled={change.isPending || index === 0} aria-label={`Mover ${p.title} hacia arriba`} onClick={() => reorder(index, -1)}>Subir</Button>
-                        <Button variant="secondary" icon={<JourneyIcon name="DOWN" />} disabled={change.isPending || index === points.length - 1} aria-label={`Mover ${p.title} hacia abajo`} onClick={() => reorder(index, 1)}>Bajar</Button>
-                        <Button variant="destructive" icon={<JourneyIcon name="DELETE" />} onClick={() => requestDelete("points", p.id, "¿Quitar este punto?")}>Quitar</Button>
-                      </div>}
                     </div>
                   </div>
                 </li>;
@@ -546,6 +514,7 @@ export function JourneyDetailPage() {
             </ol>
           </>
         )}
+        {tab === "Galería" && <JourneyGalleryTab detail={value} editable={editable} onRefresh={refresh} />}
         {tab === "Archivos" && (
           <>
             <div className="journey-panel__heading">

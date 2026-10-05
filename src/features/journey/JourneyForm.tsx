@@ -90,47 +90,6 @@ export function CityPicker({
     </div>
   );
 }
-type StageDraft = {
-  key: string;
-  stageId?: string;
-  city: CityDraft;
-  startsOn: string;
-  endsOn: string;
-  manualDates: boolean;
-};
-const dayNumber = (date: string) => Math.floor(Date.parse(`${date}T00:00:00Z`) / 86_400_000);
-const dayString = (day: number) => new Date(day * 86_400_000).toISOString().slice(0, 10);
-export function distributeDates<T extends Pick<StageDraft, "startsOn" | "endsOn" | "manualDates">>(stages: T[], start: string, end: string) {
-  const first = dayNumber(start); const finish = dayNumber(end);
-  if (finish < first) return { stages, error: "La fecha de fin debe ser posterior al inicio." };
-  const next = stages.map((stage) => ({ ...stage }));
-  let cursor = first; let index = 0;
-  while (index < next.length) {
-    if (next[index].manualDates) {
-      const from = dayNumber(next[index].startsOn); const to = dayNumber(next[index].endsOn);
-      if (from !== cursor || to < from || to > finish)
-        return { stages, error: "Las etapas fijas deben quedar consecutivas. Agregá un destino automático para cubrir los días libres." };
-      cursor = to + 1; index += 1; continue;
-    }
-    const runStart = index;
-    while (index < next.length && !next[index].manualDates) index += 1;
-    const count = index - runStart;
-    const boundary = index < next.length ? dayNumber(next[index].startsOn) : finish + 1;
-    const available = boundary - cursor;
-    if (available < count)
-      return { stages, error: "No quedan suficientes días libres para repartir los destinos. Ajustá alguna fecha o ampliá el viaje." };
-    const base = Math.floor(available / count); const remainder = available % count;
-    for (let offset = 0; offset < count; offset += 1) {
-      const length = base + (offset < remainder ? 1 : 0);
-      next[runStart + offset].startsOn = dayString(cursor);
-      next[runStart + offset].endsOn = dayString(cursor + length - 1);
-      cursor += length;
-    }
-  }
-  if (cursor !== finish + 1)
-    return { stages, error: "Quedaron días del viaje sin destino. Ajustá una etapa o agregá otro destino." };
-  return { stages: next, error: "" };
-}
 export function JourneyForm({
   trip,
   onClose,
@@ -146,56 +105,21 @@ export function JourneyForm({
   const [maxTripPhotos, setMaxTripPhotos] = useState(trip?.maxTripPhotos ?? 20);
   const [maxDayPhotos, setMaxDayPhotos] = useState(trip?.maxDayPhotos ?? 10);
   const [coverFile, setCoverFile] = useState<File>();
-  const [allocationError, setAllocationError] = useState("");
-  const [stages, setStages] = useState<StageDraft[]>(
-    trip?.stages.map((s) => ({
-      key: s.id,
-      stageId: s.id,
-      manualDates: true,
-      city: { id: s.cityId, name: s.cityName, countryCode: s.countryCode },
-      startsOn: s.startsOn,
-      endsOn: s.endsOn,
-    })) ?? [
-      {
-        key: crypto.randomUUID(),
-        city: { countryCode: "AR", name: "" },
-        startsOn: today(),
-        endsOn: today(),
-        manualDates: false,
-      },
-    ],
-  );
-  const update = (key: string, change: Partial<StageDraft>) => {
-    const next = stages.map((s) => s.key === key
-      ? { ...s, ...change,
-          manualDates: "startsOn" in change || "endsOn" in change ? true : s.manualDates }
-      : s);
-    const allocation = distributeDates(next, startsOn, endsOn);
-    setStages(allocation.stages);
-    setAllocationError(allocation.error);
-  };
-  const suggestion = stages
-    .map((s) => s.city.name.trim())
-    .filter(Boolean)
-    .join(" → ");
+  const initialStage = trip?.stages[0];
+  const [stageId] = useState(initialStage?.id);
+  const [city, setCity] = useState<CityDraft>(initialStage
+    ? { id: initialStage.cityId, name: initialStage.cityName, countryCode: initialStage.countryCode }
+    : { countryCode: "AR", name: "" });
+  const suggestion = city.name.trim();
   const save = useMutation({
     mutationFn: async () => {
-      const resolved = [];
-      for (const s of stages) {
-        const city: City = s.city.id
+      const resolvedCity: City = city.id
           ? {
-              id: s.city.id,
-              name: s.city.name,
-              countryCode: s.city.countryCode,
+              id: city.id,
+              name: city.name,
+              countryCode: city.countryCode,
             }
-          : await saveCity(s.city.name, s.city.countryCode);
-        resolved.push({
-          id: s.stageId,
-          cityId: city.id,
-          startsOn: s.startsOn,
-          endsOn: s.endsOn,
-        });
-      }
+          : await saveCity(city.name, city.countryCode);
       return saveTrip(
         {
           name: (name.trim() || suggestion).slice(0, 160),
@@ -203,7 +127,7 @@ export function JourneyForm({
           endsOn,
           maxTripPhotos,
           maxDayPhotos,
-          stages: resolved,
+          stages: [{ id: stageId, cityId: resolvedCity.id, startsOn, endsOn }],
         },
         trip?.id,
       );
@@ -256,7 +180,7 @@ export function JourneyForm({
       >
         <h2>{trip ? "Editar viaje" : "¿Adónde quieren ir?"}</h2>
         <p className="muted">
-          El recorrido reparte las fechas disponibles entre los destinos.
+          Cada viaje tiene un destino principal que cubre todas sus fechas.
         </p>
         <div className="form-columns">
           <label>Límite de fotos del viaje<input type="number" min="1" max="100" required value={maxTripPhotos} onChange={(e) => setMaxTripPhotos(Number(e.target.value))} /></label>
@@ -287,9 +211,7 @@ export function JourneyForm({
               onChange={(e) => {
                 const nextStart = e.target.value;
                 setStartsOn(nextStart);
-                const allocation = distributeDates(stages, nextStart, endsOn);
-                setStages(allocation.stages);
-                setAllocationError(allocation.error);
+                if (nextStart > endsOn) setEndsOn(nextStart);
               }}
             />
           </label>
@@ -300,87 +222,16 @@ export function JourneyForm({
               type="date"
               min={startsOn}
               value={endsOn}
-              onChange={(e) => {
-                const nextEnd = e.target.value;
-                setEndsOn(nextEnd);
-                const allocation = distributeDates(stages, startsOn, nextEnd);
-                setStages(allocation.stages);
-                setAllocationError(allocation.error);
-              }}
+              onChange={(e) => setEndsOn(e.target.value)}
             />
           </label>
         </div>
-        <h3>Destinos del recorrido</h3>
-        {stages.map((s, index) => (
-          <fieldset className="journey-stage-form" key={s.key}>
-            <legend>Destino {index + 1}</legend>
-            <CityPicker
-              value={s.city}
-              onChange={(city) => update(s.key, { city })}
-            />
-            <div className="form-columns">
-              <label>
-                Llegada
-                <input
-                  required
-                  type="date"
-                  min={startsOn}
-                  max={endsOn}
-                  value={s.startsOn}
-                  onChange={(e) => update(s.key, { startsOn: e.target.value })}
-                />
-              </label>
-              <label>
-                Salida
-                <input
-                  required
-                  type="date"
-                  min={s.startsOn > startsOn ? s.startsOn : startsOn}
-                  max={endsOn}
-                  value={s.endsOn}
-                  onChange={(e) => update(s.key, { endsOn: e.target.value })}
-                />
-              </label>
-            </div>
-            {stages.length > 1 && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  const allocation = distributeDates(stages.filter((v) => v.key !== s.key), startsOn, endsOn);
-                  setStages(allocation.stages);
-                  setAllocationError(allocation.error);
-                }}
-              >
-                Quitar destino
-              </Button>
-            )}
-          </fieldset>
-        ))}
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={stages.length >= 100}
-          onClick={() => {
-            const allocation = distributeDates([
-              ...stages,
-              {
-                key: crypto.randomUUID(),
-                city: { countryCode: "AR", name: "" },
-                startsOn,
-                endsOn,
-                manualDates: false,
-              },
-            ], startsOn, endsOn);
-            setStages(allocation.stages);
-            setAllocationError(allocation.error);
-          }}
-        >
-          Agregar otro destino
-        </Button>
-        {allocationError && <p className="form-error" role="alert">{allocationError}</p>}
+        <fieldset className="journey-stage-form">
+          <legend>Destino</legend>
+          <CityPicker value={city} onChange={setCity} />
+        </fieldset>
         <div className="journey-form__actions">
-          <Button disabled={save.isPending || !suggestion || !!allocationError}>
+          <Button disabled={save.isPending || !suggestion || !startsOn || endsOn < startsOn}>
             {save.isPending ? "Guardando…" : "Guardar viaje"}
           </Button>
         </div>
