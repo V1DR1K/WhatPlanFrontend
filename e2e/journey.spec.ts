@@ -341,12 +341,13 @@ test("packing adds items to both partners, keeps unchecked first, and allows cus
   await page.getByRole("button", { name: "Agregar", exact: true }).click();
   await expect(tomas.getByText("Adaptador", { exact: false })).toBeVisible();
   await tomas.getByRole("button", { name: "Subir Adaptador" }).click();
-  const itemOrder = await tomas.locator("li").evaluateAll((rows) =>
-    rows.map((row) => row.textContent ?? ""),
-  );
-  expect(itemOrder.findIndex((text) => text.includes("Adaptador"))).toBeLessThan(
-    itemOrder.findIndex((text) => text.includes("Auriculares")),
-  );
+  await expect.poll(async () => {
+    const itemOrder = await tomas.locator("li").evaluateAll((rows) =>
+      rows.map((row) => row.textContent ?? ""),
+    );
+    return itemOrder.findIndex((text) => text.includes("Adaptador"))
+      < itemOrder.findIndex((text) => text.includes("Auriculares"));
+  }).toBe(true);
   const orderRequest = fixture.requests.find(
     (request) => request.method === "PUT" && request.path.endsWith("/packing/order"),
   );
