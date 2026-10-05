@@ -79,7 +79,6 @@ export function PhotoManagerModal(props: Props) {
     </Button>
     {open && <Modal size="wide" className="photo-manager-modal" onClose={close} pending={uploading || preparing} title={`Administrar ${heading.toLowerCase()}`}>
       <div className="photo-manager">
-        <p className="eyebrow">{props.mode === "gallery" ? "GALERÍA" : "FOTO DE PERFIL"}</p>
         <h2>{heading}</h2>
         <p className="muted">JPG, PNG, WebP o HEIC · hasta 10 MB</p>
 
@@ -92,14 +91,23 @@ export function PhotoManagerModal(props: Props) {
         </> : <>
           <p className="photo-manager__count">{limitCount}/{photoLimit} fotos para esta galería · podés agregar {maxFiles}</p>
           {props.photos.length > 0 && <div className="photo-manager__saved" aria-label="Fotos guardadas">
-            {props.photos.map((photo, index) => <article className="photo-manager__photo" key={photo.id}>
-              <button className="photo-manager__preview" type="button" onClick={() => setViewerIndex(index)} aria-label={`Ampliar foto ${index + 1} de ${props.name}`}><MediaImage src={photo.thumbnailUrl || photo.url} alt={`Foto ${index + 1} de ${props.name}`} width={photo.width} height={photo.height} loading="lazy" /></button>
-              {photo.id === props.coverPhotoId && <span className="photo-manager__cover">Foto de portada</span>}
-              <div className="photo-manager__photo-actions">
-                {props.onSetCover && photo.id !== props.coverPhotoId && <Button type="button" variant="secondary" icon="⭐" disabled={props.coverPending || uploading} onClick={() => props.onSetCover?.(photo)}>Hacer portada</Button>}
-                {props.onDelete && <Button type="button" variant="destructive" icon="🗑️" disabled={uploading} onClick={() => props.onDelete?.(photo)}>Quitar</Button>}
-              </div>
-            </article>)}
+            {props.photos.map((photo, index) => {
+              const isCover = photo.id === props.coverPhotoId;
+              return (
+                <article className="photo-manager__photo" key={photo.id}>
+                  <button className="photo-manager__preview" type="button" onClick={() => setViewerIndex(index)} aria-label={`Ampliar foto ${index + 1} de ${props.name}`}>
+                    <MediaImage src={photo.thumbnailUrl || photo.url} fallbackSrc={photo.url} alt={`Foto ${index + 1} de ${props.name}`} width={photo.width} height={photo.height} loading="lazy" />
+                  </button>
+                  <span className={`photo-manager__cover${isCover ? "" : " photo-manager__cover--empty"}`} aria-hidden={!isCover}>
+                    {isCover ? "Foto de portada" : ""}
+                  </span>
+                  <div className="photo-manager__photo-actions">
+                    {props.onSetCover && <Button type="button" className={isCover ? "photo-manager__cover-action" : undefined} variant="secondary" icon="⭐" disabled={isCover || props.coverPending || uploading} onClick={() => props.onSetCover?.(photo)}>Hacer portada</Button>}
+                    {props.onDelete && <Button type="button" variant="destructive" icon="🗑️" disabled={uploading} onClick={() => props.onDelete?.(photo)}>Quitar</Button>}
+                  </div>
+                </article>
+              );
+            })}
           </div>}
           {maxFiles > 0 && <>
             <PhotoPicker key={`${props.photos.length}-${pickerKey}`} multiple maxFiles={maxFiles} disabled={uploading} onChange={setFiles} onPreparingChange={setPreparing} selectLabel="Agregar fotos" />
