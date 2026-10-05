@@ -361,6 +361,10 @@ export async function journeyFixture(page: Page, rich = false) {
       }
       return reply(pointTypes);
     }
+    if (path === "/whither-journey/destinations") {
+      const cityIds = new Set(Array.from(journeys.values()).flatMap((detail) => detail.trip.stages.map((stage) => stage.cityId)));
+      return reply(cities.filter((city) => cityIds.has(city.id)).sort((a, b) => a.name.localeCompare(b.name)));
+    }
     const pointTypeRoute = /^\/whither-journey\/point-types\/([^/]+)$/.exec(path);
     if (pointTypeRoute) {
       const index = pointTypes.findIndex((type) => type.code === decodeURIComponent(pointTypeRoute[1]));
@@ -375,7 +379,33 @@ export async function journeyFixture(page: Page, rich = false) {
     }
     if (path === "/whither-journey") {
       if (method === "POST") return reply(create(body).trip, 201);
-      return reply(Array.from(journeys.values()).map((d) => d.trip));
+      const params = url.searchParams;
+      let result = Array.from(journeys.values()).map((d) => d.trip);
+      const archived = params.get("archived");
+      if (archived !== null) result = result.filter((trip) => trip.archived === (archived === "true"));
+      const search = params.get("search")?.trim().toLocaleLowerCase("es");
+      if (search) result = result.filter((trip) => trip.name.toLocaleLowerCase("es").includes(search)
+        || trip.stages.some((stage) => stage.cityName.toLocaleLowerCase("es").includes(search)));
+      const destinationId = Number(params.get("destinationId"));
+      if (Number.isSafeInteger(destinationId) && destinationId > 0) result = result.filter((trip) => trip.stages.some((stage) => stage.cityId === destinationId));
+      const from = params.get("from");
+      const to = params.get("to");
+      if (from) result = result.filter((trip) => trip.endsOn >= from);
+      if (to) result = result.filter((trip) => trip.startsOn <= to);
+      const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+      switch (params.get("status")) {
+        case "UPCOMING": result = result.filter((trip) => trip.startsOn > today); break;
+        case "IN_PROGRESS": result = result.filter((trip) => trip.startsOn <= today && trip.endsOn >= today); break;
+        case "FINISHED": result = result.filter((trip) => trip.endsOn < today); break;
+      }
+      switch (params.get("sort")) {
+        case "starts-asc": result.sort((a, b) => a.startsOn.localeCompare(b.startsOn) || a.id.localeCompare(b.id)); break;
+        case "name-asc": result.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id)); break;
+        default: result.sort((a, b) => b.startsOn.localeCompare(a.startsOn) || b.id.localeCompare(a.id));
+      }
+      const page = Math.max(0, Number(params.get("page") ?? 0));
+      const size = Math.min(50, Math.max(1, Number(params.get("size") ?? 20)));
+      return reply(result.slice(page * size, (page + 1) * size));
     }
     const dayIndex = /^\/whither-journey\/([^/]+)\/days$/.exec(path);
     if (dayIndex) {

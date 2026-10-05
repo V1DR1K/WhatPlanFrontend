@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
+import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { useZoneContext } from "../../lib/zoneContext";
@@ -229,33 +230,38 @@ export function JourneyDetailPage() {
       <Link className="journey-back" to="/app/whither-journey">
         ← Todos sus viajes
       </Link>
-      <header className={`journey-detail-hero${trip.coverPhotoUrl ? " has-cover" : ""}`}>
-        {trip.coverPhotoUrl && (
-          <MediaImage
-            className="journey-detail-hero__image"
-            src={trip.coverPhotoUrl}
-            alt={`Foto de portada de ${trip.name}`}
-            loading="eager"
-          />
-        )}
-        <div className="journey-detail-hero__content">
-          <PlaneIcon />
-          <h1>{trip.name}</h1>
-          <p>
-            {formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}
-            {trip.archived ? " · Archivado" : ""}
-          </p>
-        </div>
-        {editable && (
-          <Button
-            className="journey-detail-hero__edit"
-            variant="secondary"
-            onClick={() => setEditTrip(true)}
-          >
-            Editar viaje
-          </Button>
-        )}
-      </header>
+      <EntityDetailHeader
+        className="journey-detail__head"
+        eyebrow="WHITHER JOURNEY · VIAJE COMPARTIDO"
+        title={trip.name}
+        media={
+          <div className="journey-detail-cover">
+            {trip.coverPhotoUrl ? (
+              <MediaImage
+                className="journey-detail-cover__image"
+                src={trip.coverPhotoUrl}
+                alt={`Foto de portada de ${trip.name}`}
+                loading="eager"
+              />
+            ) : (
+              <div className="journey-detail-cover__empty" aria-label="Viaje sin foto de portada">
+                <PlaneIcon />
+              </div>
+            )}
+          </div>
+        }
+        metadata={
+          <div className="journey-detail__metadata">
+            <p>{formatDate(trip.startsOn)} — {formatDate(trip.endsOn)}{trip.archived ? " · Archivado" : ""}</p>
+            <p className="journey-detail__route">{trip.stages.map((stage) => stage.cityName).join(" → ")}</p>
+          </div>
+        }
+        actions={editable ? (
+          <div className="detail-actions">
+            <Button variant="secondary" onClick={() => setEditTrip(true)}>Editar viaje</Button>
+          </div>
+        ) : null}
+      />
       <div className="journey-destinations" aria-label="Destinos del viaje">
         {trip.stages.map((s) => (
           <button

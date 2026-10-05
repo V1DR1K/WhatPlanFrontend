@@ -21,6 +21,49 @@ test("dashboard presents Whither Journey beside WhenDates at the end", async ({ 
   expect(firstWordLines).toBe(1);
 });
 
+test("journey catalog filters trips and renders shared photo cards", async ({ page }) => {
+  const fixture = await journeyFixture(page, true);
+  const archivedTrip = fixture.journeys.get("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!;
+  archivedTrip.trip.archived = true;
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/app/whither-journey");
+
+  const cards = page.locator(".journey-catalog > a");
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first().locator(".journey-trip__art svg")).toBeVisible();
+  await expect(cards.first().getByRole("heading", { name: "Volvemos a Buenos Aires" })).toBeVisible();
+  await expect(cards.first().locator(".catalog-media-card__kpi")).toContainText("3 DÍAS");
+
+  await page.getByLabel("Buscar viajes").fill("Buenos Aires");
+  await page.getByLabel("Filtrar por destino").selectOption("2");
+  await page.getByLabel("Fecha desde").fill("2026-08-01");
+  await page.getByLabel("Fecha hasta").fill("2026-09-30");
+  await page.locator(".catalog-filter").getByRole("button", { name: "Finalizados" }).click();
+  await page.getByLabel("Ordenar viajes").selectOption("name-asc");
+
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first().getByRole("heading", { name: "Volvemos a Buenos Aires" })).toBeVisible();
+  await expect.poll(() => fixture.requests.some((request) => {
+    if (!request.path.startsWith("/api/whither-journey?")) return false;
+    const params = new URLSearchParams(request.path.split("?")[1]);
+    return params.get("archived") === "false"
+      && params.get("search") === "Buenos Aires"
+      && params.get("destinationId") === "2"
+      && params.get("from") === "2026-08-01"
+      && params.get("to") === "2026-09-30"
+      && params.get("status") === "FINISHED"
+      && params.get("sort") === "name-asc";
+  })).toBe(true);
+
+  await page.getByRole("button", { name: "Limpiar filtros" }).click();
+  await expect(cards).toHaveCount(1);
+  await page.getByRole("button", { name: "Ver archivados" }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first().locator(".catalog-media-card__media img")).toBeVisible();
+  await expect(cards.first().getByRole("heading", { name: "Un fin de semana en Buenos Aires" })).toBeVisible();
+  await expect(cards.first().locator(".catalog-media-card__badge")).toContainText("ARCHIVADO");
+});
+
 for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
@@ -65,7 +108,7 @@ for (const viewport of [
         exact: true,
       }),
     ).toBeVisible();
-    await expect(page.locator(".journey-detail-hero img")).toBeVisible();
+    await expect(page.locator(".journey-detail-cover img")).toBeVisible();
     expect(fixture.journeys.size).toBe(1);
     expect(fixture.requests.some((request) =>
       request.method === "POST"
@@ -228,7 +271,7 @@ test("review desktop and mobile, keyboard and reduced motion", async ({
         exact: true,
       }),
     ).toBeVisible();
-    await expect(page.locator(".journey-detail-hero.has-cover img")).toBeVisible();
+    await expect(page.locator(".journey-detail-cover__image")).toBeVisible();
     const fullWidth = await page.evaluate(() => {
       const page = document.querySelector(".journey-page")!;
       const destinations = document.querySelector(".journey-destinations")!;

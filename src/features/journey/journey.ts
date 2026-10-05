@@ -288,8 +288,29 @@ export const saveCity = (name: string, countryCode: string) =>
     method: "POST",
     body: JSON.stringify({ name, countryCode }),
   });
-export const getTrips = (page = 0) =>
-  api<Trip[]>(`/whither-journey?page=${page}&size=20`);
+export type JourneyCatalogStatus = "UPCOMING" | "IN_PROGRESS" | "FINISHED";
+export type JourneyCatalogSort = "starts-desc" | "starts-asc" | "name-asc";
+export type JourneyCatalogFilters = {
+  archived?: boolean;
+  search?: string;
+  status?: JourneyCatalogStatus;
+  destinationId?: number;
+  from?: string;
+  to?: string;
+  sort?: JourneyCatalogSort;
+};
+export const getTrips = (page = 0, filters: JourneyCatalogFilters = {}) => {
+  const query = new URLSearchParams({ page: String(page), size: "20" });
+  if (filters.archived !== undefined) query.set("archived", String(filters.archived));
+  if (filters.search?.trim()) query.set("search", filters.search.trim());
+  if (filters.status) query.set("status", filters.status);
+  if (filters.destinationId) query.set("destinationId", String(filters.destinationId));
+  if (filters.from) query.set("from", filters.from);
+  if (filters.to) query.set("to", filters.to);
+  if (filters.sort) query.set("sort", filters.sort);
+  return api<Trip[]>(`/whither-journey?${query.toString()}`);
+};
+export const getJourneyDestinations = () => api<City[]>("/whither-journey/destinations");
 export const getTrip = (id: string) => api<Detail>(`/whither-journey/${id}`);
 export const getJourneyPointTypes = () => api<JourneyPointType[]>("/whither-journey/point-types");
 export const saveJourneyPointType = (input: Pick<JourneyPointType, "name" | "icon" | "color">, code?: string) =>
