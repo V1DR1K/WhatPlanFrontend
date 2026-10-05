@@ -5,6 +5,7 @@ const specialDates = [
   { id: 1, date: '2026-02-14', label: 'San Valentín', recurrence: 'ANNUAL' as const, createdAt: '', updatedAt: '' },
   { id: 2, date: '2026-02-14', label: 'Cena especial', recurrence: 'ONCE' as const, createdAt: '', updatedAt: '' },
   { id: 3, date: '2026-06-27', label: 'Mensuario', recurrence: 'MONTHLY' as const, createdAt: '', updatedAt: '' },
+  { id: 4, date: '2026-10-10', endsOn: '2026-10-12', label: 'Viaje', recurrence: 'ONCE' as const, createdAt: '', updatedAt: '' },
 ];
 
 describe('special date labels', () => {
@@ -16,6 +17,13 @@ describe('special date labels', () => {
 
   it('adds all matching labels to a history option', () => {
     expect(specialDateOptionSuffix('2026-02-14', specialDates)).toBe(' · San Valentín · Cena especial');
+  });
+
+  it('matches every day in a unique date range, including both endpoints', () => {
+    expect(matchingSpecialDates('2026-10-10', specialDates).map((value) => value.label)).toContain('Viaje');
+    expect(matchingSpecialDates('2026-10-11', specialDates).map((value) => value.label)).toContain('Viaje');
+    expect(matchingSpecialDates('2026-10-12', specialDates).map((value) => value.label)).toContain('Viaje');
+    expect(matchingSpecialDates('2026-10-13', specialDates).map((value) => value.label)).not.toContain('Viaje');
   });
 
   it('formats special dates for display without changing their ISO value', () => {

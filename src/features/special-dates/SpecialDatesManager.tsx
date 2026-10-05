@@ -10,7 +10,7 @@ import type { SpecialDate, SpecialDateRecurrence } from '../../types/domain';
 import { specialDateDisplay, specialDateRecurrenceLabel } from './SpecialDateLabels';
 import { deleteSpecialDate, getSpecialDates, saveSpecialDate, type SpecialDateInput } from './specialDates';
 
-const emptyDraft: SpecialDateInput = { date: '', label: '', recurrence: 'ONCE' };
+const emptyDraft: SpecialDateInput = { date: '', endsOn: '', label: '', recurrence: 'ONCE' };
 
 export function SpecialDatesManager() {
   const queryClient = useQueryClient();
@@ -49,7 +49,7 @@ export function SpecialDatesManager() {
   };
   const startEdit = (specialDate: SpecialDate) => {
     save.reset();
-    setDraft({ date: specialDate.date, label: specialDate.label, recurrence: specialDate.recurrence });
+    setDraft({ date: specialDate.date, endsOn: specialDate.endsOn ?? specialDate.date, label: specialDate.label, recurrence: specialDate.recurrence });
     setEditing(specialDate);
   };
 
@@ -67,7 +67,7 @@ export function SpecialDatesManager() {
         specialDates.data?.length ? <ul className="special-dates-settings__list">
           {specialDates.data.map((specialDate) => <li key={specialDate.id}>
             <div>
-              <time dateTime={specialDate.date}>{specialDateDisplay(specialDate.date)}</time>
+              <time dateTime={specialDate.date}>{specialDateDisplay(specialDate.date)}{specialDate.recurrence === 'ONCE' && specialDate.endsOn && specialDate.endsOn !== specialDate.date ? ` — ${specialDateDisplay(specialDate.endsOn)}` : ''}</time>
               <strong>{specialDate.label}</strong>
               <small className="special-date-recurrence">{specialDateRecurrenceLabel[specialDate.recurrence]}</small>
             </div>
@@ -83,10 +83,11 @@ export function SpecialDatesManager() {
       <form onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
         <p className="eyebrow">{editing ? 'EDITAR FECHA ESPECIAL' : 'NUEVA FECHA ESPECIAL'}</p>
         <h2>{editing ? editing.label : 'Agregar fecha especial'}</h2>
-        <p className="special-dates-settings__modal-copy">Elegí si la etiqueta ocurre una sola vez, cada año o todos los meses el mismo día.</p>
+        <p className="special-dates-settings__modal-copy">Elegí un día o un rango para una fecha única. Las fechas anuales o mensuales se repiten en el mismo día.</p>
         <label>Etiqueta<input value={draft.label} maxLength={160} required autoFocus onChange={(event) => setDraft({ ...draft, label: event.target.value })} /></label>
-        <label>Fecha<input type="date" value={draft.date} required onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></label>
-        <label>Repetición<select value={draft.recurrence} onChange={(event) => setDraft({ ...draft, recurrence: event.target.value as SpecialDateRecurrence })}><option value="ONCE">Única, solo esta fecha</option><option value="ANNUAL">Anual, mismo día y mes</option><option value="MONTHLY">Mensual, mismo día</option></select></label>
+        <label>Fecha de inicio<input type="date" value={draft.date} required onChange={(event) => setDraft({ ...draft, date: event.target.value, endsOn: draft.recurrence === 'ONCE' && (!draft.endsOn || draft.endsOn < event.target.value) ? event.target.value : draft.endsOn })} /></label>
+        {draft.recurrence === 'ONCE' && <label>Fecha de fin<input type="date" min={draft.date} value={draft.endsOn ?? draft.date} required onChange={(event) => setDraft({ ...draft, endsOn: event.target.value })} /></label>}
+        <label>Repetición<select value={draft.recurrence} onChange={(event) => { const recurrence = event.target.value as SpecialDateRecurrence; setDraft({ ...draft, recurrence, endsOn: recurrence === 'ONCE' ? (draft.endsOn || draft.date) : draft.date }); }}><option value="ONCE">Única, un día o un rango</option><option value="ANNUAL">Anual, mismo día y mes</option><option value="MONTHLY">Mensual, mismo día</option></select></label>
         <Button icon="💾" disabled={save.isPending}>{save.isPending ? 'Guardando…' : 'Guardar fecha especial'}</Button>
         {save.error && <p className="form-error" role="alert">{save.error.message}</p>}
       </form>

@@ -19,6 +19,7 @@ import {
   saveReview,
   sections,
   sourceHref,
+  formatDate,
   today,
   type Detail,
   type Point,
@@ -843,14 +844,14 @@ export function JourneyDateEditor({
     queryKey: ["special-dates"],
     queryFn: getSpecialDates,
   });
-  const [stageId, setStageId] = useState(detail.trip.stages[0].id);
+  const stageId = detail.trip.stages[0].id;
   const [dateId, setDateId] = useState("");
-  const stage = detail.trip.stages.find((s) => s.id === stageId)!;
   const save = useMutation({
     mutationFn: (form: FormData) =>
       linkDate(detail.trip.id, {
         stageId,
-        date: String(form.get("date")),
+        date: detail.trip.startsOn,
+        endsOn: detail.trip.endsOn,
         specialDateId: dateId ? Number(dateId) : undefined,
         label: dateId ? undefined : String(form.get("label")),
       }),
@@ -876,10 +877,12 @@ export function JourneyDateEditor({
       >
         <h2>Una fecha para recordar</h2>
         <p className="muted">
-          Quedará en WhenDates y en este viaje, aunque todavía no hayan
-          registrado experiencias.
+          Quedará vinculada al rango completo del viaje, del {formatDate(detail.trip.startsOn)} al {formatDate(detail.trip.endsOn)}, y aparecerá en WhenDates aunque todavía no haya experiencias.
         </p>
-        <StageSelect detail={detail} value={stageId} onChange={setStageId} />
+        <div className="journey-linked-date-range" aria-label="Rango del viaje">
+          <span>Desde <strong>{formatDate(detail.trip.startsOn)}</strong></span>
+          <span>Hasta <strong>{formatDate(detail.trip.endsOn)}</strong></span>
+        </div>
         <label>
           Fecha importante
           <select value={dateId} onChange={(e) => setDateId(e.target.value)}>
@@ -902,18 +905,6 @@ export function JourneyDateEditor({
             />
           </label>
         )}
-        <label>
-          Día
-          <input
-            name="date"
-            type="date"
-            required
-            min={stage.startsOn}
-            max={stage.endsOn}
-            defaultValue={stage.startsOn}
-            key={stageId}
-          />
-        </label>
         <FormError error={save.error ?? templates.error} />
         <Button disabled={save.isPending}>Vincular fecha</Button>
       </form>

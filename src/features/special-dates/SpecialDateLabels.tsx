@@ -11,7 +11,7 @@ export const specialDateDisplay = (date: string) => date.split('-').reverse().jo
 const matchesDate = (date: string, specialDate: SpecialDate) => {
   if (specialDate.recurrence === 'ANNUAL') return specialDate.date.slice(5) === date.slice(5);
   if (specialDate.recurrence === 'MONTHLY') return specialDate.date.slice(-2) === date.slice(-2);
-  return specialDate.date === date;
+  return date >= specialDate.date && date <= (specialDate.endsOn ?? specialDate.date);
 };
 
 export function matchingSpecialDates(date: string | undefined, specialDates: SpecialDate[]) {

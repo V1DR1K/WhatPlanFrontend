@@ -158,6 +158,7 @@ export type JourneyDay = {
   reviews: { id: string; userId: number; author: string; rating: number | null; comment: string | null }[];
 };
 export type JourneyDayIndex = { date: string; destinations: string[] };
+export type JourneyGalleryEntry = { date: string; section: Section; title: string; href: string; photos: JourneySourcePhoto[] };
 export type Detail = {
   trip: Trip;
   points: Point[];
@@ -171,6 +172,7 @@ export type Detail = {
   dates: {
     specialDateId: number;
     date: string;
+    endsOn: string;
     label: string;
     stageId: string;
   }[];
@@ -333,6 +335,8 @@ export const getJourneyDay = (id: string, day: string) =>
   api<JourneyDay>(`/whither-journey/${id}/days/${day}`);
 export const getJourneyDays = (id: string) =>
   api<JourneyDayIndex[]>(`/whither-journey/${id}/days`);
+export const getJourneyGallery = (id: string) =>
+  api<JourneyGalleryEntry[]>(`/whither-journey/${id}/gallery`);
 export const saveJourneyDayStory = (id: string, day: string, story: string) =>
   api<JourneyDay>(`/whither-journey/${id}/days/${day}/story`, {
     method: "PUT", body: JSON.stringify({ story }),
@@ -472,6 +476,7 @@ export const linkDate = (
   input: {
     stageId: string;
     date: string;
+    endsOn?: string;
     specialDateId?: number;
     label?: string;
   },

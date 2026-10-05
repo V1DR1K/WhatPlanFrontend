@@ -1,7 +1,7 @@
 import { api } from '../../lib/api';
 import type { SpecialDate } from '../../types/domain';
 
-export type SpecialDateInput = Pick<SpecialDate, 'date' | 'label' | 'recurrence'>;
+export type SpecialDateInput = Pick<SpecialDate, 'date' | 'label' | 'recurrence'> & { endsOn?: string };
 
 export const getSpecialDates = () => api<SpecialDate[]>('/special-dates');
 
