@@ -9,8 +9,9 @@ type ImportantDatesLinkProps = {
 };
 
 export function ImportantDatesLink({ date, specialDates = [], specialDateId }: ImportantDatesLinkProps) {
-  const match = specialDates.find((entry) => entry.id === specialDateId)
-    ?? matchingSpecialDates(date, specialDates)[0];
+  const match = specialDateId
+    ? { id: specialDateId }
+    : matchingSpecialDates(date, specialDates)[0];
   const href = match && date
     ? `/app/when-dates/${match.id}/${date}`
     : "/app/when-dates";
