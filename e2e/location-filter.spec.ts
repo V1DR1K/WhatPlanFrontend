@@ -49,7 +49,7 @@ test(`${role}: switching to all cities reloads Rosario's historical catalog`, as
     if (path === "/categories" || path === "/highlight-tags") return reply([]);
     if (path === "/places") {
       const isPending = url.searchParams.get("status") === "PENDING";
-      const isRosario = !url.searchParams.has("cityId") || url.searchParams.get("cityId") === "1";
+      const isRosario = !url.searchParams.has("zoneId") || url.searchParams.get("zoneId") === "1";
       return reply({ content: isPending && isRosario ? [rosarioPlace] : [], nextCursor: null });
     }
     if (path === "/places/archived") return reply([]);
@@ -68,9 +68,9 @@ test(`${role}: switching to all cities reloads Rosario's historical catalog`, as
 
   await cityFilter.selectOption("all");
   await expect(place).toBeVisible();
-  expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("cityId") === "2")).toBe(true);
-  expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("cityId") === "1")).toBe(true);
-  expect(requests.some((url) => url.pathname.endsWith("/places") && !url.searchParams.has("cityId"))).toBe(true);
+  expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("zoneId") === "2")).toBe(true);
+  expect(requests.some((url) => url.pathname.endsWith("/places") && url.searchParams.get("zoneId") === "1")).toBe(true);
+  expect(requests.some((url) => url.pathname.endsWith("/places") && !url.searchParams.has("zoneId"))).toBe(true);
 });
 }
 
