@@ -1,158 +1,41 @@
-:root {
-  --bg: #121112;
-  --panel: #1c1a1c;
-  --line: #312e31;
-  --cream: #fffaf0;
-  --muted: #aaa3a3;
-  --wp-brand-red: #ff6049;
-  --wp-brand-contrast: #281211;
-  --wp-brand-shadow: #8e3026;
-  --coral: var(--wp-brand-red);
-  --lime: #d4ef55;
-  --violet: #a978ff;
-  --section-accent: var(--coral);
-  --section-contrast: var(--wp-brand-contrast);
-  --section-shadow: var(--wp-brand-shadow);
-  font-family: "DM Sans", sans-serif;
-  color: var(--cream);
-  background: var(--bg);
-}
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  min-width: 320px;
-  background: var(--bg);
-}
-#root {
-  min-height: 100vh;
-  isolation: isolate;
-}
-.heart-rain {
-  position: fixed;
-  z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.heart-rain span {
-  position: absolute;
-  top: -18vh;
-  left: var(--heart-left);
-  color: #ff83ba;
-  font-size: var(--heart-size);
-  line-height: 1;
-  opacity: 0.3;
-  filter: drop-shadow(0 0 9px #ff4e9ab3);
-  animation: heart-matrix-fall var(--heart-duration) linear var(--heart-delay)
-    infinite;
-}
-@keyframes heart-matrix-fall {
-  0% {
-    transform: translate3d(0, -18vh, 0) rotate(-12deg);
-  }
-  70% {
-    opacity: 0.4;
-  }
-  100% {
-    transform: translate3d(var(--heart-drift), 125vh, 0) rotate(20deg);
-    opacity: 0.12;
-  }
-}
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-button {
-  cursor: pointer;
-}
-a {
-  color: inherit;
-}
-.login-shell {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: transparent;
-}
-.login-card {
-  width: min(420px, 100%);
-  text-align: center;
-}
-.food-orbit {
-  font-size: 42px;
-  letter-spacing: 16px;
-  transform: rotate(-6deg);
-  margin-bottom: 25px;
-}
-.food-orbit span {
-  display: inline-block;
-  transform: translateY(-18px);
-}
-.eyebrow {
-  font: 500 11px "DM Mono";
-  letter-spacing: 1.5px;
-  color: var(--lime);
-  margin: 0 0 10px;
-}
-.login-card h1,
 .detail h1 {
   font: 700 clamp(48px, 9vw, 70px)/0.9 "Fraunces";
   letter-spacing: -3px;
   margin: 0;
 }
-.login-card h1 span,
 .brand span {
   color: var(--wp-brand-red);
 }
-.intro {
-  font-size: 17px;
-  color: #c6bfc0;
-  line-height: 1.5;
-  margin: 22px auto;
-}
-.login-card label,
 .modal label {
   display: grid;
   text-align: left;
   gap: 6px;
   font-size: 12px;
-  color: #d5ced0;
+  color: var(--color-text);
   margin: 10px 0;
 }
-.login-card input,
 .modal input,
 .modal textarea,
 .modal select,
 .inline-form input {
   width: 100%;
-  background: #151415;
+  background: var(--color-control);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--radius-control);
   padding: 12px;
   color: var(--cream);
   outline-color: var(--violet);
 }
-.tiny,
 .byline {
   font-size: 12px;
   color: var(--muted);
-}
-.form-error {
-  color: #ff9e90;
-  font-size: 13px;
 }
 .app-shell {
   max-width: 1240px;
   margin: auto;
   padding: 0 max(28px, env(safe-area-inset-right, 0px)) calc(70px + env(safe-area-inset-bottom, 0px)) max(28px, env(safe-area-inset-left, 0px));
 }
-.app-shell,
-.login-shell {
+.app-shell {
   position: relative;
   z-index: 1;
 }

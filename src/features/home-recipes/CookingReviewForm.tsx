@@ -1,22 +1,75 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modal } from "../../components/ui/Modal";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
-import { Button } from "../../components/ui/Button";
+import { useState, type FormEvent } from "react";
+import { ReviewDialogShell } from "../../components/ui/ReviewDialogShell";
 import { StarRating } from "../../components/ui/StarRating";
 import { showNotice } from "../../lib/flash";
 import type { Cooking, CookingReview } from "../../types/domain";
 import { createCookingReview, deleteCookingReview, updateCookingReview } from "./homeRecipes";
 
 export function CookingReviewForm({ cooking, review, onClose }: { cooking: Cooking; review?: CookingReview; onClose: () => void }) {
-  const qc = useQueryClient();
+  const queryClient = useQueryClient();
   const [rating, setRating] = useState(review?.rating ?? 4);
   const [complexity, setComplexity] = useState(review?.complexity ?? 1);
   const [taste, setTaste] = useState(review?.taste ?? 4);
   const [comment, setComment] = useState(review?.comment ?? "");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const invalidate = () => Promise.all([qc.invalidateQueries({ queryKey: ["cookings"] }), qc.invalidateQueries({ queryKey: ["recipe", cooking.recipe.id] }), qc.invalidateQueries({ queryKey: ["recipes"] })]);
-  const mutation = useMutation({ mutationFn: () => review ? updateCookingReview(review.id, { rating, complexity, taste, comment: comment || undefined }) : createCookingReview(cooking.id, { rating, complexity, taste, comment: comment || undefined }), onSuccess: async () => { await invalidate(); showNotice(review ? "Actualizamos la reseña compartida." : "Agregamos la reseña a esta cocinada."); onClose(); } });
-  const remove = useMutation({ mutationFn: () => deleteCookingReview(review!.id), onSuccess: async () => { await invalidate(); showNotice("Eliminamos la reseña."); onClose(); } });
-  return <><Modal onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}><form onSubmit={(event) => { event.preventDefault(); mutation.mutate(); }}><p className="eyebrow">RESEÑA DE LA COCINADA</p><h2>¿Cómo salió?</h2><label>Puntuación<StarRating label="Puntuación de la cocinada" value={rating} onChange={setRating} /></label><div className="form-columns"><label>Sabor<StarRating label="Sabor de la receta" value={taste} onChange={setTaste} /></label><label>Complejidad<StarRating label="Complejidad de la receta" value={complexity} onChange={setComplexity} /></label></div><label>Comentario <small className="tiny">Opcional</small><textarea className="review-textarea" value={comment} maxLength={1000} onChange={(event) => setComment(event.target.value)} placeholder="Contá qué gustó o cambiarías…" /></label><Button icon={review ? "💾" : "💬"} disabled={mutation.isPending || remove.isPending}>{mutation.isPending ? "Guardando…" : review ? "Guardar reseña" : "Agregar reseña"}</Button>{review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirmingDelete(true)}>Borrar reseña</Button>}{(mutation.error || remove.error) && <p className="form-error" role="alert">{(mutation.error || remove.error)!.message}</p>}</form></Modal>{confirmingDelete && review && <ConfirmDialog title="¿Borrar esta reseña?" message="La reseña se eliminará definitivamente de esta cocinada." confirmLabel="Borrar reseña" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}</>;
+  const invalidate = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["cookings"] }),
+    queryClient.invalidateQueries({ queryKey: ["recipe", cooking.recipe.id] }),
+    queryClient.invalidateQueries({ queryKey: ["recipes"] }),
+  ]);
+  const mutation = useMutation({
+    mutationFn: () => review
+      ? updateCookingReview(review.id, { rating, complexity, taste, comment: comment || undefined })
+      : createCookingReview(cooking.id, { rating, complexity, taste, comment: comment || undefined }),
+    onSuccess: async () => {
+      await invalidate();
+      showNotice(review ? "Actualizamos la reseña compartida." : "Agregamos la reseña a esta cocinada.");
+      onClose();
+    },
+  });
+  const remove = useMutation({
+    mutationFn: () => deleteCookingReview(review!.id),
+    onSuccess: async () => {
+      await invalidate();
+      showNotice("Eliminamos la reseña.");
+      onClose();
+    },
+  });
+
+  return (
+    <ReviewDialogShell
+      eyebrow="RESEÑA DE LA COCINADA"
+      title="¿Cómo salió?"
+      context={cooking.recipe.name}
+      onClose={onClose}
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        mutation.mutate();
+      }}
+      pending={mutation.isPending || remove.isPending}
+      submitIcon={review ? "💾" : "💬"}
+      submitLabel={mutation.isPending ? "Guardando…" : review ? "Guardar reseña" : "Agregar reseña"}
+      error={mutation.error?.message ?? remove.error?.message}
+      deleteAction={review ? {
+        title: "¿Borrar esta reseña?",
+        message: "La reseña se eliminará definitivamente de esta cocinada.",
+        confirmLabel: "Borrar reseña",
+        pending: remove.isPending,
+        onConfirm: () => remove.mutate(),
+      } : undefined}
+    >
+      <label>
+        Puntuación
+        <StarRating label="Puntuación de la cocinada" value={rating} onChange={setRating} />
+      </label>
+      <div className="form-columns">
+        <label>Sabor<StarRating label="Sabor de la receta" value={taste} onChange={setTaste} /></label>
+        <label>Complejidad<StarRating label="Complejidad de la receta" value={complexity} onChange={setComplexity} /></label>
+      </div>
+      <label>
+        Comentario <small className="tiny">Opcional</small>
+        <textarea className="review-textarea" value={comment} maxLength={1000} onChange={(event) => setComment(event.target.value)} placeholder="Contá qué gustó o cambiarías…" />
+      </label>
+    </ReviewDialogShell>
+  );
 }

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { showNotice } from '../../lib/flash';
-import { getGlobalSettings, saveGlobalSettings } from '../../lib/settings';
+import { getGlobalSettings, maxCatalogPageSize, saveGlobalSettings } from '../../lib/settings';
 import { session } from '../../lib/api';
 
 export function SettingsPage() {
@@ -22,7 +22,7 @@ export function SettingsPage() {
   });
 
   useEffect(() => {
-    if (settings.data) setCatalogPageSize(settings.data.catalogPageSize);
+    if (settings.data) setCatalogPageSize(Math.min(settings.data.catalogPageSize, maxCatalogPageSize));
   }, [settings.data]);
 
   return <section className="settings-page" aria-labelledby="settings-title">
@@ -37,7 +37,7 @@ export function SettingsPage() {
         <p className="intro">Define cuántas entidades muestra inicialmente cada bloque y cuántas suma cada vez que eligen Ver más.</p>
         {settings.isError && <p className="form-error" role="alert">{settings.error.message}</p>}
         {settings.isLoading ? <LoadingSkeleton variant="inline" inlineKind="settings" /> : <form className="settings-page__limit-form" onSubmit={event => { event.preventDefault(); saveCatalogPageSize.mutate(); }}>
-          <label>Cantidad por bloque<input type="number" min="1" max="50" required value={catalogPageSize} onChange={event => setCatalogPageSize(Number(event.target.value))} /></label>
+          <label>Cantidad por bloque<input type="number" min="1" max={maxCatalogPageSize} required value={catalogPageSize} onChange={event => setCatalogPageSize(Number(event.target.value))} /></label>
           <Button icon="💾" disabled={saveCatalogPageSize.isPending}>{saveCatalogPageSize.isPending ? 'Guardando…' : 'Guardar límite'}</Button>
           {saveCatalogPageSize.error && <p className="form-error" role="alert">{saveCatalogPageSize.error.message}</p>}
         </form>}

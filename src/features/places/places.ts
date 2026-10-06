@@ -58,5 +58,9 @@ export const uploadPlacePhoto = (id: number, file: File) => {
 };
 export const deletePlace = (id: number) =>
   api<void>(`/places/${id}`, { method: "DELETE" });
-export const getArchivedPlaces = () => api<Place[]>("/places/archived");
+export const getArchivedPlaces = (cursor?: number, size = 12, signal?: AbortSignal) => {
+  const query = new URLSearchParams({ size: String(size) });
+  if (cursor !== undefined) query.set("cursor", String(cursor));
+  return api<Slice<Place>>(`/places/archived?${query}`, { signal });
+};
 export const restorePlace = (id: number) => api<Place>(`/places/${id}/restore`, { method: "POST" });

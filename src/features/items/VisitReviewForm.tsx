@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Modal } from "../../components/ui/Modal";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
-import { StarRating } from "../../components/ui/StarRating";
 import { Button } from "../../components/ui/Button";
+import { ReviewDialogShell } from "../../components/ui/ReviewDialogShell";
+import { StarRating } from "../../components/ui/StarRating";
 import type { PlaceVisit, PlaceVisitReview } from "../../types/domain";
 import { createVisitReview, deleteVisitReview, updateVisitReview, type PlaceVisitReviewInput } from "./items";
 import { showNotice } from "../../lib/flash";
@@ -13,27 +12,80 @@ export function VisitReviewForm({ placeId, visit, review, onClose }: { placeId: 
   const [overall, setOverall] = useState(review?.overall ?? 4);
   const [taste, setTaste] = useState<number | undefined>(review?.taste);
   const [price, setPrice] = useState<number | undefined>(review?.price);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const invalidate = () => Promise.all([queryClient.invalidateQueries({ queryKey: ["visit", visit.id] }), queryClient.invalidateQueries({ queryKey: ["visits", placeId] }), queryClient.invalidateQueries({ queryKey: ["place", placeId] }), queryClient.invalidateQueries({ queryKey: ["places"] })]);
-  const mutation = useMutation({ mutationFn: (form: FormData) => { const input: PlaceVisitReviewInput = { overall, comment: String(form.get("comment")) || undefined, taste, price }; return review ? updateVisitReview(review.id, input) : createVisitReview(visit.id, input); }, onSuccess: async () => { await invalidate(); showNotice(review ? "Actualizamos la reseña compartida." : "Agregamos la reseña a esta visita."); onClose(); } });
-  const remove = useMutation({ mutationFn: () => deleteVisitReview(review!.id), onSuccess: async () => { await invalidate(); showNotice("Eliminamos la reseña."); onClose(); } });
-  const score = (label: string, value: number | undefined, setValue: (value: number | undefined) => void, optional = false, fieldClassName = "") => <label className={["score-field", fieldClassName].filter(Boolean).join(" ")}>{label}<span className="place-score-input"><StarRating label={label} value={value} onChange={setValue} />{optional && value !== undefined && <Button variant="tertiary" icon="✕" type="button" onClick={() => setValue(undefined)}>Quitar</Button>}</span></label>;
-  return <>
-    <Modal size="wide" className="visit-review-modal" onClose={onClose} confirmDiscard pending={mutation.isPending || remove.isPending}>
-      <form className="modal-form--paired modal-form--review" onSubmit={(event) => { event.preventDefault(); mutation.mutate(new FormData(event.currentTarget)); }}>
-        <p className="eyebrow">RESEÑA DE LA VISITA</p>
-        <h2>¿Cómo estuvo?</h2>
-        <p className="muted">La puntuación general es obligatoria. Sabor y precio son opcionales.</p>
-        {score("Puntuación general", overall, (value) => { if (value !== undefined) setOverall(value); }, false, "score-field--overall")}
-        <div className="score-grid">{score("Sabor", taste, setTaste, true)}{score("Precio", price, setPrice, true)}</div>
-        <label>Comentario <small className="tiny">Opcional</small><textarea className="review-textarea" name="comment" defaultValue={review?.comment} maxLength={2000} placeholder="Contá la experiencia…" /></label>
-        <div className="modal-form__actions">
-          <Button icon={review ? "💾" : "💬"} disabled={mutation.isPending || remove.isPending}>{mutation.isPending ? "Guardando…" : review ? "Guardar reseña" : "Agregar reseña"}</Button>
-          {review && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirmingDelete(true)}>Borrar reseña</Button>}
-        </div>
-        {(mutation.error || remove.error) && <p className="form-error" role="alert">{(mutation.error || remove.error)!.message}</p>}
-      </form>
-    </Modal>
-    {confirmingDelete && review && <ConfirmDialog title="¿Borrar esta reseña?" message="La reseña se eliminará definitivamente de esta visita." confirmLabel="Borrar reseña" pending={remove.isPending} onClose={() => setConfirmingDelete(false)} onConfirm={() => remove.mutate()} />}
-  </>;
+  const invalidate = () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["visit", visit.id] }),
+    queryClient.invalidateQueries({ queryKey: ["visits", placeId] }),
+    queryClient.invalidateQueries({ queryKey: ["place", placeId] }),
+    queryClient.invalidateQueries({ queryKey: ["places"] }),
+  ]);
+  const mutation = useMutation({
+    mutationFn: (form: FormData) => {
+      const input: PlaceVisitReviewInput = {
+        overall,
+        comment: String(form.get("comment")) || undefined,
+        taste,
+        price,
+      };
+      return review ? updateVisitReview(review.id, input) : createVisitReview(visit.id, input);
+    },
+    onSuccess: async () => {
+      await invalidate();
+      showNotice(review ? "Actualizamos la reseña compartida." : "Agregamos la reseña a esta visita.");
+      onClose();
+    },
+  });
+  const remove = useMutation({
+    mutationFn: () => deleteVisitReview(review!.id),
+    onSuccess: async () => {
+      await invalidate();
+      showNotice("Eliminamos la reseña.");
+      onClose();
+    },
+  });
+  const score = (label: string, value: number | undefined, setValue: (value: number | undefined) => void, optional = false, fieldClassName = "") => (
+    <label className={["score-field", fieldClassName].filter(Boolean).join(" ")} key={label}>
+      {label}
+      <span className="place-score-input">
+        <StarRating label={label} value={value} onChange={setValue} />
+        {optional && value !== undefined && (
+          <Button variant="tertiary" icon="✕" type="button" onClick={() => setValue(undefined)}>Quitar</Button>
+        )}
+      </span>
+    </label>
+  );
+
+  return (
+    <ReviewDialogShell
+      eyebrow="RESEÑA DE LA VISITA"
+      title="¿Cómo estuvo?"
+      context="La puntuación general es obligatoria. Sabor y precio son opcionales."
+      className="visit-review-modal"
+      onClose={onClose}
+      onSubmit={(event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        mutation.mutate(new FormData(event.currentTarget));
+      }}
+      pending={mutation.isPending || remove.isPending}
+      submitIcon={review ? "💾" : "💬"}
+      submitLabel={mutation.isPending ? "Guardando…" : review ? "Guardar reseña" : "Agregar reseña"}
+      error={mutation.error?.message ?? remove.error?.message}
+      deleteAction={review ? {
+        title: "¿Borrar esta reseña?",
+        message: "La reseña se eliminará definitivamente de esta visita.",
+        confirmLabel: "Borrar reseña",
+        pending: remove.isPending,
+        onConfirm: () => remove.mutate(),
+      } : undefined}
+    >
+      {score("Puntuación general", overall, (value) => { if (value !== undefined) setOverall(value); }, false, "score-field--overall")}
+      <div className="score-grid">
+        {score("Sabor", taste, setTaste, true)}
+        {score("Precio", price, setPrice, true)}
+      </div>
+      <label>
+        Comentario <small className="tiny">Opcional</small>
+        <textarea className="review-textarea" name="comment" defaultValue={review?.comment} maxLength={2000} placeholder="Contá la experiencia…" />
+      </label>
+    </ReviewDialogShell>
+  );
 }

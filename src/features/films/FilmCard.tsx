@@ -8,13 +8,13 @@ import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
 import type { Film } from "../../types/domain";
 import { filmReviewMetrics } from "./reviewMetrics";
+import { useZoneContext } from "../../lib/zoneContext";
 
-const sharedReviewers = new Set(["tomas", "avril"]);
-const sharedReviews = (film: Film) => {
+const sharedReviews = (film: Film, activeUsernames: Set<string>) => {
   const latestByAuthor = new Map<string, Film["reviews"][number]>();
   for (const review of film.reviews) {
     const author = review.author?.toLowerCase();
-    if (author && sharedReviewers.has(author) && !latestByAuthor.has(author)) {
+    if (author && activeUsernames.has(author) && !latestByAuthor.has(author)) {
       latestByAuthor.set(author, review);
     }
   }
@@ -27,7 +27,9 @@ const watchedLabel = (date?: string) => date ? `VISTA ${date.split("-").reverse(
 
 export function FilmCard({ film }: { film: Film }) {
   const location = useLocation();
-  const reviews = sharedReviews(film);
+  const { members } = useZoneContext();
+  const activeUsernames = new Set(members.map((member) => member.username.toLowerCase()));
+  const reviews = sharedReviews(film, activeUsernames);
   const rating = average(reviews.map((review) => review.rating));
   const title = film.tmdb?.title ?? film.title;
   const posterWidth = film.posterWidth ?? undefined;

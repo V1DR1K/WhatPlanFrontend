@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, mediaUrl, parseApiError, session, setCurrentZoneFilter, setCurrentJourneyStage } from "./api";
+import { getArchivedPlaces } from "../features/places/places";
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -98,7 +99,25 @@ describe("global zone filter", () => {
 
     await api("/places?size=5");
 
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&cityId=2");
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=2");
+  });
+
+  it("does not replace an explicit zone on catalog reads", async () => {
+    setCurrentZoneFilter(2);
+
+    await api("/places?size=5&zoneId=7");
+
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=7");
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toContain("zoneId=7&zoneId=2");
+  });
+
+  it("requests archived places using the paged slice contract", async () => {
+    setCurrentZoneFilter(2);
+
+    await getArchivedPlaces(12, 5);
+
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0])
+      .toContain("/places/archived?size=5&cursor=12&zoneId=2");
   });
 
   it("assigns the selected zone to new catalog records", async () => {

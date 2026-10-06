@@ -9,10 +9,12 @@ import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
-import { SectionShell } from "../../components/ui/SectionShell";
+import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
+import { useZoneContext } from "../../lib/zoneContext";
+import { homeName } from "../../lib/homeLabels";
 import { getRecipes } from "./homeRecipes";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
 import {
@@ -78,6 +80,7 @@ function RecipeSection({
 }
 
 export function HomeRecipesPage() {
+  const { homeLabels } = useZoneContext();
   useInAppBackGuard("/app");
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
@@ -120,23 +123,25 @@ export function HomeRecipesPage() {
   }, [home, searchTerm, setSearchParams, sort]);
 
   return (
-    <SectionShell className="home-recipes catalog-experience" section="cook">
-      <ExperienceHero
+    <CatalogExperienceLayout
+      className="home-recipes"
+      section="cook"
+      hero={<ExperienceHero
         className="home-recipes__hero"
         eyebrow="WHOCOOK · RECETAS PARA REPETIR"
         title={<>¿Qué <em>cocinamos</em> hoy?</>}
         description="Guarden una receta una vez y registren cada cocinada con sus propios recuerdos."
         art="🍳"
-      />
-      <nav className="quick-nav quick-nav-action">
+      />}
+      createAction={<nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva receta"
           icon="🍳"
           label="Agregar receta"
           onClick={() => setCreating(true)}
         />
-      </nav>
-      <section className="home-recipe-controls" aria-label="Buscar, ordenar y filtrar recetas">
+      </nav>}
+      controls={<section className="home-recipe-controls" aria-label="Buscar, ordenar y filtrar recetas">
         <div className="catalog-search-sort">
           <CatalogEntitySearch
             candidates={recipes.map((recipe) => ({ id: recipe.id, title: recipe.name, updatedAt: recipe.updatedAt }))}
@@ -154,15 +159,16 @@ export function HomeRecipesPage() {
         </div>
         <div className="home-recipe-home-filters" aria-label="Filtrar recetas por casa">
           <button aria-pressed={home === "ALL"} className={home === "ALL" ? "selected" : ""} type="button" onClick={() => setHome("ALL")}>Todas</button>
-          <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>🏠 Tomás</button>
-          <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
+          <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>{homeName("TOMAS", homeLabels)}</button>
+          <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>{homeName("AVRIL", homeLabels)}</button>
         </div>
-      </section>
+      </section>}
+    >
       {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" section="cook" /> : <>
         <RecipeSection query={pendingRecipes} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} />
         <RecipeSection query={doneRecipes} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <RecipeForm onClose={() => setCreating(false)} />}
-    </SectionShell>
+    </CatalogExperienceLayout>
   );
 }

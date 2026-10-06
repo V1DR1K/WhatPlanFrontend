@@ -6,7 +6,7 @@ import { useInAppBackGuard } from "../../lib/backGuard";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { Button } from "../../components/ui/Button";
-import { SectionShell } from "../../components/ui/SectionShell";
+import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import type { PlaceStatus } from "../../types/domain";
@@ -133,7 +133,14 @@ export function DiscoverPage() {
     queryFn: ({ signal }) => getPlaces(undefined, undefined, undefined, undefined, deferredSearch, undefined, 10, signal),
     enabled: Boolean(deferredSearch),
   });
-  const archived = useQuery({ queryKey: ["places", ...locationScope, "archived"], queryFn: getArchivedPlaces, enabled: showArchived });
+  const archived = useInfiniteQuery({
+    queryKey: ["places", ...locationScope, "archived", pageSize],
+    queryFn: ({ pageParam, signal }) => getArchivedPlaces(pageParam, pageSize, signal),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: showArchived,
+  });
+  const archivedPlaces = archived.data?.pages.flatMap((page) => page.content) ?? [];
   const restore = useMutation({ mutationFn: restorePlace, onSuccess: async place => { await Promise.all([qc.invalidateQueries({ queryKey: ["places"] }), qc.invalidateQueries({ queryKey: ["places", "archived"] })]); showNotice(`${place.name} volvió a la lista de lugares.`); } });
   useEffect(() => {
     const next = new URLSearchParams();
@@ -145,23 +152,24 @@ export function DiscoverPage() {
   }, [category, highlightTagId, searchTerm, setSearchParams, sort]);
   const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
   return (
-    <SectionShell className="catalog-experience" section="food">
-      <ExperienceHero
+    <CatalogExperienceLayout
+      section="food"
+      hero={<ExperienceHero
         className="hero"
         eyebrow="TU MAPA DEL HAMBRE"
         title={<>¿Qué vamos a<br /><em> probar</em> hoy?</>}
         description="Tu ranking personal de lugares que sí dan ganas de volver."
         art={<>🍜<span>✦</span><b>🍗</b></>}
-      />
-      <nav className="quick-nav quick-nav-action">
+      />}
+      createAction={<nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nuevo lugar"
           icon="🍽️"
           label="Agregar lugar"
           onClick={() => setShowForm(true)}
         />
-      </nav>
-      <section className="food-controls">
+      </nav>}
+      controls={<section className="food-controls">
         <div className="catalog-search-sort">
           <CatalogEntitySearch
             candidates={(suggestions.data?.content ?? []).map((place) => ({ id: place.id, title: place.name, updatedAt: place.updatedAt }))}
@@ -197,7 +205,8 @@ export function DiscoverPage() {
           value={highlightTagId}
           onChange={(value) => setHighlightTagId(typeof value === "number" ? value : undefined)}
         />
-      </section>
+      </section>}
+    >
       <PlaceSection
         status="PENDING"
         category={category}
@@ -222,8 +231,25 @@ export function DiscoverPage() {
         hasFilter={hasFilter}
         pageSize={pageSize}
       />
-      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error" role="alert">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" section="food" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state" role="status">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
+      <section className="archived-places">
+        <Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived((current) => !current)}>
+          {showArchived ? "Ocultar archivados" : "Ver lugares archivados"}
+        </Button>
+        {showArchived && <>
+          {archived.isError && <p className="form-error" role="alert">{archived.error.message}</p>}
+          {archived.isLoading && <LoadingSkeleton variant="list" section="food" />}
+          {!archived.isLoading && !archivedPlaces.length && <p className="empty-state" role="status">No tenés lugares archivados.</p>}
+          {archivedPlaces.map((place) => (
+            <article className="archived-place" key={place.id}>
+              <span>{place.category.icon}</span>
+              <div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div>
+              <Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button>
+            </article>
+          ))}
+          {archived.hasNextPage && <CatalogMoreButton loading={archived.isFetchingNextPage} onClick={() => void archived.fetchNextPage()} />}
+        </>}
+      </section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
-    </SectionShell>
+    </CatalogExperienceLayout>
   );
 }

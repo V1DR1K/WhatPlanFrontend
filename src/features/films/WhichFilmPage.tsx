@@ -11,7 +11,7 @@ import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
-import { SectionShell } from "../../components/ui/SectionShell";
+import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import { useCatalogPageSize } from "../../lib/settings";
@@ -158,23 +158,24 @@ export function WhichFilmPage() {
     : [];
   const filtered = Boolean(genre || platformId || searchTerm || sort);
   return (
-    <SectionShell className="catalog-experience" section="film">
-      <ExperienceHero
+    <CatalogExperienceLayout
+      section="film"
+      hero={<ExperienceHero
         className="film-hero"
         eyebrow="NUESTRA SALA PERSONAL"
         title={<>¿Qué vamos a<br /><em>mirar</em> hoy?</>}
         description="Una colección para las películas que todavía esperan y las que ya se quedaron con nosotros. 🍿"
         art={<>🎬<span>✨</span><b>🍿</b></>}
-      />
-      <nav className="quick-nav quick-nav-action">
+      />}
+      createAction={<nav className="quick-nav quick-nav-action">
         <EntityCreateButton
           eyebrow="Nueva película"
           icon="🎬"
           label="Agregar película"
           onClick={() => setShowForm(true)}
         />
-      </nav>
-      <section className="film-controls">
+      </nav>}
+      controls={<section className="film-controls">
         <div className="catalog-search-sort">
           <CatalogEntitySearch
             candidates={all.map((film) => ({ id: film.id, title: film.tmdb?.title ?? film.title, updatedAt: film.updatedAt }))}
@@ -209,7 +210,8 @@ export function WhichFilmPage() {
             setPlatformId(typeof value === "number" ? value : undefined)
           }
         />
-      </section>
+      </section>}
+    >
       {(platforms.isError || genreOptions.isError) && <p className="form-error" role="alert">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
       {pendingFilms.isLoading && watchedFilms.isLoading ? (
         <LoadingSkeleton variant="catalog" section="film" />
@@ -232,6 +234,6 @@ export function WhichFilmPage() {
         </>
       )}
       {showForm && <FilmForm onClose={() => setShowForm(false)} />}
-    </SectionShell>
+    </CatalogExperienceLayout>
   );
 }

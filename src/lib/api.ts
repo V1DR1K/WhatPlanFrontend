@@ -165,8 +165,8 @@ export async function api<T>(path: string, init: ApiRequestInit = {}, retry = tr
   const zoneFilteredRequest = zoneFilteredLists.has(apiPath)
     || apiPath.startsWith('/when-dates/special-dates/') && apiPath.includes('/occurrences/');
   if (method === 'GET' && currentZoneFilterId !== null && zoneFilteredRequest
-      && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId') && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('cityId')) {
-    requestPath += `${requestPath.includes('?') ? '&' : '?'}cityId=${currentZoneFilterId}`;
+      && !new URLSearchParams(requestPath.split('?')[1] ?? '').has('zoneId')) {
+    requestPath += `${requestPath.includes('?') ? '&' : '?'}zoneId=${currentZoneFilterId}`;
   }
   if (method === 'POST' && (zoneAssignedCreates.has(apiPath) || stageAssignedCreates.has(apiPath))
       && typeof requestBody === 'string' && requestBody.length > 0) {

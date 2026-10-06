@@ -3,6 +3,7 @@ import { api } from './api';
 import type { GlobalSettings } from '../types/domain';
 
 export const defaultCatalogPageSize = 5;
+export const maxCatalogPageSize = 30;
 
 export const getGlobalSettings = () => api<GlobalSettings>('/settings');
 
@@ -15,5 +16,8 @@ export function useCatalogPageSize() {
     queryFn: getGlobalSettings,
     refetchInterval: 15_000,
   });
-  return settings.data?.catalogPageSize ?? defaultCatalogPageSize;
+  return Math.min(
+    maxCatalogPageSize,
+    Math.max(1, settings.data?.catalogPageSize ?? defaultCatalogPageSize),
+  );
 }

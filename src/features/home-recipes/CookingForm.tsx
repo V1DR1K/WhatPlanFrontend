@@ -5,6 +5,8 @@ import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { showNotice } from '../../lib/flash';
 import { useExperienceDraft } from '../journey/LocationFields';
+import { useZoneContext } from '../../lib/zoneContext';
+import { homeName } from '../../lib/homeLabels';
 import type { Cooking, Home, MealType, Recipe } from '../../types/domain';
 import { createCooking, deleteCooking, updateCooking } from './homeRecipes';
 
@@ -17,6 +19,7 @@ const meals: { value: MealType; label: string }[] = [
 ];
 
 export function CookingForm({ recipe, cooking, onClose, onSaved }: { recipe: Recipe; cooking?: Cooking; onClose: () => void; onSaved: (cooking: Cooking) => void }) {
+  const { homeLabels } = useZoneContext();
   const location = useExperienceDraft('COOK', recipe.id, cooking?.id, undefined);
   const query = new URLSearchParams(window.location.search);
   const journeyBinding = cooking || (query.get('journeySection') === 'COOK' && query.get('journeyEntity') === String(recipe.id))
@@ -71,7 +74,7 @@ export function CookingForm({ recipe, cooking, onClose, onSaved }: { recipe: Rec
           {(['TOMAS', 'AVRIL'] as Home[]).map(value => (
             <label key={value}>
               <input type="radio" checked={home === value} onChange={() => setHome(value)} />
-              <span>{value === 'TOMAS' ? '🏠 Casa de Tomás' : '🏡 Casa de Avril'}</span>
+              <span>{homeName(value, homeLabels)}</span>
             </label>
           ))}
         </fieldset>

@@ -4,9 +4,11 @@ import { session, setCurrentZoneFilter, setCurrentJourneyStage } from './api';
 import { getLocationContext, type LocationOption } from '../features/journey/journey';
 import { Button } from '../components/ui/Button';
 import { LoadingSkeletonForPath } from '../components/ui/LoadingSkeleton';
+import type { Home } from '../types/domain';
 
 type ZoneContextValue = {
   zones: { id: number; name: string }[]; options: LocationOption[]; coupleId: string;
+  members: { username: string; displayName: string }[]; homeLabels: Partial<Record<Home, string>>;
   selectedZoneId: number | null; selectedStageId: string | null; selectedLocationKey: string;
   defaultZoneId: number | null; maxUploadBytes:number; loading: boolean;
   selectZone: (zoneId: number | null) => void; selectLocation: (key: string) => void;
@@ -37,6 +39,8 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ZoneContextValue>(() => ({
     zones: Array.from(new Map((context.data?.options ?? []).map(o => [o.cityId, { id: o.cityId, name: o.label.split(' · ')[0] }])).values()),
     options: context.data?.options ?? [], coupleId: context.data?.coupleId ?? '',
+    members: context.data?.members ?? [],
+    homeLabels: Object.fromEntries((context.data?.homeLabels ?? []).map(({ home, displayName }) => [home, displayName])),
     selectedZoneId: cityId, selectedStageId: stageId, selectedLocationKey,
     defaultZoneId: context.data?.originCityId ?? null, maxUploadBytes:context.data?.maxUploadBytes??10485760, loading: context.isLoading,
     selectZone, selectLocation,

@@ -1,15 +1,25 @@
 :root {
-  --bg: #121112;
-  --panel: #1c1a1c;
-  --line: #312e31;
-  --cream: #fffaf0;
-  --muted: #aaa3a3;
+  --color-page: #121112;
+  --color-panel: #1c1a1c;
+  --color-border: #312e31;
+  --color-text: #fffaf0;
+  --color-text-muted: #aaa3a3;
+  --color-control: #151415;
+  --color-danger: #ff9e90;
+  --color-focus: #a978ff;
+  --radius-control: 9px;
+  --radius-card: 14px;
+  --bg: var(--color-page);
+  --panel: var(--color-panel);
+  --line: var(--color-border);
+  --cream: var(--color-text);
+  --muted: var(--color-text-muted);
   --wp-brand-red: #ff6049;
   --wp-brand-contrast: #281211;
   --wp-brand-shadow: #8e3026;
   --coral: var(--wp-brand-red);
   --lime: #d4ef55;
-  --violet: #a978ff;
+  --violet: var(--color-focus);
   --section-accent: var(--coral);
   --section-contrast: var(--wp-brand-contrast);
   --section-shadow: var(--wp-brand-shadow);
@@ -22,7 +32,7 @@
 body { margin: 0; min-width: 320px; background: var(--bg); }
 #root { min-height: 100vh; min-height: 100svh; isolation: isolate; overflow-x: clip; }
 button, input, textarea, select { font: inherit; }
-button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--section-focus, var(--violet)); outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--section-focus, var(--color-focus)); outline-offset: 3px; }
 button { cursor: pointer; }
 a { color: inherit; }
 
@@ -39,9 +49,9 @@ a { color: inherit; }
 .login-card h1 span { color: var(--wp-brand-red); }
 .intro { margin: 22px auto; color: #c6bfc0; font-size: 17px; line-height: 1.5; }
 .login-card label { display: grid; gap: 6px; margin: 10px 0; color: #d5ced0; font-size: 12px; text-align: left; }
-.login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 9px; outline-color: var(--violet); background: #151415; color: var(--cream); }
+.login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius-control); outline-color: var(--violet); background: var(--color-control); color: var(--cream); }
 .tiny { color: var(--muted); font-size: 12px; }
-.form-error { color: #ff9e90; font-size: 13px; }
+.form-error { color: var(--color-danger); font-size: 13px; }
 
 /* Shared experience rhythm. Individual modules provide content, never a new layout dialect. */
 .section-shell { --section-focus: var(--violet); }
@@ -50,14 +60,16 @@ a { color: inherit; }
 .catalog-experience__create,
 .catalog-experience > .quick-nav-action { margin: 0; }
 .catalog-experience > :is(.food-controls, .film-controls, .home-recipe-controls, .fun-controls) { margin-top: 0; }
-.async-state { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--section-accent) 8%, var(--panel)); color: var(--cream); line-height: 1.45; }
+.catalog-experience__results { display: grid; gap: 28px; min-width: 0; }
+.async-state { margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-card); background: color-mix(in srgb, var(--section-accent) 8%, var(--panel)); color: var(--cream); line-height: 1.45; }
 .async-state--loading { color: var(--muted); }
 .async-state--empty { text-align: center; }
 .async-state--empty p { margin: 0; }
-.async-state--error { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-color: color-mix(in srgb, #ff9e90 62%, var(--line)); }
+.async-state--error { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-color: color-mix(in srgb, var(--color-danger) 62%, var(--line)); }
 .async-state--error p { margin: 0; }
 
 @media (max-width: 540px) {
   .catalog-experience { gap: 22px; }
+  .catalog-experience__results { gap: 22px; }
   .async-state--error { align-items: stretch; flex-direction: column; }
 }

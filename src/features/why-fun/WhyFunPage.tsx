@@ -12,7 +12,7 @@ import { ActivityForm } from "./ActivityForm";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
-import { SectionShell } from "../../components/ui/SectionShell";
+import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
@@ -142,18 +142,19 @@ export function WhyFunPage() {
   }, [categoryId, searchTerm, setSearchParams, sort, subcategoryId]);
 
   return (
-    <SectionShell className="catalog-experience" section="fun">
-      <ExperienceHero
+    <CatalogExperienceLayout
+      section="fun"
+      hero={<ExperienceHero
         className="fun-hero"
         eyebrow="WHYFUN · SALIDAS PARA REPETIR"
         title={<>¿Qué salida<br />repetimos <em>hoy?</em></>}
         description="Guarden actividades y registren cada salida con una fecha, fotos y opiniones compartidas."
         art={<>🎲<span>✦</span><b>🕹️</b></>}
-      />
-      <nav className="quick-nav quick-nav-action">
+      />}
+      createAction={<nav className="quick-nav quick-nav-action">
         <EntityCreateButton eyebrow="Nueva actividad" icon="🎯" label="Agregar actividad" onClick={() => setCreating(true)} />
-      </nav>
-      <section className="fun-controls">
+      </nav>}
+      controls={<section className="fun-controls">
         <div className="catalog-search-sort">
           <CatalogEntitySearch
             candidates={activities.map((activity) => ({ id: activity.id, title: activity.name, updatedAt: activity.updatedAt }))}
@@ -171,13 +172,14 @@ export function WhyFunPage() {
         </div>
         <FilterChips label="Categorías" options={roots} selected={categoryId} onSelect={(id) => { setCategoryId(id); setSubcategoryId(undefined); }} />
         {categoryId && <FilterChips label="Subcategorías" options={subcategories} selected={subcategoryId} onSelect={setSubcategoryId} />}
-      </section>
+      </section>}
+    >
       {categories.isError && <p className="form-error" role="alert">No pudimos cargar las categorías.</p>}
       {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" section="fun" /> : <>
         <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <ActivityForm onClose={() => setCreating(false)} />}
-    </SectionShell>
+    </CatalogExperienceLayout>
   );
 }

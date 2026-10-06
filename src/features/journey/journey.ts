@@ -13,6 +13,8 @@ export type LocationContext = {
   originCityId: number;
   options: LocationOption[];
   maxUploadBytes: number;
+  members?: { username: string; displayName: string }[];
+  homeLabels?: { home: "TOMAS" | "AVRIL"; displayName: string }[];
 };
 export type Binding = {
   cityId?: number;

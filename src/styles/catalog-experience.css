@@ -106,6 +106,19 @@ button.catalog-section-more:disabled {
   color: transparent;
 }
 
+.star-glyphs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: 1;
+}
+
+.star-control--display .star-glyphs {
+  font-size: 15px;
+}
+
 .rating-stars--empty {
   color: var(--muted);
   font-size: 13px;

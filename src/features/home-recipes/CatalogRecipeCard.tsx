@@ -1,8 +1,11 @@
 import { getPhotoOrientation, ResponsiveImage } from "../../components/ui/AdaptivePhoto";
 import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
 import type { Recipe } from "../../types/domain";
+import { useZoneContext } from "../../lib/zoneContext";
+import { homeName } from "../../lib/homeLabels";
 
 export function CatalogRecipeCard({ recipe }: { recipe: Recipe }) {
+  const { homeLabels } = useZoneContext();
   const width = recipe.photoWidth ?? undefined;
   const height = recipe.photoHeight ?? undefined;
   const kpi = recipe.rating != null
@@ -15,7 +18,7 @@ export function CatalogRecipeCard({ recipe }: { recipe: Recipe }) {
     ariaLabel={`Ver receta ${recipe.name}`}
     badge={`${recipe.ingredients.length} ingredientes · ${recipe.steps.length} pasos`}
     eyebrow={recipe.cookingCount ? "COCINADA" : "PARA PROBAR"}
-    footer={<><span>{recipe.homes.length ? recipe.homes.map((home) => home === "TOMAS" ? "🏠 Tomás" : "🏡 Avril").join(" · ") : "Sin cocinadas"}</span><span>Ver receta →</span></>}
+    footer={<><span>{recipe.homes.length ? recipe.homes.map((home) => homeName(home, homeLabels)).join(" · ") : "Sin cocinadas"}</span><span>Ver receta →</span></>}
     image={recipe.thumbnailUrl || recipe.photoUrl ? <ResponsiveImage alt={`Foto de ${recipe.name}`} className="catalog-media-card__image" fullSrc={recipe.photoUrl ?? undefined} height={height} thumbnailSrc={recipe.thumbnailUrl ?? undefined} width={width} /> : <span className="catalog-media-card__empty">🍲</span>}
     kpi={<span aria-label={kpi.label}>{kpi.value}</span>}
     orientation={getPhotoOrientation(width, height)}
