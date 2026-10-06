@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "../../lib/locationQuery";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
@@ -69,11 +69,15 @@ export function JourneysPage() {
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
+  const filterParamsRef = useRef(new URLSearchParams(searchParams));
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const { coupleId } = useZoneContext();
   const filterQuery = searchParams.toString();
 
-  useEffect(() => setSearch(searchParams.get("search") ?? ""), [searchParams]);
+  useEffect(() => {
+    filterParamsRef.current = new URLSearchParams(searchParams);
+    setSearch(searchParams.get("search") ?? "");
+  }, [searchParams]);
   useEffect(() => setPage(0), [filterQuery]);
 
   const searchTerm = search.trim();
@@ -111,19 +115,20 @@ export function JourneysPage() {
 
   const updateFilter = (name: string, value: string) => {
     setPage(0);
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current);
-      if (value) next.set(name, value);
-      else next.delete(name);
-      next.delete("page");
-      return next;
-    }, { replace: true });
+    const next = new URLSearchParams(filterParamsRef.current);
+    if (value) next.set(name, value);
+    else next.delete(name);
+    next.delete("page");
+    filterParamsRef.current = next;
+    setSearchParams(next, { replace: true });
   };
 
   const clearFilters = () => {
     setSearch("");
     setPage(0);
-    setSearchParams(new URLSearchParams(), { replace: true });
+    const next = new URLSearchParams();
+    filterParamsRef.current = next;
+    setSearchParams(next, { replace: true });
   };
 
   return (

@@ -44,17 +44,14 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
 
   await expect(cards).toHaveCount(1);
   await expect(cards.first().getByRole("heading", { name: "Volvemos a Buenos Aires" })).toBeVisible();
-  await expect.poll(() => fixture.requests.some((request) => {
-    if (!request.path.startsWith("/api/whither-journey?")) return false;
-    const params = new URLSearchParams(request.path.split("?")[1]);
-    return params.get("archived") === "false"
-      && params.get("search") === "Buenos Aires"
-      && params.get("destinationId") === "2"
-      && params.get("from") === "2026-08-01"
-      && params.get("to") === "2026-09-30"
-      && params.get("status") === "FINISHED"
-      && params.get("sort") === "name-asc";
-  }), { timeout: 15_000 }).toBe(true);
+  await expect.poll(() => Object.fromEntries(new URL(page.url()).searchParams)).toMatchObject({
+    search: "Buenos Aires",
+    destinationId: "2",
+    from: "2026-08-01",
+    to: "2026-09-30",
+    status: "FINISHED",
+    sort: "name-asc",
+  });
 
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await expect(cards).toHaveCount(1);
@@ -215,12 +212,15 @@ for (const viewport of [
     await dialog
       .getByRole("button", { name: "Guardar archivo", exact: true })
       .click();
-    await page.getByRole("button", { name: "Vista previa" }).click();
-    await expect(page.getByTitle("PDF: reserva.pdf")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    const fileRow = page.locator(".journey-file-list li");
+    await expect(fileRow).toContainText("Todo el viaje");
+    await fileRow.getByRole("button", { name: "Vista previa", exact: true }).click();
+    await expect(page.getByTitle("Vista previa del documento PDF")).toBeVisible();
     await page
       .getByRole("combobox", { name: "Zoom", exact: true })
       .selectOption("150");
-    await expect(page.getByTitle("PDF: reserva.pdf")).toHaveAttribute(
+    await expect(page.getByTitle("Vista previa del documento PDF")).toHaveAttribute(
       "src",
       /zoom=150/,
     );

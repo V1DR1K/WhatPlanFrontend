@@ -222,7 +222,6 @@ export function FileUpload({
           Archivo
           <input
             type="file"
-            required
             accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif"
             disabled={preparingFile}
             onChange={(e) => { const selected = e.currentTarget.files?.[0]; e.currentTarget.value = ""; void selectFile(selected); }}

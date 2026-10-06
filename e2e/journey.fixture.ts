@@ -596,6 +596,7 @@ export async function journeyFixture(page: Page, rich = false) {
           const f = {
             id: randomUUID(),
             name: "reserva.pdf",
+            occurredAt: new Date().toISOString(),
             contentType: "application/pdf",
             byteSize: 150,
             stageId: null,
