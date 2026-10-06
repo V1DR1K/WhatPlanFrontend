@@ -452,16 +452,6 @@ export const bindExperience = (source: Source, input: Binding) =>
     `/whither-journey/experiences/${source.section}/${source.entityId}/${source.experienceId}/location`,
     { method: "PUT", body: JSON.stringify(input) },
   );
-export const saveDateLocation = (
-  specialDateId: number,
-  date: string,
-  input: Binding,
-) =>
-  api(
-    `/when-dates/special-dates/${specialDateId}/occurrences/${date}/location`,
-    { method: "PUT", body: JSON.stringify(input) },
-  );
-
 export const relinkFile = (
   id: string,
   links: {
