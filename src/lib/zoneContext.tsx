@@ -4,7 +4,6 @@ import { session, setCurrentZoneFilter, setCurrentJourneyStage } from './api';
 import { getLocationContext, type LocationOption } from '../features/journey/journey';
 import { Button } from '../components/ui/Button';
 import { LoadingSkeletonForPath } from '../components/ui/LoadingSkeleton';
-import { useLocation } from 'react-router-dom';
 
 type ZoneContextValue = {
   zones: { id: number; name: string }[]; options: LocationOption[]; coupleId: string;
@@ -14,7 +13,7 @@ type ZoneContextValue = {
 };
 const ZoneContext = createContext<ZoneContextValue | null>(null);
 export function ZoneProvider({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation();
+  const pathname = window.location.pathname;
   const client = useQueryClient();
   const context = useQuery({ queryKey: ['location-context', session.get()?.username], queryFn: getLocationContext, refetchInterval: 15_000 });
   const [selectedLocationKey, setSelectedLocationKey] = useState('origin');
