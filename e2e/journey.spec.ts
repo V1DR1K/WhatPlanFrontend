@@ -65,17 +65,14 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
   await expect(cards.first().locator(".catalog-media-card__badge")).toContainText("ARCHIVADO");
 });
 
-test("important dates linked from a journey cover its complete date range", async ({ page }) => {
-  const fixture = await journeyFixture(page, true);
+test("journey displays matching important dates in its header automatically", async ({ page }) => {
+  await journeyFixture(page, true);
   await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-  await page.getByRole("button", { name: "Vincular fecha importante" }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByLabel("Rango del viaje")).toContainText("10 de ago de 2026");
-  await expect(dialog.getByLabel("Rango del viaje")).toContainText("12 de ago de 2026");
-  await dialog.getByLabel("Nombre", { exact: true }).fill("Escapada compartida");
-  await dialog.getByRole("button", { name: "Vincular fecha", exact: true }).click();
-  const request = fixture.requests.find((item) => item.method === "POST" && item.path.endsWith("/dates"));
-  expect(request?.body).toMatchObject({ date: "2026-08-10", endsOn: "2026-08-12", label: "Escapada compartida" });
+  const linkedDates = page.locator(".journey-detail__head .journey-linked-dates");
+  await expect(linkedDates).toContainText("Fechas importantes");
+  await expect(linkedDates.getByRole("link", { name: "Nuestro aniversario", exact: true }))
+    .toHaveAttribute("href", "/app/when-dates/1/2026-08-10");
+  await expect(page.getByRole("button", { name: "Vincular fecha importante" })).toHaveCount(0);
 });
 
 for (const viewport of [
