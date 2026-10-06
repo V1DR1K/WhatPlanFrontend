@@ -130,10 +130,10 @@ for (const viewport of [
     )).toBeFalsy();
     await page.getByRole("tab", { name: "Agenda", exact: true }).click();
     await expect(page.locator(".journey-day-picker input[type=date]")).toHaveCount(0);
-    await expect(page.getByText(/10 de agosto de 2026/)).toBeVisible();
+    await expect(page.locator(".journey-day-stepper select")).toHaveValue("2026-08-10");
     await expect(page.getByRole("button", { name: "Día anterior" })).toBeDisabled();
     await page.getByRole("button", { name: "Día siguiente" }).click();
-    await expect(page.getByText(/11 de agosto de 2026/)).toBeVisible();
+    await expect(page.locator(".journey-day-stepper select")).toHaveValue("2026-08-11");
     await page.getByRole("button", { name: "Día anterior" }).click();
     await page
       .getByRole("button", { name: "Agregar punto", exact: true })
