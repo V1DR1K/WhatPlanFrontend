@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { session } from '../lib/api';
 import { LoginPage } from '../features/auth/LoginPage';
-import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { LoadingSkeletonForPath } from '../components/ui/LoadingSkeleton';
 import { AuthenticatedApp } from '../layouts/AuthenticatedApp';
 import { LandingPage } from '../features/landing/LandingPage';
 
@@ -26,7 +26,12 @@ const WhenDatesPage = lazy(() => import('../features/when-dates/WhenDatesPage').
 const WhenDateDetailPage = lazy(() => import('../features/when-dates/WhenDateDetailPage').then(({ WhenDateDetailPage }) => ({ default: WhenDateDetailPage })));
 const WhenDatesSettingsPage = lazy(() => import('../features/when-dates/WhenDatesSettingsPage').then(({ WhenDatesSettingsPage }) => ({ default: WhenDatesSettingsPage })));
 
-const routeFallback = <LoadingSkeleton variant="route" />;
+function RouteLoadingFallback() {
+  const { pathname } = useLocation();
+  return <LoadingSkeletonForPath pathname={pathname} />;
+}
+
+const routeFallback = <RouteLoadingFallback />;
 
 function Protected() {
   return session.get() ? <AuthenticatedApp /> : <Navigate to="/login" replace />;

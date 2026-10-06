@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { session, setCurrentZoneFilter, setCurrentJourneyStage } from './api';
 import { getLocationContext, type LocationOption } from '../features/journey/journey';
 import { Button } from '../components/ui/Button';
-import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
+import { LoadingSkeletonForPath } from '../components/ui/LoadingSkeleton';
+import { useLocation } from 'react-router-dom';
 
 type ZoneContextValue = {
   zones: { id: number; name: string }[]; options: LocationOption[]; coupleId: string;
@@ -13,6 +14,7 @@ type ZoneContextValue = {
 };
 const ZoneContext = createContext<ZoneContextValue | null>(null);
 export function ZoneProvider({ children }: { children: ReactNode }) {
+  const { pathname } = useLocation();
   const client = useQueryClient();
   const context = useQuery({ queryKey: ['location-context', session.get()?.username], queryFn: getLocationContext, refetchInterval: 15_000 });
   const [selectedLocationKey, setSelectedLocationKey] = useState('origin');
@@ -40,7 +42,7 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
     defaultZoneId: context.data?.originCityId ?? null, maxUploadBytes:context.data?.maxUploadBytes??10485760, loading: context.isLoading,
     selectZone, selectLocation,
   }), [context.data, context.isLoading, cityId, stageId, selectedLocationKey, selectZone, selectLocation]);
-  if (context.isLoading) return <LoadingSkeleton variant="route" />;
+  if (context.isLoading) return <LoadingSkeletonForPath pathname={pathname} />;
   if (context.isError&&!context.data) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
   return <ZoneContext.Provider value={value}>{context.isRefetchError&&<p className="form-error" role="status">No pudimos actualizar las ubicaciones. <Button variant="secondary" onClick={()=>void context.refetch()}>Reintentar</Button></p>}{children}</ZoneContext.Provider>;
 }

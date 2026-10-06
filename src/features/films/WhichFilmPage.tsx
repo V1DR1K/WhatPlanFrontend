@@ -81,9 +81,9 @@ function FilmSection({
         <strong>Mostrando {films.length} película{films.length === 1 ? "" : "s"}</strong>
       </div>
       {query.isError ? (
-        <AsyncState error onRetry={() => query.refetch()} />
+        <AsyncState error onRetry={() => query.refetch()} section="film" />
       ) : query.isLoading ? (
-        <LoadingSkeleton variant="catalog" />
+        <LoadingSkeleton variant="catalog" section="film" />
       ) : films.length ? (
         <div className="film-grid">
           {films.map((film) => (
@@ -212,7 +212,7 @@ export function WhichFilmPage() {
       </section>
       {(platforms.isError || genreOptions.isError) && <p className="form-error" role="alert">No pudimos cargar todos los filtros. Podés seguir explorando la lista.</p>}
       {pendingFilms.isLoading && watchedFilms.isLoading ? (
-        <LoadingSkeleton variant="catalog" />
+        <LoadingSkeleton variant="catalog" section="film" />
       ) : (
         <>
           <FilmSection

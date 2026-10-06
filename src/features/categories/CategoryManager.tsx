@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import type { Category, HighlightTag } from '../../types/domain';
 import { deleteCategory, getAllCategories, saveCategory } from './categories';
 import { deleteHighlightTag, getHighlightTags, saveHighlightTag } from '../places/highlightTags';
@@ -76,6 +77,7 @@ export function CategoryManager() {
         <h3>Rubros</h3>
         <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setDraft(emptyCategory); setCreatingCategory(true); }}>Agregar rubro</Button>
         <div className="category-list">
+          {list.isLoading && <LoadingSkeleton variant="list" section="food" />}
           {list.data?.map(category => <span key={category.id}>
             {category.icon} {category.name}{!category.active && ' (inactiva)'}
             <Button variant="tertiary" icon="✏️" type="button" onClick={() => editCategory(category)}>Editar</Button>
@@ -87,6 +89,7 @@ export function CategoryManager() {
         <h3>Etiquetas destacadas</h3>
         <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setTagDraft(emptyTag); setCreatingTag(true); }}>Agregar etiqueta</Button>
         <div className="category-list">
+          {tags.isLoading && <LoadingSkeleton variant="list" section="food" />}
           {tags.data?.map(tag => <span key={tag.id}>
             {tag.emoji} {tag.name}
             <Button variant="tertiary" icon="✏️" type="button" onClick={() => editTag(tag)}>Editar</Button>

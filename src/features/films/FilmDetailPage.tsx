@@ -98,7 +98,7 @@ export function FilmDetailPage() {
     (!filmQuery.isLoading && !filmQuery.data)
   )
     return <section className="film-detail"><p className="form-error" role="alert">No pudimos abrir esta película. Probá nuevamente desde la sala.</p></section>;
-  if (filmQuery.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (filmQuery.isLoading) return <LoadingSkeleton variant="detail" section="film" />;
 
   const film = filmQuery.data!;
   const selectedView = views.find((view) => view.id === selectedViewId);
@@ -273,6 +273,10 @@ export function FilmDetailPage() {
               </div>
             </section>
           )}
+          {tmdbId !== undefined && recommendationsQuery.isLoading && <section className="tmdb-cast tmdb-recommendations">
+            <div className="section-title"><div><p className="eyebrow">DESDE TMDB</p><h2>Recomendaciones</h2></div></div>
+            <LoadingSkeleton variant="inline" inlineKind="recommendations" section="film" />
+          </section>}
           {!!recommendations.length && (
             <section className="tmdb-cast tmdb-recommendations">
               <div className="section-title">

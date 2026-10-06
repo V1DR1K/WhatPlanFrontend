@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { RecordIterator, type RecordIteratorOption } from "../../components/ui/RecordIterator";
 import { Modal } from "../../components/ui/Modal";
 import { StarRating } from "../../components/ui/StarRating";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { session } from "../../lib/api";
 import { sectionThemeStyle, type SectionId } from "../../lib/sectionTheme";
 import {
@@ -77,7 +78,7 @@ export function JourneyDaySummary({
     <>
       <section className="journey-day-summary" aria-labelledby="journey-day-title">
         <div className="journey-day-summary__navigation" aria-label="Elegir día del viaje">
-          {days.isLoading && <p className="muted" role="status">Cargando días…</p>}
+          {days.isLoading && <LoadingSkeleton variant="inline" inlineKind="iterator" section="journey" />}
           {days.error && <div className="journey-gallery__error"><p role="alert" className="form-error">{days.error.message}</p><Button variant="tertiary" onClick={() => void days.refetch()}>Reintentar</Button></div>}
           {!days.isLoading && !days.error && <RecordIterator
             ariaLabel="Iterar días del viaje"
@@ -95,7 +96,7 @@ export function JourneyDaySummary({
             <p className="muted">{formatDate(date)}{isFuture ? " · Día por venir" : " · Lo que pasó en el viaje"}</p>
           </div>
         </div>
-        {query.isLoading && <p role="status">Cargando lo que pasó este día…</p>}
+        {query.isLoading && <LoadingSkeleton variant="inline" inlineKind="journey-summary" section="journey" />}
         {query.error && <p className="form-error" role="alert">{query.error.message}</p>}
         {selected && <>
           <div className="journey-day-summary__columns">

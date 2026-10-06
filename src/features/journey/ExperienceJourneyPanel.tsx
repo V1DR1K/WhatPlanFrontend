@@ -15,6 +15,7 @@ import {
 import { LocationFields, useLocationDraft } from "./LocationFields";
 import { MovementEditor } from "./JourneyEditors";
 import { useZoneContext } from "../../lib/zoneContext";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 export function ExperienceJourneyPanel({
   source,
   physicalCity,
@@ -68,7 +69,7 @@ export function ExperienceJourneyPanel({
   return (
     <section className="experience-journey-panel">
       <h3>Ubicación y viaje</h3>
-      {location.isLoading && <p role="status">Cargando ubicación…</p>}
+      {location.isLoading && <LoadingSkeleton variant="inline" inlineKind="location" section="journey" />}
       {location.error && (
         <p className="form-error" role="alert">
           {location.error.message}

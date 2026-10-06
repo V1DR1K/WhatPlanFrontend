@@ -190,7 +190,7 @@ export function JourneyDetailPage() {
     },
     onSuccess: refresh,
   });
-  if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (detail.isLoading) return <LoadingSkeleton variant="detail" section="journey" />;
   if (!detail.data)
     return (
       <section className="journey-page">

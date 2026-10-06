@@ -65,7 +65,7 @@ export function SpecialDatesManager() {
       <div className="special-dates-settings__toolbar">
         <Button icon="➕" type="button" onClick={startCreate}>Agregar fecha especial</Button>
       </div>
-      {specialDates.isLoading && <LoadingSkeleton variant="list" />}
+      {specialDates.isLoading && <LoadingSkeleton variant="list" section="dates" />}
       {specialDates.isError && <p className="form-error" role="alert">{specialDates.error.message}</p>}
       {!specialDates.isLoading && !specialDates.isError && (
         specialDates.data?.length ? <ul className="special-dates-settings__list">

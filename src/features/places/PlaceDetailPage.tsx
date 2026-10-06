@@ -113,7 +113,7 @@ export function PlaceDetailPage() {
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
     return <section className="detail"><p className="form-error" role="alert">No pudimos cargar este lugar.</p></section>;
   }
-  if (place.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (place.isLoading) return <LoadingSkeleton variant="detail" section="food" />;
 
   const venue = place.data!;
   const visitList = visits.data ?? [];
@@ -207,7 +207,7 @@ export function PlaceDetailPage() {
             />
             {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
-          {visit.isLoading && <LoadingSkeleton variant="list" />}
+          {visit.isLoading && <LoadingSkeleton variant="experience" section="food" compactExperience />}
           {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(Number(photo.id))} />}
         </section>
       )}

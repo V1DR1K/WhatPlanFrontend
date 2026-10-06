@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "../../lib/locationQuery";
 import { useZoneContext } from "../../lib/zoneContext";
 import { Button } from "../../components/ui/Button";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { showNotice } from "../../lib/flash";
 import { CityPicker, type CityDraft } from "./JourneyForm";
 import { getCity, saveCity, saveOrigin } from "./journey";
@@ -42,7 +43,7 @@ export function OriginSettingsPanel() {
         Su ciudad de origen es compartida. Al entrar, ambos verán los catálogos
         de esta ciudad; los viajes agregan nuevos destinos al filtro.
       </p>
-      {city.isLoading && <p role="status">Cargando ciudad…</p>}
+      {city.isLoading && <LoadingSkeleton variant="inline" inlineKind="location" section="journey" />}
       {city.error && (
         <p className="form-error" role="alert">
           {city.error.message}

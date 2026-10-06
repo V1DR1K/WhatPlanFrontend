@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
 import { useEffect, useState } from 'react';
 import { Button } from '../../components/ui/Button';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { showNotice } from '../../lib/flash';
 import { getGlobalSettings, saveGlobalSettings } from '../../lib/settings';
 import { session } from '../../lib/api';
@@ -35,11 +36,11 @@ export function SettingsPage() {
         <h2 id="catalog-limit-title">Límite de Ver más</h2>
         <p className="intro">Define cuántas entidades muestra inicialmente cada bloque y cuántas suma cada vez que eligen Ver más.</p>
         {settings.isError && <p className="form-error" role="alert">{settings.error.message}</p>}
-        <form className="settings-page__limit-form" onSubmit={event => { event.preventDefault(); saveCatalogPageSize.mutate(); }}>
+        {settings.isLoading ? <LoadingSkeleton variant="inline" inlineKind="settings" /> : <form className="settings-page__limit-form" onSubmit={event => { event.preventDefault(); saveCatalogPageSize.mutate(); }}>
           <label>Cantidad por bloque<input type="number" min="1" max="50" required value={catalogPageSize} onChange={event => setCatalogPageSize(Number(event.target.value))} /></label>
           <Button icon="💾" disabled={saveCatalogPageSize.isPending}>{saveCatalogPageSize.isPending ? 'Guardando…' : 'Guardar límite'}</Button>
           {saveCatalogPageSize.error && <p className="form-error" role="alert">{saveCatalogPageSize.error.message}</p>}
-        </form>
+        </form>}
       </section>
     </>}
   </section>;

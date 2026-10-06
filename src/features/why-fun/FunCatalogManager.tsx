@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import type { FunCategory } from '../../types/domain';
 import { deleteFunCategory, getAllFunCategories, saveFunCategory, type FunCategoryInput } from './whyFun';
 
@@ -71,6 +72,7 @@ export function FunCatalogManager() {
       </section>
     </div>
     <div className="fun-catalog-list">
+      {categories.isLoading && <LoadingSkeleton variant="list" section="fun" />}
       {roots.map(category => <section className="fun-catalog-group" key={category.id}>
         <div className="category-list">
           <span className="fun-catalog-root">

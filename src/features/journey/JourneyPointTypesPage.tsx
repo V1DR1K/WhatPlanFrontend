@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { Modal } from "../../components/ui/Modal";
 import { useQuery } from "../../lib/locationQuery";
@@ -51,6 +52,7 @@ export function JourneyPointTypesPage() {
     <p>Personalicen las categorías que aparecen en la agenda de todos sus viajes.</p>
     {types.error && <p className="form-error" role="alert">{types.error.message}</p>}
     <div className="journey-point-type-list" aria-busy={types.isLoading}>
+      {types.isLoading && <LoadingSkeleton variant="list" section="journey" />}
       {types.data?.map((value) => <article className="journey-point-type-row" key={value.code}>
         <span className="journey-point-type-row__icon" style={{ color: value.color, backgroundColor: `${value.color}20` }}>
           <JourneyIcon name={value.icon} />

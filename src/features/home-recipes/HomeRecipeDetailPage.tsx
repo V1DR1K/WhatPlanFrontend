@@ -75,7 +75,7 @@ export function HomeRecipeDetailPage() {
   if (!validId || recipe.isError || (!recipe.isLoading && !recipe.data)) {
     return <section className="home-recipe-detail"><p className="form-error" role="alert">No pudimos abrir esta receta.</p></section>;
   }
-  if (recipe.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (recipe.isLoading) return <LoadingSkeleton variant="detail" section="cook" />;
 
   const value = recipe.data!;
   const profilePhoto = value.photoUrl ?? value.thumbnailUrl;
@@ -130,7 +130,7 @@ export function HomeRecipeDetailPage() {
       </section>
       <section className="reviews-section">
         <div className="section-title"><div><p className="eyebrow">HISTORIAL DE COCINADAS</p><h2>Veces que la hicieron</h2></div><strong>{list.length}</strong></div>
-        {list.length ? <>
+        {cookings.isLoading ? <LoadingSkeleton variant="experience" section="cook" compactExperience /> : list.length ? <>
           <div className="item-date-pager">
             <RecordIterator
               ariaLabel="Navegar cocinadas"

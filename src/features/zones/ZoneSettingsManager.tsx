@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
 import { Button } from '../../components/ui/Button';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { showNotice } from '../../lib/flash';
 import { createZone, deactivateZone, getAllZones, updateZone } from './zones';
 
@@ -27,6 +28,7 @@ export function ZoneSettingsManager() {
     </form>
     {add.error && <p className="form-error" role="alert">{add.error.message}</p>}
     <ul className="zone-settings__list">
+      {zones.isLoading && <li className="zone-settings__loading"><LoadingSkeleton variant="list" /></li>}
       {(zones.data ?? []).map(zone => <li key={zone.id}>
         {editingId === zone.id ? <form onSubmit={event => { event.preventDefault(); edit.mutate(); }}>
           <label className="sr-only" htmlFor={`zone-${zone.id}`}>Nombre de la Zona</label>

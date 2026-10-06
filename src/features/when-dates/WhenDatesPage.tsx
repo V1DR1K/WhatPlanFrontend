@@ -52,8 +52,8 @@ export function WhenDatesPage() {
       </div>
     </section>
     {specialDates.isError && <p className="form-error" role="alert">No pudimos cargar las fechas importantes para filtrar.</p>}
-    {entries.isLoading && <LoadingSkeleton variant="catalog" />}
-    {entries.isError && <AsyncState error onRetry={() => entries.refetch()} />}
+    {entries.isLoading && <LoadingSkeleton variant="catalog" section="dates" />}
+    {entries.isError && <AsyncState error onRetry={() => entries.refetch()} section="dates" />}
     {!entries.isLoading && !entries.isError && !results.length && <p className="empty-state" role="status">Todavía no hay recuerdos para estas fechas.</p>}
     <div className="when-dates-grid" aria-busy={entries.isFetching}>{results.map((occurrence) => <WhenDateCard occurrence={occurrence} key={`${occurrence.specialDate.id}:${occurrence.occurredOn}`} />)}</div>
     {entries.hasNextPage && <CatalogMoreButton loading={entries.isFetchingNextPage} onClick={() => entries.fetchNextPage()} />}

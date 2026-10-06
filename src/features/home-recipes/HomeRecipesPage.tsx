@@ -72,7 +72,7 @@ function RecipeSection({
   const recipes = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="home-recipe-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {recipes.length} recetas</strong></div>
-     {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state" role="status">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
+     {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" section="cook" /> : recipes.length ? <div className="home-recipe-grid">{recipes.map((recipe) => <CatalogRecipeCard key={recipe.id} recipe={recipe} />)}</div> : <p className="empty-state" role="status">{filtered ? "No encontramos recetas con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -158,7 +158,7 @@ export function HomeRecipesPage() {
           <button aria-pressed={home === "AVRIL"} className={home === "AVRIL" ? "selected" : ""} type="button" onClick={() => setHome("AVRIL")}>🏡 Avril</button>
         </div>
       </section>
-      {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
+      {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" section="cook" /> : <>
         <RecipeSection query={pendingRecipes} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} />
         <RecipeSection query={doneRecipes} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} />
       </>}

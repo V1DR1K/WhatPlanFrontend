@@ -85,7 +85,7 @@ function ActivitySection({
   const activities = query.data?.pages.flatMap((page) => page.content) ?? [];
   return <section className="fun-section">
     <div className="section-title"><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2></div><strong>Mostrando {activities.length} actividades</strong></div>
-    {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" /> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state" role="status">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
+    {query.isError ? <p className="form-error" role="alert">{query.error.message}</p> : query.isLoading ? <LoadingSkeleton variant="catalog" section="fun" /> : activities.length ? <div className="fun-grid">{activities.map((activity) => <FunVenueCard key={activity.id} activity={activity} />)}</div> : <p className="empty-state" role="status">{filtered ? "No hay actividades con esos filtros." : empty}</p>}
     {query.hasNextPage && <CatalogMoreButton loading={query.isFetchingNextPage} onClick={() => query.fetchNextPage()} />}
   </section>;
 }
@@ -173,7 +173,7 @@ export function WhyFunPage() {
         {categoryId && <FilterChips label="Subcategorías" options={subcategories} selected={subcategoryId} onSelect={setSubcategoryId} />}
       </section>
       {categories.isError && <p className="form-error" role="alert">No pudimos cargar las categorías.</p>}
-      {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" /> : <>
+      {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" section="fun" /> : <>
         <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />
       </>}

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useQuery } from "../../lib/locationQuery";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { photoDateOrNow } from "../../lib/photoMetadata";
@@ -170,7 +171,7 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
           <span>{ownedCount} propias · {linkedCount} vinculadas</span>
         </div>
       </div>
-      {linked.isLoading && <p className="muted" role="status">Buscando fotos de las secciones…</p>}
+      {linked.isLoading && <LoadingSkeleton variant="inline" inlineKind="gallery" section="journey" />}
       {linked.error && <div className="journey-gallery__error"><p className="form-error" role="alert">No pudimos cargar las fotos vinculadas: {linked.error.message}</p><Button variant="secondary" onClick={() => void linked.refetch()}>Reintentar</Button></div>}
       <ExperienceGallery
         accentLabel="GALERÍA COMPARTIDA"

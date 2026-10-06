@@ -222,7 +222,7 @@ export function JourneysPage() {
       {dateRangeError && (
         <p role="alert" className="form-error">La fecha “Desde” debe ser anterior o igual a “Hasta”.</p>
       )}
-      {trips.isLoading && !dateRangeError && <LoadingSkeleton variant="catalog" />}
+      {trips.isLoading && !dateRangeError && <LoadingSkeleton variant="catalog" section="journey" />}
       {trips.error && !dateRangeError && (
         <p role="alert" className="form-error">
           {trips.error.message}

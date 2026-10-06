@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { Modal } from '../../components/ui/Modal';
+import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import type { FilmGenreOption, WatchPlatform } from '../../types/domain';
 import { deleteFilmGenre, deletePlatform, getAllPlatforms, getFilmGenres, saveFilmGenre, savePlatform } from './films';
 
@@ -89,6 +90,7 @@ export function PlatformManager() {
         <h3>¿Dónde las vieron?</h3>
         <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setEditingPlatform(undefined); setPlatform(emptyPlatform); setCreatingPlatform(true); }}>Agregar plataforma</Button>
         <div className="platform-list">
+          {platforms.isLoading && <LoadingSkeleton variant="list" section="film" />}
           {platforms.data?.map(value => <article key={value.id}>
             <span>{value.icon}</span>
             <div><h3>{value.name}</h3><small>{value.active ? 'Disponible' : 'Inactiva'}</small></div>
@@ -101,6 +103,7 @@ export function PlatformManager() {
         <h3>Géneros</h3>
         <Button className="settings-add-button" icon="➕" type="button" onClick={() => { setEditingGenre(undefined); setGenre(emptyGenre); setCreatingGenre(true); }}>Agregar género</Button>
         <div className="category-list">
+          {genres.isLoading && <LoadingSkeleton variant="list" section="film" />}
           {genres.data?.map(value => <span key={value.id}>
             {value.emoji} {value.name}
             <Button variant="tertiary" icon="✏️" type="button" onClick={() => { setEditingGenre(value); setGenre(value); }}>Editar</Button>

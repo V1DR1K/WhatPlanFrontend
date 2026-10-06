@@ -104,7 +104,7 @@ export function FunVenueDetailPage() {
   if (!validId || activity.isError || (!activity.isLoading && !activity.data)) {
     return <section className="fun-detail"><p className="form-error" role="alert">No pudimos abrir esta actividad.</p></section>;
   }
-  if (activity.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (activity.isLoading) return <LoadingSkeleton variant="detail" section="fun" />;
 
   const value = activity.data!;
   const profilePhoto = value.profilePhoto?.url ?? value.profilePhoto?.thumbnailUrl;
@@ -157,7 +157,7 @@ export function FunVenueDetailPage() {
       </section>
       <section className="reviews-section">
         <div className="section-title"><div><p className="eyebrow">SALIDAS</p><h2>El historial</h2></div><strong>{list.length}</strong></div>
-        {list.length ? <>
+        {visits.isLoading ? <LoadingSkeleton variant="experience" section="fun" compactExperience /> : list.length ? <>
           <div className="item-date-pager">
             <RecordIterator
               ariaLabel="Navegar salidas"

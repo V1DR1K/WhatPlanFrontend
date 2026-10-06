@@ -31,7 +31,7 @@ export function WhenDateDetailPage() {
   const cover = useMutation({ mutationFn: ({ occurrenceId, photoId }: { occurrenceId: number; photoId: number }) => setWhenDateCover(occurrenceId, photoId), onSuccess: async () => { await qc.invalidateQueries({queryKey:['when-date', specialDateId, date]}); await qc.invalidateQueries({ queryKey: ['when-dates'] }); showNotice('Actualizamos la portada del recuerdo.'); } });
   const removePhoto = useMutation({ mutationFn: (photoId: number) => deleteWhenDatePhoto(photoId), onSuccess: async () => { await refresh(); setDeletingPhoto(undefined); showNotice('Quitamos la foto.'); } });
   if (!valid || detail.isError || (!detail.isLoading && !detail.data)) return <section className="when-dates-page"><p className="form-error" role="alert">No pudimos abrir este recuerdo.</p></section>;
-  if (detail.isLoading) return <LoadingSkeleton variant="detail" />;
+  if (detail.isLoading) return <LoadingSkeleton variant="detail" section="dates" />;
   const value = detail.data!; const rangeEnd = value.endsOn ?? value.occurredOn; const occurred=rangeEnd<=today(); const ownComment = value.comments.find((comment) => comment.author === session.get()?.username); const sourcePhotos = value.entries.flatMap((entry) => entry.sourcePhotos.map((photo) => ({ ...photo, title: entry.title })));
   return <section className="when-date-detail">
     <Link className="section-back when-date-detail__back" to="/app/when-dates">← Volver a WhenDates</Link>

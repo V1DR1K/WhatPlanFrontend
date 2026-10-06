@@ -84,9 +84,9 @@ function PlaceSection({
         <strong>Mostrando {list.length} lugar{list.length === 1 ? "" : "es"}</strong>
       </div>
       {query.isError ? (
-        <AsyncState error onRetry={() => query.refetch()} />
+        <AsyncState error onRetry={() => query.refetch()} section="food" />
       ) : query.isLoading ? (
-        <LoadingSkeleton variant="catalog" />
+        <LoadingSkeleton variant="catalog" section="food" />
       ) : list.length ? (
         <div className="place-grid">
           {list.map((p) => (
@@ -222,7 +222,7 @@ export function DiscoverPage() {
         hasFilter={hasFilter}
         pageSize={pageSize}
       />
-      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error" role="alert">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state" role="status">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
+      <section className="archived-places"><Button variant="tertiary" icon="🗃️" type="button" onClick={() => setShowArchived(current => !current)}>{showArchived ? "Ocultar archivados" : "Ver lugares archivados"}</Button>{showArchived && <>{archived.isError && <p className="form-error" role="alert">{archived.error.message}</p>}{archived.isLoading && <LoadingSkeleton variant="list" section="food" />}{!archived.isLoading && !archived.data?.length && <p className="empty-state" role="status">No tenés lugares archivados.</p>}{archived.data?.map(place => <article className="archived-place" key={place.id}><span>{place.category.icon}</span><div><strong>{place.name}</strong><small>Archivado. Sus datos y fotos se conservan.</small></div><Button variant="secondary" icon="↩️" type="button" disabled={restore.isPending} onClick={() => restore.mutate(place.id)}>Restaurar lugar</Button></article>)}</>}</section>
       {showForm && <PlaceForm onClose={() => setShowForm(false)} />}
     </SectionShell>
   );
