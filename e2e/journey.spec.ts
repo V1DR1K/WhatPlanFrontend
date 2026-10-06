@@ -522,12 +522,13 @@ test("point types are shared settings and extra itinerary links get clear previe
   await expect(point.getByText("Anotar entradas y horario.")).toBeVisible();
 });
 
-test("journey summary stays focused and gallery manages trip, daily and linked photos", async ({ page }) => {
+test("journey summary stays focused and the gallery manages trip and linked photos", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await journeyFixture(page, true);
   await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
   await expect(page.getByRole("heading", { name: "Resumen del día", exact: true })).toBeVisible();
-  await expect(page.getByText("Nuestro aniversario", { exact: false })).toBeVisible();
+  await expect(page.locator(".journey-detail__header-actions").getByRole("link", { name: /Fechas importantes/ }))
+    .toHaveAttribute("href", "/app/when-dates/1/2026-08-10");
 
   await page.getByRole("button", { name: "Editar relato", exact: true }).click();
   let dialog = page.getByRole("dialog");
@@ -551,17 +552,6 @@ test("journey summary stays focused and gallery manages trip, daily and linked p
   await expect(gallery).toContainText("Vinculada · WhereFood");
   await expect(gallery).toContainText("La Cabrera");
   await expect(gallery.getByRole("link", { name: "Abrir ficha" })).toHaveAttribute("href", "/app/food/places/7");
-  await gallery.getByRole("button", { name: "Administrar fotos del día", exact: true }).click();
-  dialog = page.getByRole("dialog");
-  await dialog.locator('input[type="file"]').setInputFiles({
-    name: "caminata.png",
-    mimeType: "image/png",
-    buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64"),
-  });
-  await dialog.getByRole("button", { name: "Subir 1 foto", exact: true }).click();
-  await expect(dialog.locator(".photo-manager__saved img")).toHaveCount(1);
-  await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
-
   const tripGallery = page.locator(".journey-gallery");
   await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
   dialog = page.getByRole("dialog");
