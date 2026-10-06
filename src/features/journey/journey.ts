@@ -74,6 +74,7 @@ export type Point = {
   scheduledOn: string | null;
   scheduledTime: string | null;
   notes: string | null;
+  address: string | null;
   mapsUrl: string | null;
   position: number;
   status: "PENDING" | "COMPLETED" | "CANCELLED";
@@ -87,6 +88,8 @@ export type Stay = {
   name: string;
   startsOn: string;
   endsOn: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
   address: string | null;
   price: number | string | null;
   currency: string | null;
@@ -132,6 +135,7 @@ export type Review = {
 export type JourneyFile = {
   id: string;
   name: string;
+  occurredAt: string;
   contentType: string;
   byteSize: number;
   stageId: string | null;
@@ -347,9 +351,9 @@ export const saveJourneyDayReview = (id: string, day: string, rating: number | n
   });
 export const deleteJourneyDayReview = (id: string, day: string) =>
   api<void>(`/whither-journey/${id}/days/${day}/reviews/me`, { method: "DELETE" });
-export const uploadJourneyPhoto = (id: string, file: File, purpose: "TRIP" | "DAY", day?: string) => {
+export const uploadJourneyPhoto = (id: string, file: File, purpose: "TRIP" | "DAY", day?: string, occurredAt?: string) => {
   const form = new FormData(); form.append("file", file);
-  const query = new URLSearchParams({ purpose }); if (day) query.set("day", day);
+  const query = new URLSearchParams({ purpose }); if (day) query.set("day", day); if (occurredAt) query.set("occurredAt", occurredAt);
   return api<JourneyPhoto>(`/whither-journey/${id}/photos?${query}`, { method: "POST", body: form });
 };
 export const setJourneyCover = (id: string, fileId: string) =>
@@ -398,6 +402,7 @@ export const uploadFile = (
     stayId?: string;
     movementId?: string;
     hotelPhoto?: boolean;
+    occurredAt?: string;
   } = {},
 ) => {
   const q = new URLSearchParams();
@@ -471,17 +476,8 @@ export const relinkFile = (
     body: JSON.stringify(links),
   });
 
-export const linkDate = (
-  id: string,
-  input: {
-    stageId: string;
-    date: string;
-    endsOn?: string;
-    specialDateId?: number;
-    label?: string;
-  },
-) =>
-  api(`/whither-journey/${id}/dates`, {
-    method: "POST",
-    body: JSON.stringify(input),
+export const updateFileDate = (id: string, occurredAt: string) =>
+  api<JourneyFile>(`/whither-journey/files/${id}/date`, {
+    method: "PUT",
+    body: JSON.stringify({ occurredAt }),
   });

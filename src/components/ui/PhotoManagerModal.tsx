@@ -23,7 +23,9 @@ type GalleryProps = {
   maxPhotos?: number;
   limitCount?: number;
   coverPending?: boolean;
-  onUpload: (files: File[]) => Promise<void>;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onUpload: (files: File[], originals?: File[]) => Promise<void>;
   onSetCover?: (photo: ExperiencePhoto) => void;
   onDelete?: (photo: ExperiencePhoto) => void;
 };
@@ -31,18 +33,29 @@ type GalleryProps = {
 type Props = AttachmentProps | GalleryProps;
 
 export function PhotoManagerModal(props: Props) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [originalFiles, setOriginalFiles] = useState<File[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [preparing, setPreparing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>();
   const [pickerKey, setPickerKey] = useState(0);
   const [viewerIndex, setViewerIndex] = useState<number>();
+  const controlled = props.mode === "gallery" && props.open !== undefined;
+  const open = controlled ? props.open : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (controlled) {
+      if (props.mode === "gallery") props.onOpenChange?.(next);
+      return;
+    }
+    setInternalOpen(next);
+  };
 
   const close = () => {
     if (uploading || preparing) return;
     setOpen(false);
     setFiles([]);
+    setOriginalFiles([]);
     setError(undefined);
     if (props.mode === "attachment") props.onPreparingChange?.(false);
   };
@@ -52,8 +65,9 @@ export function PhotoManagerModal(props: Props) {
     try {
       setUploading(true);
       setError(undefined);
-      await props.onUpload(files);
+      await props.onUpload(files, originalFiles.length === files.length ? originalFiles : files);
       setFiles([]);
+      setOriginalFiles([]);
       setPickerKey((key) => key + 1);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "No pudimos subir las fotos.");
@@ -75,7 +89,7 @@ export function PhotoManagerModal(props: Props) {
   const heading = props.mode === "gallery" ? `Fotos de ${props.name}` : `Foto ${props.name}`;
 
   return <>
-    <Button type="button" variant="secondary" icon={props.mode === "gallery" ? "🖼️" : "📷"} onClick={() => { setFiles(props.mode === "attachment" && props.photo ? [props.photo] : []); setError(undefined); setOpen(true); }}>
+    <Button type="button" variant="secondary" icon={props.mode === "gallery" ? "🖼️" : "📷"} onClick={() => { setFiles(props.mode === "attachment" && props.photo ? [props.photo] : []); setOriginalFiles([]); setError(undefined); setOpen(true); }}>
       {props.mode === "gallery" ? props.manageLabel ?? "Administrar fotos" : selectedFile ? "Cambiar foto" : "Agregar foto"}
     </Button>
     {open && <Modal size="wide" className="photo-manager-modal" onClose={close} pending={uploading || preparing} title={`Administrar ${heading.toLowerCase()}`}>
@@ -111,7 +125,7 @@ export function PhotoManagerModal(props: Props) {
             })}
           </div>}
           {maxFiles > 0 && <>
-            <PhotoPicker key={`${props.photos.length}-${pickerKey}`} multiple maxFiles={maxFiles} disabled={uploading} onChange={setFiles} onPreparingChange={setPreparing} selectLabel="Agregar fotos" />
+            <PhotoPicker key={`${props.photos.length}-${pickerKey}`} multiple maxFiles={maxFiles} disabled={uploading} onChange={(nextFiles, originals) => { setFiles(nextFiles); setOriginalFiles(originals); }} onPreparingChange={setPreparing} selectLabel="Agregar fotos" />
             {files.length > 0 && <Button type="button" disabled={uploading || preparing} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos…" : `Subir ${files.length} ${files.length === 1 ? "foto" : "fotos"}`}</Button>}
           </>}
           {props.photos.length === 0 && maxFiles === 0 && <p className="muted">No hay espacio para más fotos.</p>}

@@ -324,6 +324,105 @@
 .item-date-pager__actions {
   flex: 0 0 auto;
 }
+.record-iterator {
+  display: grid;
+  flex: 1 1 360px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--section-accent, #a978ff) 35%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--section-accent, #a978ff) 7%, var(--panel));
+}
+.record-iterator > .button--icon {
+  border-color: color-mix(in srgb, var(--section-accent, #a978ff) 45%, var(--line));
+  color: var(--section-accent, #a978ff);
+}
+.record-iterator > .button--icon svg {
+  width: 19px;
+  height: 19px;
+}
+.record-iterator__current {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: center;
+}
+.record-iterator__current label {
+  display: grid;
+  width: min(100%, 420px);
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font: 500 10px "DM Mono";
+  letter-spacing: 0.8px;
+}
+.record-iterator__current select {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cream);
+  font: 700 15px "DM Sans";
+  letter-spacing: 0;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+.record-iterator__current small {
+  color: var(--muted);
+  font: 500 11px "DM Sans";
+}
+.place-detail__external-actions,
+.fun-detail__external-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 420px;
+  margin-block: 8px 12px;
+}
+.place-detail__external-actions .button,
+.fun-detail__external-actions .button {
+  min-width: 0;
+  min-height: 44px;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+}
+.place-detail__address {
+  margin-bottom: 4px;
+  overflow-wrap: anywhere;
+}
+.place-detail__external-actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.fun-detail__external-actions:has(> :only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.item-date-pager > .record-iterator {
+  max-width: 540px;
+}
+@media (max-width: 540px) {
+  .item-date-pager {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+  .item-date-pager > .record-iterator {
+    width: 100%;
+  }
+  .item-date-pager__actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .item-date-pager__actions .button {
+    flex: 1 1 145px;
+  }
+}
 .date-chevron {
   width: 42px;
   height: 42px;

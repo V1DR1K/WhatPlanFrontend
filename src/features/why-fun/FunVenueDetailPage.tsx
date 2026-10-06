@@ -1,11 +1,12 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
@@ -21,6 +22,7 @@ import { deleteActivity, deleteActivityPhoto, getActivity, getActivityVisits, se
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { mapsSearch } from "../places/places";
 
 const dateLabel = (value?: string) =>
   value
@@ -105,8 +107,10 @@ export function FunVenueDetailPage() {
   const value = activity.data!;
   const profilePhoto = value.profilePhoto?.url ?? value.profilePhoto?.thumbnailUrl;
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
+  const addressUrl = mapsSearch(value.address);
   return (
     <section className="fun-detail">
+      <Link className="journey-back" to="/app/why-fun">← Volver a WhyFun</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -124,7 +128,10 @@ export function FunVenueDetailPage() {
         }
         metadata={
           <>
-          <p className="fun-plan-date">📍 {value.address}</p>
+          {value.address && <p className="fun-plan-date">{value.address}</p>}
+          {addressUrl && <div className="fun-detail__external-actions">
+            <a className="button button--primary address-link" href={addressUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${value.name} en Google Maps`}>📍 Dirección ↗</a>
+          </div>}
           <p className="byline">Creada por {value.createdBy} · editada por {value.updatedBy}</p>
           </>
         }
@@ -149,12 +156,13 @@ export function FunVenueDetailPage() {
         <div className="section-title"><div><p className="eyebrow">SALIDAS</p><h2>El historial</h2></div><strong>{list.length}</strong></div>
         {list.length ? <>
           <div className="item-date-pager">
-            <label>
-              Elegir salida
-              <select value={selectedVisitId ?? ""} onChange={(event) => setSelectedVisitId(Number(event.target.value))}>
-                {list.map((visit) => <option key={visit.id} value={visit.id}>{dateLabel(visit.scheduledAt)}{specialDateOptionSuffix(visit.scheduledAt, specialDateList)} · {visit.createdBy}</option>)}
-              </select>
-            </label>
+            <RecordIterator
+              ariaLabel="Navegar salidas"
+              label="Salida"
+              value={String(selectedVisitId ?? "")}
+              options={list.map((visit) => ({ value: String(visit.id), label: `${dateLabel(visit.scheduledAt)}${specialDateOptionSuffix(visit.scheduledAt, specialDateList)}`, detail: `Registrada por ${visit.createdBy}` }))}
+              onChange={(value) => setSelectedVisitId(Number(value))}
+            />
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}
           </div>
           {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" manageInModal name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(Number(photo.id))} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}

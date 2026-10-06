@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
+import { RecordIterator, type RecordIteratorOption } from "../../components/ui/RecordIterator";
 import { Modal } from "../../components/ui/Modal";
 import { StarRating } from "../../components/ui/StarRating";
 import { session } from "../../lib/api";
@@ -9,10 +10,12 @@ import { sectionThemeStyle, type SectionId } from "../../lib/sectionTheme";
 import {
   deleteJourneyDayReview,
   formatDate,
+  formatJourneyDay,
   getJourneyDay,
   getJourneyDays,
   saveJourneyDayReview,
   saveJourneyDayStory,
+  offsetJourneyDate,
   type Detail,
   type Section,
 } from "./journey";
@@ -58,6 +61,15 @@ export function JourneyDaySummary({
     onSuccess: async () => { await invalidate(); setEditingStory(false); },
   });
   const selected = query.data;
+  const dayOptions: RecordIteratorOption[] = [];
+  for (let day = detail.trip.startsOn; day <= detail.trip.endsOn; day = offsetJourneyDate(day, 1)) {
+    const summary = days.data?.find((item) => item.date === day);
+    dayOptions.push({
+      value: day,
+      label: formatJourneyDay(day),
+      detail: summary?.destinations[0] ?? "Día del viaje",
+    });
+  }
   const ownReview = selected?.reviews.find((review) => review.author === session.get()?.username);
   const isFuture = date > new Date().toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" });
 
@@ -70,24 +82,20 @@ export function JourneyDaySummary({
           </div>
           {days.isLoading && <p className="muted" role="status">Cargando días…</p>}
           {days.error && <p role="alert" className="form-error">{days.error.message}</p>}
-          {days.data && <div className="journey-day-index__list">
-            {days.data.map((item) => <button key={item.date} type="button" aria-pressed={date === item.date}
-              className={date === item.date ? "is-selected" : ""} onClick={() => onDateChange(item.date)}>
-              <time dateTime={item.date}>{formatDate(item.date)}</time>
-              <small>{item.destinations[0] || "Día del viaje"}</small>
-            </button>)}
-          </div>}
+          {!days.isLoading && !days.error && <RecordIterator
+            ariaLabel="Iterar días del viaje"
+            className="journey-day-stepper"
+            label="Día del viaje"
+            options={dayOptions}
+            value={date}
+            onChange={onDateChange}
+          />}
         </section>
         <div className="journey-panel__heading">
           <div>
             <h2 id="journey-day-title">Resumen del día</h2>
             <p className="muted">{formatDate(date)}{isFuture ? " · Día por venir" : " · Lo que pasó en el viaje"}</p>
           </div>
-          <label className="journey-day-picker__date">
-            Día del viaje
-            <input type="date" min={detail.trip.startsOn} max={detail.trip.endsOn}
-              value={date} onChange={(event) => onDateChange(event.target.value)} />
-          </label>
         </div>
         {query.isLoading && <p role="status">Cargando lo que pasó este día…</p>}
         {query.error && <p className="form-error" role="alert">{query.error.message}</p>}

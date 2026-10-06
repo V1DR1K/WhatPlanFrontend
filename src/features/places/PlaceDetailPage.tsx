@@ -1,12 +1,13 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
@@ -19,7 +20,7 @@ import { VisitForm } from "../items/VisitForm";
 import { VisitReviewForm } from "../items/VisitReviewForm";
 import { PlaceForm } from "./PlaceForm";
 import { PlaceReviewForm } from "./PlaceReviewForm";
-import { deletePlace, getPlace } from "./places";
+import { deletePlace, getPlace, mapsSearch } from "./places";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
@@ -30,10 +31,6 @@ const dateLabel = (date: string) =>
     month: "long",
     year: "numeric",
   }).format(new Date(`${date}T12:00:00`));
-const mapsSearch = (address?: string | null) =>
-  address
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-    : undefined;
 const visitMetrics = [
   ["taste", "Sabor"],
   ["price", "Precio"],
@@ -128,6 +125,7 @@ export function PlaceDetailPage() {
 
   return (
     <section className="detail">
+      <Link className="journey-back" to="/app/food">← Volver a WhereFood</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -156,14 +154,12 @@ export function PlaceDetailPage() {
         }
         metadata={
           <>
-          <p>
-            {mapsUrl ? (
-              <a className="address-link" href={mapsUrl} target="_blank" rel="noreferrer">
-                📍 {venue.address || "Abrir ubicación"} ↗
-              </a>
-            ) : venue.address || "Sin dirección"}
-          </p>
-          {venue.sourceUrl && <a className="source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
+          {venue.address && <p className="place-detail__address">{venue.address}</p>}
+          <div className="place-detail__external-actions" aria-label="Enlaces del lugar">
+            {mapsUrl && <a className="button button--primary address-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${venue.name} en Google Maps`}>📍 Dirección ↗</a>}
+            {venue.sourceUrl && <a className="button button--secondary source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
+          </div>
+          {!venue.address && !mapsUrl && <p>Sin dirección</p>}
           {venue.acceptsReservations && <p className="place-reservation-status">📅 Acepta reservas</p>}
           <p className="byline">Agregado por {venue.author}</p>
           </>
@@ -199,12 +195,13 @@ export function PlaceDetailPage() {
             <strong>{visitList.length} fechas</strong>
           </div>
           <div className="item-date-pager">
-            <label>
-              Elegir visita
-              <select value={selectedVisitId ?? ""} onChange={(event) => setSelectedVisitId(Number(event.target.value))}>
-                {visitList.map((entry) => <option key={entry.id} value={entry.id}>{dateLabel(entry.visitedOn)}{specialDateOptionSuffix(entry.visitedOn, specialDateList)} · registrada por {entry.createdBy}</option>)}
-              </select>
-            </label>
+            <RecordIterator
+              ariaLabel="Navegar visitas"
+              label="Visita"
+              value={String(selectedVisitId ?? "")}
+              options={visitList.map((entry) => ({ value: String(entry.id), label: `${dateLabel(entry.visitedOn)}${specialDateOptionSuffix(entry.visitedOn, specialDateList)}`, detail: `Registrada por ${entry.createdBy}` }))}
+              onChange={(value) => setSelectedVisitId(Number(value))}
+            />
             {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           {visit.isLoading && <LoadingSkeleton variant="list" />}

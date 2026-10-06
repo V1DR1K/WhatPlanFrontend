@@ -5,8 +5,11 @@ import { fetchMedia } from "../../lib/api";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
+import { localDateTimeToIso, photoDateOrNow, toLocalDateTimeInput } from "../../lib/photoMetadata";
+import { preparePhoto } from "../../lib/photos";
 import {
   relinkFile,
+  updateFileDate,
   uploadFile,
   type Detail,
   type JourneyFile,
@@ -46,12 +49,13 @@ export function FilePreview({
   }, [file.url]);
   if (url && file.contentType.startsWith("image/"))
     return (
-      <PhotoViewer photos={[{ src: url, alt: file.name }]} onClose={onClose} />
+      <PhotoViewer photos={[{ src: url, alt: "Foto guardada en el viaje" }]} onClose={onClose} />
     );
+  const downloadName = `documento-${file.id}.pdf`;
   return (
-    <Modal className="journey-modal" onClose={onClose} size="wide" title={file.name}>
+    <Modal className="journey-modal" onClose={onClose} size="wide" title="Vista previa del archivo">
       <div className="journey-file-preview">
-        <h2>{file.name}</h2>
+        <h2>Documento PDF</h2>
         {error && (
           <p className="form-error" role="alert">
             {error}
@@ -86,13 +90,13 @@ export function FilePreview({
               <a
                 className="button button--secondary"
                 href={url}
-                download={file.name}
+                download={downloadName}
               >
                 Descargar original
               </a>
             </div>
             <iframe
-              title={`PDF: ${file.name}`}
+              title="Vista previa del documento PDF"
               src={`${url}#page=${page}&zoom=${zoom}`}
             />
             <p className="muted">
@@ -118,9 +122,11 @@ export function FileUpload({
   const refresh = useJourneyRefresh(detail.trip.id);
   const [file, setFile] = useState<File>();
   const [previewUrl, setPreviewUrl] = useState("");
+  const [occurredAt, setOccurredAt] = useState("");
+  const [preparingFile, setPreparingFile] = useState(false);
+  const [selectionError, setSelectionError] = useState("");
   const [linkType, setLinkType] = useState(stayId ? "stay" : "trip");
   const [linkId, setLinkId] = useState(stayId ?? "");
-  const [hotelPhoto, setHotelPhoto] = useState(!!stayId);
   const upload = useMutation({
     mutationFn: () => {
       if (!file) throw new Error("Elegí un archivo.");
@@ -141,14 +147,17 @@ export function FileUpload({
       if (linkType === "stay") {
         links.stayId = linkId;
         links.stageId = detail.stays.find((s) => s.id === linkId)?.stageId;
-        links.hotelPhoto = hotelPhoto;
+        links.hotelPhoto = Boolean(file?.type.startsWith("image/"));
       }
       if (linkType === "movement") {
         links.movementId = linkId;
         links.stageId =
           detail.movements.find((m) => m.id === linkId)?.stageId ?? undefined;
       }
-      return uploadFile(detail.trip.id, file, links);
+      return uploadFile(detail.trip.id, file, {
+        ...links,
+        occurredAt: localDateTimeToIso(occurredAt),
+      });
     },
     onSuccess: async () => {
       await refresh();
@@ -172,6 +181,24 @@ export function FileUpload({
         : linkType === "stay"
           ? detail.stays.map((s) => ({ id: s.id, name: s.name }))
           : detail.movements.map((m) => ({ id: m.id, name: m.description }));
+  const selectFile = async (source?: File) => {
+    setFile(undefined);
+    setSelectionError("");
+    if (!source) return;
+    setPreparingFile(true);
+    try {
+      const capturedAt = await photoDateOrNow(source);
+      const ready = source.type.startsWith("image/") || /\.hei[cf]$/i.test(source.name)
+        ? await preparePhoto(source)
+        : source;
+      setOccurredAt(toLocalDateTimeInput(capturedAt));
+      setFile(ready);
+    } catch (error) {
+      setSelectionError(error instanceof Error ? error.message : "No pudimos preparar el archivo.");
+    } finally {
+      setPreparingFile(false);
+    }
+  };
   return (
     <Modal
       className="journey-modal"
@@ -189,20 +216,27 @@ export function FileUpload({
       >
         <h2>Reservas, entradas y recibos</h2>
         <p className="muted">
-          PDF, JPEG, PNG o WebP. Hasta {maxMegabytes} MB; guardamos el original.
+          PDF, JPEG, PNG, WebP o HEIC. Hasta {maxMegabytes} MB.
         </p>
         <label>
           Archivo
           <input
             type="file"
             required
-            accept="application/pdf,image/jpeg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0])}
+            accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif"
+            disabled={preparingFile}
+            onChange={(e) => { const selected = e.currentTarget.files?.[0]; e.currentTarget.value = ""; void selectFile(selected); }}
           />
         </label>
+        {preparingFile && <p role="status">Leyendo la fecha de la foto…</p>}
+        {selectionError && <p className="form-error" role="alert">{selectionError}</p>}
         {file && (previewUrl
-          ? <div className="journey-file-upload-preview"><img src={previewUrl} alt={`Vista previa de ${file.name}`} /><span>{file.name}</span></div>
-          : <div className="journey-file-upload-preview"><span aria-hidden="true">📄</span><span>PDF listo para guardar: {file.name}</span></div>)}
+          ? <div className="journey-file-upload-preview"><img src={previewUrl} alt="Vista previa de la imagen seleccionada" /><span>Imagen lista para guardar</span></div>
+          : <div className="journey-file-upload-preview"><span aria-hidden="true">📄</span><span>PDF listo para guardar</span></div>)}
+        {file && <label>
+          Fecha y hora del archivo
+          <input type="datetime-local" required value={occurredAt} onChange={(event) => setOccurredAt(event.target.value)} />
+        </label>}
         <label>
           Vincular a
           <select
@@ -210,7 +244,6 @@ export function FileUpload({
             onChange={(e) => {
               setLinkType(e.target.value);
               setLinkId("");
-              setHotelPhoto(false);
             }}
           >
             <option value="trip">Todo el viaje</option>
@@ -238,21 +271,14 @@ export function FileUpload({
           </label>
         )}
         {linkType === "stay" && (
-          <label className="journey-checkbox">
-            <input
-              type="checkbox"
-              checked={hotelPhoto}
-              onChange={(e) => setHotelPhoto(e.target.checked)}
-            />
-            Usar como foto del alojamiento
-          </label>
+          <p className="muted">Las imágenes vinculadas al alojamiento aparecen en su carrusel de fotos.</p>
         )}
         {upload.error && (
           <p className="form-error" role="alert">
             {upload.error.message}
           </p>
         )}
-        <Button disabled={upload.isPending || !file}>
+        <Button disabled={upload.isPending || preparingFile || !file || !occurredAt}>
           {upload.isPending ? "Guardando…" : "Guardar archivo"}
         </Button>
       </form>
@@ -285,7 +311,14 @@ export async function downloadFile(file: JourneyFile) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = file.name;
+  const extension = file.contentType === "application/pdf"
+    ? "pdf"
+    : file.contentType === "image/png"
+      ? "png"
+      : file.contentType === "image/webp"
+        ? "webp"
+        : "jpg";
+  a.download = `archivo-${file.id}.${extension}`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -350,7 +383,7 @@ export function FileLinksEditor({
           save.mutate();
         }}
       >
-        <h2>Vincular {file.name}</h2>
+        <h2>Vincular archivo</h2>
         <label>
           Vincular a
           <select
@@ -389,4 +422,26 @@ export function FileLinksEditor({
       </form>
     </Modal>
   );
+}
+
+export function FileDateEditor({ file, tripId, onClose }: { file: JourneyFile; tripId: string; onClose: () => void }) {
+  const refresh = useJourneyRefresh(tripId);
+  const [occurredAt, setOccurredAt] = useState(toLocalDateTimeInput(file.occurredAt));
+  const save = useMutation({
+    mutationFn: () => updateFileDate(file.id, localDateTimeToIso(occurredAt)),
+    onSuccess: async () => {
+      await refresh();
+      onClose();
+    },
+  });
+
+  return <Modal className="journey-modal" title="Editar fecha del archivo" onClose={onClose} pending={save.isPending}>
+    <form className="journey-form" onSubmit={(event) => { event.preventDefault(); save.mutate(); }}>
+      <h2>¿Cuándo fue?</h2>
+      <p className="muted">La fecha de la cámara se usa automáticamente cuando está disponible.</p>
+      <label>Fecha y hora<input type="datetime-local" required value={occurredAt} onChange={(event) => setOccurredAt(event.target.value)} /></label>
+      {save.error && <p className="form-error" role="alert">{save.error.message}</p>}
+      <Button disabled={save.isPending || !occurredAt}>{save.isPending ? "Guardando…" : "Guardar fecha"}</Button>
+    </form>
+  </Modal>;
 }

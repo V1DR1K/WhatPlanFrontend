@@ -1,7 +1,7 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { SegmentedLevel } from "../../components/ui/SegmentedLevel";
@@ -17,6 +17,7 @@ import { FilmReviewForm } from "./FilmReviewForm";
 import { FilmViewForm } from "./FilmViewForm";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { deleteFilm, deleteFilmView, getFilm, getTmdbRecommendations } from "./films";
 import { filmReviewMetrics, metricLevel } from "./reviewMetrics";
@@ -100,11 +101,9 @@ export function FilmDetailPage() {
 
   const film = filmQuery.data!;
   const selectedView = views.find((view) => view.id === selectedViewId);
-  const selectedViewIndex = views.findIndex(
-    (view) => view.id === selectedViewId,
-  );
-  const visitNumber =
-    selectedViewIndex < 0 ? 0 : views.length - selectedViewIndex;
+  const selectedViewNumber = selectedView
+    ? views.length - views.findIndex((view) => view.id === selectedView.id)
+    : 0;
   const username = session.get()?.username;
   const ownReview = selectedView?.reviews.find(
     (review) => review.author === username,
@@ -132,6 +131,7 @@ export function FilmDetailPage() {
 
   return (
     <section className="film-detail">
+      <Link className="journey-back" to="/app/films">← Volver a WhichMovie</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -335,22 +335,13 @@ export function FilmDetailPage() {
         </div>
         {!!views.length && (
           <div className="item-date-pager" aria-label="Navegar vistas">
-            <label>
-              Vista #{visitNumber}
-              <select
-                value={selectedViewId ?? ""}
-                onChange={(event) =>
-                  setSelectedViewId(Number(event.target.value))
-                }
-              >
-                {views.map((view, index) => (
-                  <option key={view.id} value={view.id}>
-                    Vista #{views.length - index} ·{" "}
-                      {viewedLabel(view.watchedOn)}{specialDateOptionSuffix(view.watchedOn, specialDateList)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <RecordIterator
+              ariaLabel="Navegar vistas"
+              label="Vista"
+              value={String(selectedViewId ?? "")}
+              options={views.map((view, index) => ({ value: String(view.id), label: viewedLabel(view.watchedOn) + specialDateOptionSuffix(view.watchedOn, specialDateList), detail: `Vista #${views.length - index}` }))}
+              onChange={(value) => setSelectedViewId(Number(value))}
+            />
             {selectedView && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button><Button icon="🗑️" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button></div>}
           </div>
         )}
@@ -373,7 +364,7 @@ export function FilmDetailPage() {
                 <ReviewCard
                   key={review.id}
                   review={review}
-                  visitNumber={visitNumber}
+                  visitNumber={selectedViewNumber}
                 />
               ))}
             </div>

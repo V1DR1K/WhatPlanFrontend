@@ -15,7 +15,7 @@ type PhotoPickerProps = {
   initialFiles?: File[];
   maxFiles?: number;
   multiple?: boolean;
-  onChange: (files: File[]) => void;
+  onChange: (files: File[], originals: File[]) => void;
   onPreparingChange?: (preparing: boolean) => void;
   selectLabel?: string;
 };
@@ -55,7 +55,7 @@ export function PhotoPicker({
 
   const publish = (next: PhotoDraft[]) => {
     setDrafts(next);
-    onChange(next.map((draft) => draft.file));
+    onChange(next.map((draft) => draft.file), next.map((draft) => draft.source));
   };
 
   const clear = () => {

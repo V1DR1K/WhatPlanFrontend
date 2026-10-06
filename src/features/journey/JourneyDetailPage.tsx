@@ -6,14 +6,18 @@ import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
-import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
 import { RatingStars } from "../../components/ui/RatingStars";
+import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
+import { RecordIterator, type RecordIteratorOption } from "../../components/ui/RecordIterator";
+import type { ExperiencePhoto } from "../../types/domain";
 import { useZoneContext } from "../../lib/zoneContext";
 import { api, session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
+import { mapsSearch } from "../places/places";
+import { formatPhotoDate, photoDateOrNow } from "../../lib/photoMetadata";
 import {
   getTrip,
   getJourneyPointTypes,
@@ -35,6 +39,7 @@ import {
   type Movement,
   type JourneyFile,
   type Packing,
+  uploadFile,
 } from "./journey";
 import { JourneyIcon } from "./JourneyIcon";
 import { JourneyForm } from "./JourneyForm";
@@ -51,6 +56,7 @@ import {
 import {
   FilePreview,
   FileUpload,
+  FileDateEditor,
   FileLinksEditor,
   fileLabel,
   downloadFile,
@@ -58,6 +64,22 @@ import {
 const tabs = ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 const displayPointCategory = (point: Point) =>
   point.source?.section ?? point.category ?? "GENERAL";
+
+function stayGalleryPhoto(file: JourneyFile, position: number): ExperiencePhoto {
+  return {
+    id: file.id,
+    url: file.url,
+    thumbnailUrl: file.thumbnailUrl ?? file.url,
+    width: file.width ?? 640,
+    height: file.height ?? 480,
+    position,
+    createdBy: "",
+    createdAt: file.occurredAt,
+  };
+}
+
+const formatStayDateTime = (date: string, time?: string | null) =>
+  `${formatDate(date)}${time ? ` · ${time.slice(0, 5)}` : ""}`;
 export function JourneyDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -73,6 +95,7 @@ export function JourneyDetailPage() {
   const [day, setDay] = useState("");
   const [editTrip, setEditTrip] = useState(false);
   const [coverPreview, setCoverPreview] = useState(false);
+  const [openGalleryManager, setOpenGalleryManager] = useState(false);
   const [point, setPoint] = useState<Point | null>();
   const [completing, setCompleting] = useState(false);
   const [stay, setStay] = useState<Stay | null>();
@@ -81,6 +104,7 @@ export function JourneyDetailPage() {
   const [upload, setUpload] = useState<string | null>();
   const [preview, setPreview] = useState<JourneyFile>();
   const [fileLinks, setFileLinks] = useState<JourneyFile>();
+  const [fileDate, setFileDate] = useState<JourneyFile>();
   const [packingEdit, setPackingEdit] = useState<Packing>();
   const [movementPoint, setMovementPoint] = useState<string>();
   const [moneyStage, setMoneyStage] = useState("");
@@ -94,7 +118,7 @@ export function JourneyDetailPage() {
   const change = useMutation({
     mutationFn: async (action: {
       type: string;
-      value?: Point | Packing;
+      value?: Point | Packing | Stay;
       ids?: string[];
       userId?: number;
     }) => {
@@ -105,6 +129,15 @@ export function JourneyDetailPage() {
           action.value as Point,
           (action.value as Point).id,
         );
+      if (action.type === "stay-cover") {
+        const selected = action.value as Stay;
+        return saveResource<Stay>(
+          id,
+          "stays",
+          { ...selected, photoId: action.ids?.[0] ?? null },
+          selected.id,
+        );
+      }
       if (action.type === "packing")
         return saveResource<Packing>(
           id,
@@ -202,20 +235,16 @@ export function JourneyDetailPage() {
     !value.reviews.length &&
     !value.dates?.length;
   const completed = value.points.filter((p) => p.status === "COMPLETED").length;
-  const tripDayCount =
-    Math.round(
-      (Date.parse(`${trip.endsOn}T00:00:00Z`) -
-        Date.parse(`${trip.startsOn}T00:00:00Z`)) /
-        86_400_000,
-    ) + 1;
-  const selectedDayNumber =
-    selectedDay === "unscheduled"
-      ? 0
-      : Math.round(
-          (Date.parse(`${selectedDay}T00:00:00Z`) -
-            Date.parse(`${trip.startsOn}T00:00:00Z`)) /
-            86_400_000,
-        ) + 1;
+  const tripDayOptions: RecordIteratorOption[] = [];
+  for (let date = trip.startsOn; date <= trip.endsOn; date = offsetJourneyDate(date, 1)) {
+    const stage = trip.stages.find((entry) => date >= entry.startsOn && date <= entry.endsOn);
+    tripDayOptions.push({ value: date, label: formatJourneyDay(date), detail: stage?.cityName ?? "Día del viaje" });
+  }
+  tripDayOptions.push({
+    value: "unscheduled",
+    label: `Sin día asignado (${value.points.filter((p) => !p.scheduledOn).length})`,
+    progress: false,
+  });
   const requestDelete = (resource: string, itemId: string, title: string) => {
     remove.reset();
     setConfirm({ resource, id: itemId, title });
@@ -264,25 +293,36 @@ export function JourneyDetailPage() {
             <p className="journey-detail__route">{trip.stages[0]?.cityName ?? "Destino del viaje"}</p>
           </div>
         }
-        summary={value.dates?.length ? (
-          <div className="journey-linked-dates" aria-label="Fechas importantes vinculadas">
-            <strong>Fechas importantes</strong>
-            <div className="journey-linked-dates__list">
-              {value.dates.map((d) => (
-                <Link
-                  key={`${d.specialDateId}-${d.date}`}
-                  to={`/app/when-dates/${d.specialDateId}/${d.date}`}
-                  title={`Ver ${d.label} en WhenDates`}
-                >
-                  {d.label}<span aria-hidden="true"> ↗</span>
-                </Link>
-              ))}
-            </div>
+        summary={value.stays.length || value.dates?.length ? (
+          <div className="journey-detail__header-summary">
+            {value.stays.map((stay) => {
+              const addressUrl = mapsSearch(stay.address) ?? stay.mapsUrl;
+              return <div className="journey-stay-summary" key={stay.id}>
+                <strong>🏨 {stay.name}</strong>
+                <span>Check-in · {formatStayDateTime(stay.startsOn, stay.checkInTime)}</span>
+                <span>Check-out · {formatStayDateTime(stay.endsOn, stay.checkOutTime)}</span>
+                {addressUrl && <a className="button button--secondary journey-stay-summary__address" href={addressUrl} target="_blank" rel="noreferrer">📍 Dirección</a>}
+              </div>;
+            })}
+            {value.dates?.length ? <div className="journey-linked-dates" aria-label="Fechas importantes vinculadas">
+              <strong>Fechas importantes</strong>
+              <div className="journey-linked-dates__list">
+                {value.dates.map((d) => (
+                  <Link
+                    key={`${d.specialDateId}-${d.date}`}
+                    to={`/app/when-dates/${d.specialDateId}/${d.date}`}
+                    title={`Ver ${d.label} en WhenDates`}
+                  >
+                    {d.label}<span aria-hidden="true"> ↗</span>
+                  </Link>
+                ))}
+              </div>
+            </div> : null}
           </div>
         ) : null}
         actions={editable ? (
           <div className="detail-actions">
-            <Button variant="secondary" onClick={() => setTab("Galería")}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
+            <Button variant="secondary" onClick={() => { setTab("Galería"); setOpenGalleryManager(true); }}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
             <Button variant="secondary" onClick={() => setEditTrip(true)}>Editar viaje</Button>
           </div>
         ) : null}
@@ -382,61 +422,14 @@ export function JourneyDetailPage() {
               )}
             </div>
             <div className="journey-day-picker">
-              <div className="journey-day-stepper" aria-label="Días del viaje">
-                <Button
-                  variant="icon"
-                  aria-label="Día anterior"
-                  disabled={
-                    selectedDay === "unscheduled" ||
-                    selectedDay <= trip.startsOn
-                  }
-                  onClick={() => setDay(offsetJourneyDate(selectedDay, -1))}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                </Button>
-                <div className="journey-day-stepper__date" aria-live="polite">
-                  <span>Día del viaje</span>
-                  <strong>
-                    {selectedDay === "unscheduled"
-                      ? "Sin día asignado"
-                      : formatJourneyDay(selectedDay)}
-                  </strong>
-                  {selectedDay !== "unscheduled" && (
-                    <small>
-                      {selectedDayNumber} de {tripDayCount}
-                    </small>
-                  )}
-                </div>
-                <Button
-                  variant="icon"
-                  aria-label="Día siguiente"
-                  disabled={
-                    selectedDay === "unscheduled" ||
-                    selectedDay >= trip.endsOn
-                  }
-                  onClick={() => setDay(offsetJourneyDate(selectedDay, 1))}
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
-                </Button>
-              </div>
-              <Button
-                variant="secondary"
-                aria-pressed={selectedDay === "unscheduled"}
-                onClick={() =>
-                  setDay(
-                    selectedDay === "unscheduled"
-                      ? trip.startsOn
-                      : "unscheduled",
-                  )
-                }
-              >
-                Sin día asignado (
-                {value.points.filter((p) => !p.scheduledOn).length})
-              </Button>
+              <RecordIterator
+                ariaLabel="Días del viaje"
+                className="journey-day-stepper"
+                label="Día del viaje"
+                options={tripDayOptions}
+                value={selectedDay}
+                onChange={setDay}
+              />
             </div>
             {!points.length && (
               <p className="journey-empty">
@@ -489,7 +482,10 @@ export function JourneyDetailPage() {
                           }}>{p.status === "COMPLETED" ? "Marcar pendiente" : p.status === "CANCELLED" ? "Reactivar punto" : "Marcar realizado"}</Button>}
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
-                        {(editable || p.source || p.extraActions?.length || p.mapsUrl) && <details className="journey-point-overflow"
+                        {p.address && mapsSearch(p.address) && <a className="button button--primary journey-action-link journey-address-action" href={mapsSearch(p.address)} target="_blank" rel="noreferrer">
+                          <JourneyIcon name="MAPS" /> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                        </a>}
+                        {(editable || p.source || p.extraActions?.length) && <details className="journey-point-overflow"
                           onBlur={(event) => {
                             const next = event.relatedTarget;
                             if (!(next instanceof Node) || !event.currentTarget.contains(next)) {
@@ -506,9 +502,6 @@ export function JourneyDetailPage() {
                               href={action.url} key={`${p.id}-${actionIndex}`} target="_blank" rel="noreferrer">
                               <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                             </a>)}
-                            {p.mapsUrl && <a className="button button--primary journey-action-link journey-map-action" href={p.mapsUrl} target="_blank" rel="noreferrer">
-                              <JourneyIcon name="MAPS" /> Google Maps <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
-                            </a>}
                             {editable && <>
                               <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} disabled={change.isPending} onClick={() => { setPoint(p); setCompleting(false); }}>Editar punto</Button>
                               {p.status !== "CANCELLED" && <Button variant="secondary" icon={<JourneyIcon name="CANCEL" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "CANCELLED" } })}>Cancelar punto</Button>}
@@ -526,7 +519,7 @@ export function JourneyDetailPage() {
             </ol>
           </>
         )}
-        {tab === "Galería" && <JourneyGalleryTab detail={value} editable={editable} onRefresh={refresh} />}
+        {tab === "Galería" && <JourneyGalleryTab detail={value} editable={editable} onRefresh={refresh} managerOpen={openGalleryManager} onManagerOpenChange={setOpenGalleryManager} />}
         {tab === "Archivos" && (
           <>
             <div className="journey-panel__heading">
@@ -545,14 +538,11 @@ export function JourneyDetailPage() {
               {value.files.filter((f) => f.purpose === "ATTACHMENT").map((f) => (
                 <li key={f.id}>
                   {f.contentType.startsWith("image/") && (
-                    <MediaImage className="journey-file-thumbnail" src={f.thumbnailUrl ?? f.url} alt={`Miniatura de ${f.name}`} width={f.width ?? 640} height={f.height ?? 480} />
+                    <MediaImage className="journey-file-thumbnail" src={f.thumbnailUrl ?? f.url} alt={`Miniatura del archivo vinculado a ${fileLabel(f, value)}`} width={f.width ?? 640} height={f.height ?? 480} />
                   )}
-                  <div>
-                    <strong>{f.name}</strong>
-                    <span>
-                      {fileLabel(f, value)} · {(f.byteSize / 1024).toFixed(0)}{" "}
-                      KB
-                    </span>
+                  <div className="journey-file-list__summary">
+                    <strong>🔗 {fileLabel(f, value)}</strong>
+                    <span className="journey-file-list__date">Fecha del archivo · {formatPhotoDate(f.occurredAt)}</span>
                   </div>
                   <div className="journey-actions">
                     <Button variant="secondary" onClick={() => setPreview(f)}>
@@ -566,6 +556,7 @@ export function JourneyDetailPage() {
                     >
                       Descargar
                     </Button>
+                    {editable && <Button variant="secondary" onClick={() => setFileDate(f)}>Editar fecha</Button>}
                     {editable && (
                       <Button
                         variant="secondary"
@@ -606,20 +597,43 @@ export function JourneyDetailPage() {
               </p>
             )}
             <div className="journey-stays">
-              {value.stays.map((s) => (
-                <article key={s.id} className="journey-stay">
-                  {s.photoId && (
-                    <AdaptivePhoto
-                      context="place"
-                      fullSrc={`/whither-journey/files/${s.photoId}/content`}
-                      alt={s.name}
+              {value.stays.map((s) => {
+                const stayPhotos = value.files
+                  .filter((file) => file.stayId === s.id && file.contentType.startsWith("image/"))
+                  .map(stayGalleryPhoto);
+                const addressUrl = mapsSearch(s.address) ?? s.mapsUrl;
+                return <article key={s.id} className="journey-stay">
+                  <div className="journey-stay__gallery">
+                    <ExperienceGallery
+                      accentLabel="FOTOS DE LA ESTADÍA"
+                      emptyIcon="🏨"
+                      emptyMessage="Agreguen fotos del alojamiento para verlas acá."
+                      name={s.name}
+                      photos={stayPhotos}
+                      coverPhotoId={s.photoId ?? undefined}
+                      maxPhotos={5}
+                      limitCount={stayPhotos.length}
+                      managerLimitCount={stayPhotos.length}
+                      managerLabel="Administrar fotos"
+                      manageInModal={editable}
+                      onUpload={editable ? async (files, originals) => {
+                        for (const [index, file] of files.entries()) {
+                          const capturedAt = await photoDateOrNow(originals?.[index] ?? file);
+                          await uploadFile(id, file, { stageId: s.stageId, stayId: s.id, occurredAt: capturedAt.toISOString() });
+                        }
+                        await refresh();
+                      } : undefined}
+                      onSetCover={editable ? (photo) => change.mutate({ type: "stay-cover", value: s, ids: [String(photo.id)] }) : undefined}
+                      onDelete={editable ? (photo) => requestDelete("files", String(photo.id), "¿Quitar esta foto?") : undefined}
+                      coverPending={change.isPending}
                     />
-                  )}
+                  </div>
                   <div>
                     <h3>{s.name}</h3>
                     <p>
                       {trip.stages.find((st) => st.id === s.stageId)?.cityName}{" "}
-                      · {formatDate(s.startsOn)} — {formatDate(s.endsOn)}
+                      · Check-in {formatStayDateTime(s.startsOn, s.checkInTime)}
+                      · Check-out {formatStayDateTime(s.endsOn, s.checkOutTime)}
                     </p>
                     <p>{s.address}</p>
                     {s.price != null && s.currency && (
@@ -634,9 +648,9 @@ export function JourneyDetailPage() {
                           Reserva ↗
                         </a>
                       )}
-                      {s.mapsUrl && (
-                        <a href={s.mapsUrl} target="_blank" rel="noreferrer">
-                          Google Maps ↗
+                      {addressUrl && (
+                        <a className="button button--primary" href={addressUrl} target="_blank" rel="noreferrer">
+                          📍 Dirección ↗
                         </a>
                       )}
                       {editable && (
@@ -651,7 +665,7 @@ export function JourneyDetailPage() {
                             variant="secondary"
                             onClick={() => setUpload(s.id)}
                           >
-                            Foto / archivo
+                            Adjuntar archivo
                           </Button>
                           <Button
                             variant="secondary"
@@ -684,8 +698,8 @@ export function JourneyDetailPage() {
                         </div>
                       ))}
                   </div>
-                </article>
-              ))}
+                </article>;
+              })}
             </div>
           </>
         )}
@@ -1057,6 +1071,13 @@ export function JourneyDetailPage() {
           detail={value}
           file={fileLinks}
           onClose={() => setFileLinks(undefined)}
+        />
+      )}
+      {fileDate && (
+        <FileDateEditor
+          file={fileDate}
+          tripId={trip.id}
+          onClose={() => setFileDate(undefined)}
         />
       )}
       {editTrip && (

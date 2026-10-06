@@ -1,5 +1,3 @@
-import { getSpecialDates } from "../special-dates/specialDates";
-import { linkDate } from "./journey";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "../../lib/locationQuery";
@@ -19,7 +17,6 @@ import {
   saveReview,
   sections,
   sourceHref,
-  formatDate,
   today,
   type Detail,
   type Point,
@@ -174,7 +171,8 @@ export function PointEditor({
           scheduledOn: scheduledOn || null,
           scheduledTime: text(form, "scheduledTime"),
           notes: text(form, "notes"),
-          mapsUrl: text(form, "mapsUrl"),
+          address: text(form, "address"),
+          mapsUrl: null,
           position: point?.position ?? detail.points.length,
           status,
           category,
@@ -356,13 +354,12 @@ export function PointEditor({
           />
         </label>
         <label>
-          Google Maps
+          Dirección
           <input
-            type="url"
-            name="mapsUrl"
-            maxLength={1000}
-            placeholder="https://maps.google.com/…"
-            defaultValue={point?.mapsUrl ?? ""}
+            name="address"
+            maxLength={500}
+            defaultValue={point?.address ?? ""}
+            placeholder="Calle, número y ciudad"
           />
         </label>
         <fieldset className="journey-point-action-editor">
@@ -454,6 +451,8 @@ export function StayEditor({
           name: text(form, "name")!,
           startsOn: text(form, "startsOn")!,
           endsOn: text(form, "endsOn")!,
+          checkInTime: text(form, "checkInTime") || null,
+          checkOutTime: text(form, "checkOutTime") || null,
           address: text(form, "address"),
           price: normalizeAmountInput(text(form, "price") ?? "") || null,
           currency: text(form, "currency"),
@@ -499,7 +498,7 @@ export function StayEditor({
         </label>
         <div className="form-columns">
           <label>
-            Llegada
+            Check-in
             <input
               name="startsOn"
               type="date"
@@ -510,7 +509,7 @@ export function StayEditor({
             />
           </label>
           <label>
-            Salida
+            Check-out
             <input
               name="endsOn"
               type="date"
@@ -518,6 +517,24 @@ export function StayEditor({
               min={stage.startsOn}
               max={stage.endsOn}
               defaultValue={stay?.endsOn ?? stage.endsOn}
+            />
+          </label>
+        </div>
+        <div className="form-columns">
+          <label>
+            Hora de check-in
+            <input
+              name="checkInTime"
+              type="time"
+              defaultValue={stay?.checkInTime ?? ""}
+            />
+          </label>
+          <label>
+            Hora de check-out
+            <input
+              name="checkOutTime"
+              type="time"
+              defaultValue={stay?.checkOutTime ?? ""}
             />
           </label>
         </div>
@@ -827,86 +844,6 @@ export function ReviewEditor({
         <Button disabled={save.isPending || !rating}>
           {save.isPending ? "Guardando…" : "Guardar mi reseña"}
         </Button>
-      </form>
-    </Modal>
-  );
-}
-
-export function JourneyDateEditor({
-  detail,
-  onClose,
-}: {
-  detail: Detail;
-  onClose: () => void;
-}) {
-  const refresh = useJourneyRefresh(detail.trip.id);
-  const templates = useQuery({
-    queryKey: ["special-dates"],
-    queryFn: getSpecialDates,
-  });
-  const stageId = detail.trip.stages[0].id;
-  const [dateId, setDateId] = useState("");
-  const save = useMutation({
-    mutationFn: (form: FormData) =>
-      linkDate(detail.trip.id, {
-        stageId,
-        date: detail.trip.startsOn,
-        endsOn: detail.trip.endsOn,
-        specialDateId: dateId ? Number(dateId) : undefined,
-        label: dateId ? undefined : String(form.get("label")),
-      }),
-    onSuccess: async () => {
-      await refresh();
-      onClose();
-    },
-  });
-  return (
-    <Modal
-      className="journey-modal"
-      title="Vincular fecha importante"
-      onClose={onClose}
-      pending={save.isPending}
-      confirmDiscard
-    >
-      <form
-        className="journey-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save.mutate(new FormData(e.currentTarget));
-        }}
-      >
-        <h2>Una fecha para recordar</h2>
-        <p className="muted">
-          Quedará vinculada al rango completo del viaje, del {formatDate(detail.trip.startsOn)} al {formatDate(detail.trip.endsOn)}, y aparecerá en WhenDates aunque todavía no haya experiencias.
-        </p>
-        <div className="journey-linked-date-range" aria-label="Rango del viaje">
-          <span>Desde <strong>{formatDate(detail.trip.startsOn)}</strong></span>
-          <span>Hasta <strong>{formatDate(detail.trip.endsOn)}</strong></span>
-        </div>
-        <label>
-          Fecha importante
-          <select value={dateId} onChange={(e) => setDateId(e.target.value)}>
-            <option value="">Crear una fecha única</option>
-            {templates.data?.map((d) => (
-              <option value={d.id} key={d.id}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {!dateId && (
-          <label>
-            Nombre
-            <input
-              name="label"
-              required
-              maxLength={160}
-              placeholder="Nuestro aniversario en viaje"
-            />
-          </label>
-        )}
-        <FormError error={save.error ?? templates.error} />
-        <Button disabled={save.isPending}>Vincular fecha</Button>
       </form>
     </Modal>
   );

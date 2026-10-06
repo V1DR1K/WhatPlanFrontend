@@ -1,11 +1,12 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -80,6 +81,7 @@ export function HomeRecipeDetailPage() {
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="home-recipe-detail">
+      <Link className="journey-back" to="/app/how-cook">← Volver a WhoCook</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -128,12 +130,13 @@ export function HomeRecipeDetailPage() {
         <div className="section-title"><div><p className="eyebrow">HISTORIAL DE COCINADAS</p><h2>Veces que la hicieron</h2></div><strong>{list.length}</strong></div>
         {list.length ? <>
           <div className="item-date-pager">
-            <label>
-              Elegir cocinada
-              <select value={selectedCookingId ?? ""} onChange={(event) => setSelectedCookingId(Number(event.target.value))}>
-                {list.map((cooking) => <option key={cooking.id} value={cooking.id}>{dateLabel(cooking.cookedOn)}{specialDateOptionSuffix(cooking.cookedOn, specialDateList)} · {mealName(cooking.mealType)} · {cooking.createdBy}</option>)}
-              </select>
-            </label>
+            <RecordIterator
+              ariaLabel="Navegar cocinadas"
+              label="Cocinada"
+              value={String(selectedCookingId ?? "")}
+              options={list.map((cooking) => ({ value: String(cooking.id), label: `${dateLabel(cooking.cookedOn)}${specialDateOptionSuffix(cooking.cookedOn, specialDateList)}`, detail: `${mealName(cooking.mealType)} · ${cooking.createdBy}` }))}
+              onChange={(value) => setSelectedCookingId(Number(value))}
+            />
             {current && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button></div>}
           </div>
           {current && <CookingExperience cooking={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}

@@ -55,7 +55,7 @@
 .journey-gallery-origin__description a { color: var(--section-accent); font-weight: 800; text-underline-offset: 3px; }
 .journey-gallery-controls {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
 }
@@ -85,7 +85,7 @@
 .journey-gallery-day-select select { width: 100%; min-height: 44px; }
 
 @media (max-width: 600px) {
-  .journey-point-primary-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 6px; }
+  .journey-point-primary-actions { grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; gap: 6px; }
   .journey-point-primary-actions > .button { min-height: 48px; padding-inline: 7px; font-size: 0.78rem; }
   .journey-point-overflow > summary { width: 44px; height: 48px; }
   .journey-point-overflow__menu { width: min(280px, calc(100vw - 48px)); }
@@ -93,6 +93,18 @@
   .journey-gallery__totals { justify-items: start; align-self: stretch; }
   .journey-gallery-controls { grid-template-columns: minmax(0, 1fr); }
   .journey-gallery-origin__description { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 540px) {
+  .journey-stay-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 8px;
+  }
+  .journey-stay-summary__address {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    width: 100%;
+  }
 }
 .module-card--journey:hover,
 .module-card--journey:focus-visible {
@@ -609,7 +621,7 @@
 .journey-point-primary-actions {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 46px;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 46px;
   align-items: stretch;
   gap: 8px;
   width: 100%;
@@ -830,6 +842,18 @@
 .journey-money-list li > div:first-child {
   min-width: 0;
 }
+.journey-file-list__summary {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.journey-file-list__summary > strong {
+  display: block;
+  color: #e4f6ff;
+  line-height: 1.35;
+}
+.journey-file-list__date {
+  font-size: 0.82rem;
+}
 .journey-file-list span,
 .journey-money-list span {
   display: block;
@@ -864,9 +888,9 @@
   padding: 24px 0;
   border-bottom: 1px solid #345666;
 }
-.journey-stay:not(:has(.adaptive-photo)) {
-  grid-template-columns: 1fr;
-}
+.journey-stay__gallery { min-width: 0; }
+.journey-stay__gallery .experience-gallery { width: 100%; margin: 0; }
+.journey-stay__gallery .experience-gallery__stage { aspect-ratio: 4 / 3; }
 .journey-stay h3 {
   margin: 0 0 12px;
 }
@@ -1143,6 +1167,25 @@
     flex-direction: column;
     gap: 12px;
   }
+  .journey-file-list li {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px 12px;
+  }
+  .journey-file-list li:not(:has(.journey-file-thumbnail)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .journey-file-list__summary { grid-column: 2; }
+  .journey-file-list li:not(:has(.journey-file-thumbnail)) .journey-file-list__summary { grid-column: 1; }
+  .journey-file-list .journey-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 7px;
+  }
+  .journey-file-list .journey-actions .button { flex: 1 1 128px; min-width: 0; }
   .journey-form .form-columns {
     grid-template-columns: 1fr;
   }
@@ -1302,6 +1345,33 @@
   line-height: 1.3;
   overflow-wrap: anywhere;
   text-underline-offset: 3px;
+}
+.journey-detail__header-summary {
+  display: grid;
+  gap: 12px;
+}
+.journey-stay-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px 12px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid color-mix(in srgb, #83d8f5 25%, transparent);
+  color: #b9dce9;
+  font-size: 0.83rem;
+}
+.journey-stay-summary > strong {
+  grid-column: 1 / -1;
+  color: #e4f6ff;
+}
+.journey-stay-summary__address {
+  grid-column: 3;
+  grid-row: 2 / span 2;
+  white-space: nowrap;
+}
+.journey-detail__header-summary > .journey-linked-dates {
+  margin-top: 0;
 }
 .journey-form input[type="date"],
 .journey-form input[type="time"] {

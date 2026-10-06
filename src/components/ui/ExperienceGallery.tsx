@@ -59,17 +59,22 @@ type ExperienceGalleryProps = {
   metaLabel?: ReactNode;
   maxPhotos?: number;
   limitCount?: number;
+  managerPhotos?: ExperiencePhoto[];
+  managerLabel?: string;
+  managerLimitCount?: number;
+  managerOpen?: boolean;
+  onManagerOpenChange?: (open: boolean) => void;
   emptyIcon: string;
   name: string;
   onDelete?: (photo: ExperiencePhoto) => void;
   onSetCover?: (photo: ExperiencePhoto) => void;
-  onUpload?: (files: File[]) => Promise<void>;
+  onUpload?: (files: File[], originals?: File[]) => Promise<void>;
   photoDetails?: (photo: ExperiencePhoto) => ReactNode;
   photos: ExperiencePhoto[];
   manageInModal?: boolean;
 };
 
-export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSetCover, coverPending = false, coverPhotoId, emptyMessage, metaLabel, maxPhotos = MAX_EXPERIENCE_PHOTOS, limitCount, emptyIcon, manageInModal = false, name, onDelete, onSetCover, onUpload, photoDetails, photos }: ExperienceGalleryProps) {
+export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSetCover, coverPending = false, coverPhotoId, emptyMessage, metaLabel, maxPhotos = MAX_EXPERIENCE_PHOTOS, limitCount, managerPhotos, managerLabel, managerLimitCount, managerOpen, onManagerOpenChange, emptyIcon, manageInModal = false, name, onDelete, onSetCover, onUpload, photoDetails, photos }: ExperienceGalleryProps) {
   const uploadCount = limitCount ?? photos.length;
   const coverIndex = Math.max(0, photos.findIndex((photo) => photo.id === coverPhotoId));
   const [selected, setSelected] = useState(coverIndex);
@@ -138,7 +143,7 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
     {photo && photoDetails?.(photo)}
      <div className="experience-gallery__dots" role={photos.length > 1 ? "tablist" : undefined} aria-label={photos.length > 1 ? "Elegir foto" : undefined}>{photos.length > 1 && photos.map((value, index) => <button key={value.id} id={`experience-gallery-tab-${value.id}`} type="button" role="tab" aria-controls="experience-gallery-panel" aria-selected={selected === index} tabIndex={selected === index ? 0 : -1} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowDown") { event.preventDefault(); const next = nextPhotoIndex(index, photos.length); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "ArrowLeft" || event.key === "ArrowUp") { event.preventDefault(); const next = previousPhotoIndex(index, photos.length); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "Home" || event.key === "End") { event.preventDefault(); const next = event.key === "Home" ? 0 : photos.length - 1; setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } }} />)}</div>
     <div className="experience-gallery__actions">
-      {manageInModal && onUpload && <PhotoManagerModal mode="gallery" name={name} photos={photos} coverPhotoId={coverPhotoId} maxPhotos={maxPhotos} limitCount={uploadCount} coverPending={coverPending} onUpload={onUpload} onSetCover={onSetCover} onDelete={onDelete} />}
+      {manageInModal && onUpload && <PhotoManagerModal mode="gallery" name={name} manageLabel={managerLabel} photos={managerPhotos ?? photos} coverPhotoId={coverPhotoId} maxPhotos={maxPhotos} limitCount={managerLimitCount ?? uploadCount} coverPending={coverPending} open={managerOpen} onOpenChange={onManagerOpenChange} onUpload={onUpload} onSetCover={onSetCover} onDelete={onDelete} />}
       {!manageInModal && onUpload && <div className="experience-gallery__upload"><PhotoPicker key={pickerKey} multiple maxFiles={experiencePhotoSlots(uploadCount, maxPhotos)} disabled={uploading} onChange={setPendingPhotos} onPreparingChange={setPreparingPhotos} selectLabel="Agregar fotos" />{pendingPhotos.length > 0 && <Button type="button" variant="secondary" disabled={uploading || preparingPhotos} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos..." : `Subir ${pendingPhotos.length} ${pendingPhotos.length === 1 ? "foto" : "fotos"}`}</Button>}</div>}
       {!manageInModal && onSetCover && <div className="experience-gallery__cover-slot">{photo && (!canSetCover || canSetCover(photo)) ? photo.id === coverPhotoId ? <span>⭐ Foto de portada</span> : <Button icon="⭐" variant="secondary" type="button" disabled={coverPending} onClick={() => onSetCover(photo)}>Usar de portada</Button> : null}</div>}
       {!manageInModal && photo && onDelete && (!canDelete || canDelete(photo)) && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}

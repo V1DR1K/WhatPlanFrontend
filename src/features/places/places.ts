@@ -6,6 +6,10 @@ import type {
   PlaceStatus,
   Slice,
 } from "../../types/domain";
+export const mapsSearch = (address?: string | null) =>
+  address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+    : undefined;
 export type PlaceInput = {
   name: string;
   address?: string;

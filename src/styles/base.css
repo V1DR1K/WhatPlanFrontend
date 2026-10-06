@@ -43,8 +43,6 @@ a { color: inherit; }
 .tiny { color: var(--muted); font-size: 12px; }
 .form-error { color: #ff9e90; font-size: 13px; }
 
-@media (prefers-reduced-motion: reduce) { .heart-rain { display: none; } }
-
 /* Shared experience rhythm. Individual modules provide content, never a new layout dialect. */
 .section-shell { --section-focus: var(--violet); }
 .catalog-experience { display: grid; gap: 28px; }
