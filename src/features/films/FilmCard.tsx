@@ -28,7 +28,12 @@ const watchedLabel = (date?: string) => date ? `VISTA ${date.split("-").reverse(
 export function FilmCard({ film }: { film: Film }) {
   const location = useLocation();
   const { members } = useZoneContext();
-  const activeUsernames = new Set(members.map((member) => member.username.toLowerCase()));
+  const activeUsernames = new Set(members.flatMap((member) => {
+    const username = member?.username;
+    return typeof username === "string" && username.trim()
+      ? [username.trim().toLowerCase()]
+      : [];
+  }));
   const reviews = sharedReviews(film, activeUsernames);
   const rating = average(reviews.map((review) => review.rating));
   const title = film.tmdb?.title ?? film.title;
