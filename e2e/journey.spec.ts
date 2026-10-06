@@ -155,7 +155,7 @@ for (const viewport of [
     ).toBeVisible();
     const newPoint = page.locator(".journey-route__point").filter({ has: page.getByRole("heading", { name: "Paseo por San Telmo" }) });
     const maps = newPoint.getByRole("link", { name: /Dirección/ });
-    await expect(maps).toHaveAttribute("href", /maps\.google\.com\/maps\/search/);
+    await expect(maps).toHaveAttribute("href", /www\.google\.com\/maps\/search/);
     await expect(maps).toHaveAttribute("href", /Plaza%20Dorrego/);
     await expect(maps).toHaveClass(/button--primary/);
     await page
