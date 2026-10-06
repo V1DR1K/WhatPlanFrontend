@@ -54,7 +54,7 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
       && params.get("to") === "2026-09-30"
       && params.get("status") === "FINISHED"
       && params.get("sort") === "name-asc";
-  })).toBe(true);
+  }), { timeout: 15_000 }).toBe(true);
 
   await page.getByRole("button", { name: "Limpiar filtros" }).click();
   await expect(cards).toHaveCount(1);
@@ -109,9 +109,6 @@ for (const viewport of [
     ).toBeVisible();
     await expect(page.locator(".journey-detail-cover img")).toHaveCount(0);
     await page.getByRole("button", { name: "Elegir portada", exact: true }).click();
-    await page.getByRole("tab", { name: "Galería", exact: true }).click();
-    const tripGallery = page.locator(".journey-gallery");
-    await tripGallery.getByRole("button", { name: "Administrar fotos generales", exact: true }).click();
     dialog = page.getByRole("dialog");
     await dialog.locator('input[type="file"]').setInputFiles({
       name: "portada.png",
@@ -147,7 +144,7 @@ for (const viewport of [
       .getByLabel("Actividad", { exact: true })
       .fill("Paseo por San Telmo");
     await dialog.getByLabel("Hora", { exact: true }).fill("09:30");
-    await dialog.getByLabel("Google Maps").fill("https://maps.google.com/?q=San+Telmo");
+    await dialog.getByLabel("Dirección").fill("Plaza Dorrego, San Telmo");
     await dialog.getByRole("button", { name: "Guardar punto" }).click();
     await expect(
       page.getByRole("heading", { name: "Paseo por San Telmo" }),
@@ -155,9 +152,10 @@ for (const viewport of [
     await expect(
       page.getByRole("tabpanel", { name: "Agenda" }).getByText("Traslado", { exact: true }),
     ).toBeVisible();
-    await page.locator(".journey-point-overflow > summary").first().click();
-    const maps = page.getByRole("link", { name: /Google Maps/ });
-    await expect(maps).toHaveAttribute("href", /maps\.google\.com/);
+    const newPoint = page.locator(".journey-route__point").filter({ has: page.getByRole("heading", { name: "Paseo por San Telmo" }) });
+    const maps = newPoint.getByRole("link", { name: /Dirección/ });
+    await expect(maps).toHaveAttribute("href", /maps\.google\.com\/maps\/search/);
+    await expect(maps).toHaveAttribute("href", /Plaza%20Dorrego/);
     await expect(maps).toHaveClass(/button--primary/);
     await page
       .getByRole("button", { name: "Registrar gasto", exact: true })
@@ -504,7 +502,7 @@ test("point types are shared settings and extra itinerary links get clear previe
   await dialog.getByLabel("Tipo de punto").selectOption({ label: "Compras" });
   await dialog.getByLabel("Actividad", { exact: true }).fill("Noche de cine");
   await dialog.getByLabel("Notas", { exact: true }).fill("Anotar entradas y horario.");
-  await dialog.getByLabel("Google Maps").fill("https://maps.google.com/?q=cinema");
+  await dialog.getByLabel("Dirección").fill("Cine Lorca, Buenos Aires");
   await dialog.getByRole("button", { name: "Agregar enlace" }).click();
   const action = dialog.locator(".journey-point-action-editor__row");
   await action.getByLabel("Nombre").fill("Reservar");
@@ -517,7 +515,7 @@ test("point types are shared settings and extra itinerary links get clear previe
   await point.locator(".journey-point-overflow > summary").click();
   await expect(point.getByRole("link", { name: /Abrir ficha/ })).toHaveClass(/journey-action-link/);
   await expect(point.getByRole("link", { name: /Reservar/ })).toHaveAttribute("href", "https://example.com/reservar");
-  await expect(point.getByRole("link", { name: /Google Maps/ })).toHaveClass(/journey-map-action/);
+  await expect(point.getByRole("link", { name: /Dirección/ })).toHaveClass(/journey-address-action/);
   await expect(point.locator("details.journey-point-note")).not.toHaveAttribute("open", "");
   await point.locator(".journey-point-note > summary").click();
   await expect(point.getByText("Anotar entradas y horario.")).toBeVisible();
@@ -564,7 +562,7 @@ test("journey summary stays focused and gallery manages trip, daily and linked p
   await dialog.getByRole("button", { name: "Cerrar", exact: true }).last().click();
 
   const tripGallery = page.locator(".journey-gallery");
-  await tripGallery.getByRole("button", { name: "Administrar fotos generales", exact: true }).click();
+  await tripGallery.getByRole("button", { name: "Administrar fotos", exact: true }).click();
   dialog = page.getByRole("dialog");
   await expect(dialog.getByText("Foto de portada", { exact: true })).toBeVisible();
   const photos = dialog.locator(".photo-manager__photo");

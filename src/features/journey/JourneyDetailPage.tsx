@@ -482,7 +482,7 @@ export function JourneyDetailPage() {
                           }}>{p.status === "COMPLETED" ? "Marcar pendiente" : p.status === "CANCELLED" ? "Reactivar punto" : "Marcar realizado"}</Button>}
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
-                        {p.address && mapsSearch(p.address) && <a className="button button--primary journey-action-link journey-address-action" href={mapsSearch(p.address)} target="_blank" rel="noreferrer">
+                        {(mapsSearch(p.address) ?? p.mapsUrl) && <a className="button button--primary journey-action-link journey-address-action" href={mapsSearch(p.address) ?? p.mapsUrl ?? undefined} target="_blank" rel="noreferrer">
                           <JourneyIcon name="MAPS" /> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                         </a>}
                         {(editable || p.source || p.extraActions?.length) && <details className="journey-point-overflow"
