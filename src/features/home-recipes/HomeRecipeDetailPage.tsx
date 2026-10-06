@@ -10,6 +10,7 @@ import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
+import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { session } from "../../lib/api";
 import { ExpandablePhoto } from "../../components/ui/ExpandablePhoto";
 import { showNotice } from "../../lib/flash";
@@ -103,6 +104,7 @@ export function HomeRecipeDetailPage() {
           {value.sourceUrl && <a className="source-link" href={value.sourceUrl} target="_blank" rel="noreferrer">↗ Ver fuente original</a>}
           </>
         }
+        summary={<ImportantDatesLink date={current?.cookedOn} specialDates={specialDateList} />}
         title={value.name}
       />
       <section className="rating-breakdown rating-breakdown--cook" aria-label="Promedios de la receta">

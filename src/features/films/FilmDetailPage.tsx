@@ -17,6 +17,7 @@ import { FilmReviewForm } from "./FilmReviewForm";
 import { FilmViewForm } from "./FilmViewForm";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { deleteFilm, deleteFilmView, getFilm, getTmdbRecommendations } from "./films";
@@ -175,9 +176,12 @@ export function FilmDetailPage() {
           </>
         }
         summary={
-          <p className="film-synopsis">
-            {synopsis || "Todavía no hay una sinopsis disponible."}
-          </p>
+          <>
+            <p className="film-synopsis">
+              {synopsis || "Todavía no hay una sinopsis disponible."}
+            </p>
+            <ImportantDatesLink date={selectedView?.watchedOn} specialDates={specialDateList} />
+          </>
         }
         title={title}
       />

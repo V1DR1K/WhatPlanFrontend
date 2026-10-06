@@ -7,6 +7,7 @@ import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
+import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
 import { AddressIcon } from "../../components/ui/AddressIcon";
@@ -207,9 +208,6 @@ export function JourneyDetailPage() {
   const addressStay = value.stays.find((stay) => stay.address || stay.mapsUrl);
   const stayAddressUrl = addressStay ? mapsSearch(addressStay.address) ?? addressStay.mapsUrl : undefined;
   const firstImportantDate = value.dates?.[0];
-  const importantDatesHref = firstImportantDate
-    ? `/app/when-dates/${firstImportantDate.specialDateId}/${firstImportantDate.date}`
-    : "/app/when-dates";
   const editable = !trip.archived;
   const selectedDay =
     day === "unscheduled"
@@ -311,9 +309,10 @@ export function JourneyDetailPage() {
             ))}
             <div className="journey-detail__header-actions" aria-label="Accesos del viaje">
               {stayAddressUrl && <a className="button button--secondary" href={stayAddressUrl} target="_blank" rel="noreferrer"><AddressIcon /> Dirección</a>}
-              <Link className="button button--secondary" to={importantDatesHref}>
-                <span aria-hidden="true">💖✨</span> Fechas importantes
-              </Link>
+              <ImportantDatesLink
+                date={firstImportantDate?.date}
+                specialDateId={firstImportantDate?.specialDateId}
+              />
             </div>
           </div>
         }

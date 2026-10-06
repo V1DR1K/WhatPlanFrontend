@@ -10,6 +10,7 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { AddressIcon } from "../../components/ui/AddressIcon";
+import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -165,6 +166,7 @@ export function PlaceDetailPage() {
           <p className="byline">Agregado por {venue.author}</p>
           </>
         }
+        summary={<ImportantDatesLink date={current?.visitedOn} specialDates={specialDateList} />}
         title={venue.name}
       />
       <section className="rating-breakdown rating-breakdown--food" aria-label="Promedios del lugar">

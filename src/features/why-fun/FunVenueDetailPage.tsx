@@ -9,6 +9,7 @@ import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/Ent
 import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
 import { AddressIcon } from "../../components/ui/AddressIcon";
+import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -136,6 +137,7 @@ export function FunVenueDetailPage() {
           <p className="byline">Creada por {value.createdBy} · editada por {value.updatedBy}</p>
           </>
         }
+        summary={<ImportantDatesLink date={current?.scheduledAt} specialDates={specialDateList} />}
         title={value.name}
       />
       <section className="rating-breakdown rating-breakdown--fun" aria-label="Puntuación promedio de la actividad">
