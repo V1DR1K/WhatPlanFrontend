@@ -12,9 +12,10 @@ export function ImportantDatesLink({ date, specialDates = [], specialDateId }: I
   const match = specialDateId
     ? { id: specialDateId }
     : matchingSpecialDates(date, specialDates)[0];
-  const href = match && date
-    ? `/app/when-dates/${match.id}/${date}`
-    : "/app/when-dates";
+
+  if (!match || !date) return null;
+
+  const href = `/app/when-dates/${match.id}/${date}`;
 
   return (
     <Link className="button button--secondary important-dates-link" to={href}>
