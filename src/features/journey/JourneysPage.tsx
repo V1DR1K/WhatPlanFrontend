@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "../../lib/locationQuery";
-import { useSearchParams } from "react-router-dom";
+import { useNavigationType, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
@@ -69,15 +69,19 @@ export function JourneysPage() {
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigationType = useNavigationType();
   const filterParamsRef = useRef(new URLSearchParams(searchParams));
   const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const { coupleId } = useZoneContext();
   const filterQuery = searchParams.toString();
 
   useEffect(() => {
+    // Filter edits already update this ref before replacing the URL. Sync only
+    // on external navigations so a pending replacement cannot roll back a newer edit.
+    if (navigationType === "REPLACE") return;
     filterParamsRef.current = new URLSearchParams(searchParams);
     setSearch(searchParams.get("search") ?? "");
-  }, [searchParams]);
+  }, [navigationType, searchParams]);
   useEffect(() => setPage(0), [filterQuery]);
 
   const searchTerm = search.trim();
