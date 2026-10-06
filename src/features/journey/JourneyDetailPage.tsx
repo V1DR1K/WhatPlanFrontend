@@ -9,6 +9,7 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { AdaptivePhoto } from "../../components/ui/AdaptivePhoto";
 import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { MediaImage } from "../../components/ui/MediaImage";
+import { PhotoViewer } from "../../components/ui/PhotoViewer";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { useZoneContext } from "../../lib/zoneContext";
 import { api, session } from "../../lib/api";
@@ -41,7 +42,6 @@ import { JourneyDaySummary } from "./JourneyDaySummary";
 import { JourneyGalleryTab } from "./JourneyGalleryTab";
 import { PlaneIcon } from "./JourneysPage";
 import {
-  JourneyDateEditor,
   PointEditor,
   StayEditor,
   MovementEditor,
@@ -71,8 +71,8 @@ export function JourneyDetailPage() {
   const refresh = useJourneyRefresh(id);
   const [tab, setTab] = useState<(typeof tabs)[number]>("Resumen");
   const [day, setDay] = useState("");
-  const [dateEditor, setDateEditor] = useState(false);
   const [editTrip, setEditTrip] = useState(false);
+  const [coverPreview, setCoverPreview] = useState(false);
   const [point, setPoint] = useState<Point | null>();
   const [completing, setCompleting] = useState(false);
   const [stay, setStay] = useState<Stay | null>();
@@ -237,12 +237,20 @@ export function JourneyDetailPage() {
         media={
           <div className="journey-detail-cover">
             {trip.coverPhotoUrl ? (
-              <MediaImage
-                className="journey-detail-cover__image"
-                src={trip.coverPhotoUrl}
-                alt={`Foto de portada de ${trip.name}`}
-                loading="eager"
-              />
+              <button
+                className="journey-detail-cover__trigger"
+                type="button"
+                aria-label={"Ver la portada del viaje " + trip.name}
+                onClick={() => setCoverPreview(true)}
+              >
+                <MediaImage
+                  className="journey-detail-cover__image"
+                  src={trip.coverPhotoUrl}
+                  alt={"Foto de portada de " + trip.name}
+                  loading="eager"
+                />
+                <span className="journey-detail-cover__hint" aria-hidden="true">⤢ Ver foto</span>
+              </button>
             ) : (
               <div className="journey-detail-cover__empty" aria-label="Viaje sin foto de portada">
                 <PlaneIcon />
@@ -256,6 +264,22 @@ export function JourneyDetailPage() {
             <p className="journey-detail__route">{trip.stages[0]?.cityName ?? "Destino del viaje"}</p>
           </div>
         }
+        summary={value.dates?.length ? (
+          <div className="journey-linked-dates" aria-label="Fechas importantes vinculadas">
+            <strong>Fechas importantes</strong>
+            <div className="journey-linked-dates__list">
+              {value.dates.map((d) => (
+                <Link
+                  key={`${d.specialDateId}-${d.date}`}
+                  to={`/app/when-dates/${d.specialDateId}/${d.date}`}
+                  title={`Ver ${d.label} en WhenDates`}
+                >
+                  {d.label}<span aria-hidden="true"> ↗</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
         actions={editable ? (
           <div className="detail-actions">
             <Button variant="secondary" onClick={() => setTab("Galería")}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
@@ -280,25 +304,6 @@ export function JourneyDetailPage() {
             </span>
           ))}
         </div>
-        {value.dates?.length > 0 && (
-          <div className="journey-linked-dates">
-            <strong>Fechas importantes</strong>
-            {value.dates.map((d) => (
-              <Link
-                key={`${d.specialDateId}-${d.date}`}
-                to={`/app/when-dates/${d.specialDateId}/${d.date}`}
-                title={`Ver ${d.label} en WhenDates`}
-              >
-                {d.label} ↗
-              </Link>
-            ))}
-          </div>
-        )}
-        {editable && (
-          <Button variant="secondary" onClick={() => setDateEditor(true)}>
-            Vincular fecha importante
-          </Button>
-        )}
         <div className="journey-review-summary" aria-labelledby="journey-review-title">
           <div className="journey-panel__heading"><div><p className="eyebrow">RESEÑAS</p><h2 id="journey-review-title">¿Cómo estuvo el viaje?</h2></div>
             {editable && <Button variant="secondary" onClick={() => setReview(null)}>{value.reviews.some((r) => !r.stayId && r.author === session.get()?.username) ? "Editar mi reseña" : "Escribir mi reseña"}</Button>}
@@ -1027,12 +1032,12 @@ export function JourneyDetailPage() {
           ),
         )}
       </datalist>
-      {dateEditor && (
-        <JourneyDateEditor
-          detail={value}
-          onClose={() => setDateEditor(false)}
+      {coverPreview && trip.coverPhotoUrl && (
+        <PhotoViewer
+          photos={[{ src: trip.coverPhotoUrl, alt: "Portada del viaje " + trip.name }]}
+          onClose={() => setCoverPreview(false)}
         />
-      )}{" "}
+      )}
       {packingEdit && (
         <PackingEditor
           item={packingEdit}

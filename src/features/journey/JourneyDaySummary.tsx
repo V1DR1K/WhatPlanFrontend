@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { StarRating } from "../../components/ui/StarRating";
 import { session } from "../../lib/api";
+import { sectionThemeStyle, type SectionId } from "../../lib/sectionTheme";
 import {
   deleteJourneyDayReview,
   formatDate,
@@ -13,7 +14,15 @@ import {
   saveJourneyDayReview,
   saveJourneyDayStory,
   type Detail,
+  type Section,
 } from "./journey";
+
+const entrySections: Record<Section, { label: string; emoji: string; cue: string; theme: SectionId }> = {
+  FOOD: { label: "WHEREFOOD", emoji: "🍽️", cue: "¡Qué rico!", theme: "food" },
+  FILM: { label: "WHICHMOVIE", emoji: "🎬", cue: "¡De película!", theme: "film" },
+  COOK: { label: "WHOCOOK", emoji: "🥘", cue: "¡Manos a la obra!", theme: "cook" },
+  FUN: { label: "WHYFUN", emoji: "🎟️", cue: "¡Planazo!", theme: "fun" },
+};
 
 export function JourneyDaySummary({
   detail,
@@ -83,34 +92,48 @@ export function JourneyDaySummary({
         {query.isLoading && <p role="status">Cargando lo que pasó este día…</p>}
         {query.error && <p className="form-error" role="alert">{query.error.message}</p>}
         {selected && <>
-          <section className="journey-day-entries">
-            <h3>Lo que hicieron</h3>
-            {selected.entries.length ? <div className="journey-day-entry-list">
-              {selected.entries.map((entry) => <article key={entry.id}>
-                <div className="journey-day-entry-list__body">
-                  <p className="eyebrow">{{ FOOD: "WHEREFOOD", FILM: "WHICHMOVIE", COOK: "WHOCOOK", FUN: "WHYFUN" }[entry.section]}</p>
-                  <h4><Link to={entry.href}>{entry.title}</Link></h4>
-                  {entry.detail && <p>{entry.detail}</p>}
-                </div>
-              </article>)}
-            </div> : <p className="journey-empty">{isFuture ? "Todavía no hay experiencias guardadas para este día." : "Aún no hay experiencias registradas para este día."}</p>}
-          </section>
+          <div className="journey-day-summary__columns">
+            <section className="journey-day-entries">
+              <h3>Lo que hicieron</h3>
+              {selected.entries.length ? <div className="journey-day-entry-list">
+                {selected.entries.map((entry) => {
+                  const presentation = entrySections[entry.section];
+                  return <article
+                    className="journey-day-entry"
+                    key={entry.id}
+                    style={sectionThemeStyle(presentation.theme)}
+                  >
+                    <div className="journey-day-entry__intro">
+                      <span className="journey-day-entry__emoji" aria-hidden="true">{presentation.emoji}</span>
+                      <div className="journey-day-entry__text">
+                        <div className="journey-day-entry__labels">
+                          <p className="eyebrow">{presentation.label}</p>
+                          <span className="journey-day-entry__cue">{presentation.cue}</span>
+                        </div>
+                        <h4><Link to={entry.href}>{entry.title}</Link></h4>
+                      </div>
+                    </div>
+                    {entry.detail && <p className="journey-day-entry__detail">{entry.detail}</p>}
+                  </article>;
+                })}
+              </div> : <p className="journey-empty">{isFuture ? "Todavía no hay experiencias guardadas para este día." : "Aún no hay experiencias registradas para este día."}</p>}
+            </section>
 
-          <section className="journey-day-memory">
-            <div className="journey-panel__heading"><h3>Su recuerdo del día</h3>
-              {editable && <Button variant="secondary" onClick={() => setEditingStory(true)}>{selected.story ? "Editar relato" : "Escribir un relato"}</Button>}
-            </div>
-            {selected.story ? <p className="journey-day-story">{selected.story}</p> : <p className="journey-empty">Un relato compartido para guardar los detalles de este día.</p>}
-            <div className="journey-panel__heading"><h3>Reseñas personales</h3>
-              {editable && <Button variant="secondary" onClick={() => setEditingReview(true)}>{ownReview ? "Editar mi reseña" : "Agregar mi reseña"}</Button>}
-            </div>
-            {selected.reviews.length ? <div className="journey-day-review-list">{selected.reviews.map((review) => <article key={review.id}>
-              <strong>{review.author}</strong>
-              {review.rating !== null && <StarRating label="Del día" value={review.rating} />}
-              {review.comment && <p>{review.comment}</p>}
-            </article>)}</div> : <p className="journey-empty">Todavía no hay reseñas para este día.</p>}
-          </section>
-
+            <section className="journey-day-memory">
+              <div className="journey-panel__heading"><h3>Su recuerdo del día</h3>
+                {editable && <Button variant="secondary" onClick={() => setEditingStory(true)}>{selected.story ? "Editar relato" : "Escribir un relato"}</Button>}
+              </div>
+              {selected.story ? <p className="journey-day-story">{selected.story}</p> : <p className="journey-empty">Un relato compartido para guardar los detalles de este día.</p>}
+              <div className="journey-panel__heading"><h3>Reseñas personales</h3>
+                {editable && <Button variant="secondary" onClick={() => setEditingReview(true)}>{ownReview ? "Editar mi reseña" : "Agregar mi reseña"}</Button>}
+              </div>
+              {selected.reviews.length ? <div className="journey-day-review-list">{selected.reviews.map((review) => <article key={review.id}>
+                <strong>{review.author}</strong>
+                {review.rating !== null && <StarRating label="Del día" value={review.rating} />}
+                {review.comment && <p>{review.comment}</p>}
+              </article>)}</div> : <p className="journey-empty">Todavía no hay reseñas para este día.</p>}
+            </section>
+          </div>
         </>}
       </section>
 
