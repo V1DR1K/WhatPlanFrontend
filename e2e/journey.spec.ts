@@ -65,10 +65,10 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
 test("journey displays matching important dates in its header automatically", async ({ page }) => {
   await journeyFixture(page, true);
   await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-  const linkedDates = page.locator(".journey-detail__head .journey-linked-dates");
-  await expect(linkedDates).toContainText("Fechas importantes");
-  await expect(linkedDates.getByRole("link", { name: "Nuestro aniversario", exact: true }))
+  const headerActions = page.locator(".journey-detail__head .journey-detail__header-actions");
+  await expect(headerActions.getByRole("link", { name: /Fechas importantes/ }))
     .toHaveAttribute("href", "/app/when-dates/1/2026-08-10");
+  await expect(page.locator(".journey-linked-dates")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Vincular fecha importante" })).toHaveCount(0);
 });
 
@@ -165,7 +165,7 @@ for (const viewport of [
     await dialog.getByLabel("Descripción").fill("Desayuno");
     await dialog.getByLabel("Importe").fill("1500.25");
     await dialog.getByLabel("Moneda").focus();
-    await expect(dialog.getByLabel("Importe")).toHaveValue("1.500,25");
+    await expect(dialog.getByLabel("Importe")).toHaveValue("1500.25");
     await dialog.getByRole("button", { name: "Guardar movimiento" }).click();
     await page
       .getByRole("button", { name: "Marcar realizado", exact: true })

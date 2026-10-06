@@ -326,11 +326,14 @@
 }
 .record-iterator {
   display: grid;
-  flex: 1 1 360px;
+  flex: 0 1 360px;
+  align-self: flex-start;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
   min-width: 0;
+  min-height: 0;
+  height: auto;
   padding: 8px;
   border: 1px solid color-mix(in srgb, var(--section-accent, #a978ff) 35%, var(--line));
   border-radius: 14px;
@@ -404,7 +407,9 @@
   grid-template-columns: minmax(0, 1fr);
 }
 .item-date-pager > .record-iterator {
+  flex: 1 1 360px;
   max-width: 540px;
+  align-self: stretch;
 }
 @media (max-width: 540px) {
   .item-date-pager {

@@ -612,33 +612,27 @@ export function MovementEditor({
   detail,
   movement,
   initialPointId,
-  initialStageId,
   onClose,
 }: {
   detail: Detail;
   movement?: Movement;
   initialPointId?: string;
-  initialStageId?: string;
   onClose: () => void;
 }) {
   const refresh = useJourneyRefresh(detail.trip.id);
-  const initialPoint = detail.points.find((p) => p.id === initialPointId);
-  const [stageId, setStageId] = useState(
-    movement?.stageId ?? initialPoint?.stageId ?? initialStageId ?? (detail.trip.stages.length === 1 ? detail.trip.stages[0].id : ""),
-  );
   const [pointId, setPointId] = useState(
     movement?.pointId ?? initialPointId ?? "",
   );
-  const [stayId, setStayId] = useState(movement?.stayId ?? "");
   const save = useMutation({
-    mutationFn: (form: FormData) =>
-      saveResource<Movement>(
+    mutationFn: (form: FormData) => {
+      const point = detail.points.find((candidate) => candidate.id === pointId);
+      return saveResource<Movement>(
         detail.trip.id,
         "movements",
         {
-          stageId: stageId || null,
+          stageId: point?.stageId ?? null,
           pointId: pointId || null,
-          stayId: stayId || null,
+          stayId: null,
           kind: text(form, "kind") as Movement["kind"],
           description: text(form, "description")!,
           amount: normalizeAmountInput(text(form, "amount") ?? ""),
@@ -646,7 +640,8 @@ export function MovementEditor({
           occurredOn: text(form, "occurredOn")!,
         },
         movement?.id,
-      ),
+      );
+    },
     onSuccess: async () => {
       await refresh();
       showNotice("Movimiento guardado.");
@@ -692,14 +687,13 @@ export function MovementEditor({
             Importe
             <input
               name="amount"
-              type="text"
+              type="number"
               inputMode="decimal"
               required
               min="0.0001"
               max="99999999999999.9999"
               step="0.0001"
-              defaultValue={movement?.amount == null ? "" : formatAmountInput(String(movement.amount))}
-              onBlur={(e) => { e.currentTarget.value = formatAmountInput(e.currentTarget.value); }}
+              defaultValue={movement?.amount == null ? "" : String(movement.amount)}
             />
           </label>
           <label>
@@ -723,60 +717,13 @@ export function MovementEditor({
             defaultValue={movement?.occurredOn ?? today()}
           />
         </label>
-        <StageSelect
-          detail={detail}
-          value={stageId}
-          optional
-          onChange={(v) => {
-            setStageId(v);
-            setPointId("");
-            setStayId("");
-          }}
-        />
-        <div className="form-columns">
-          <label>
-            Actividad
-            <select
-              value={pointId}
-              onChange={(e) => {
-                const point = detail.points.find(
-                  (p) => p.id === e.target.value,
-                );
-                setPointId(e.target.value);
-                if (point) setStageId(point.stageId);
-              }}
-            >
-              <option value="">Sin actividad</option>
-              {detail.points
-                .filter((p) => !stageId || p.stageId === stageId)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label>
-            Alojamiento
-            <select
-              value={stayId}
-              onChange={(e) => {
-                const stay = detail.stays.find((s) => s.id === e.target.value);
-                setStayId(e.target.value);
-                if (stay) setStageId(stay.stageId);
-              }}
-            >
-              <option value="">Sin alojamiento</option>
-              {detail.stays
-                .filter((s) => !stageId || s.stageId === stageId)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-        </div>
+        <label>
+          Actividad
+          <select value={pointId} onChange={(event) => setPointId(event.target.value)}>
+            <option value="">Sin actividad</option>
+            {detail.points.map((point) => <option key={point.id} value={point.id}>{point.title}</option>)}
+          </select>
+        </label>
         <FormError error={save.error} />
         <Button disabled={save.isPending}>
           {save.isPending ? "Guardando…" : "Guardar movimiento"}

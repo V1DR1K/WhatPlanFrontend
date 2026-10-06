@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
+import { AddressIcon } from "../../components/ui/AddressIcon";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -110,7 +111,7 @@ export function FunVenueDetailPage() {
   const addressUrl = mapsSearch(value.address);
   return (
     <section className="fun-detail">
-      <Link className="journey-back" to="/app/why-fun">← Volver a WhyFun</Link>
+      <Link className="section-back" to="/app/why-fun">← Volver a WhyFun</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -130,7 +131,7 @@ export function FunVenueDetailPage() {
           <>
           {value.address && <p className="fun-plan-date">{value.address}</p>}
           {addressUrl && <div className="fun-detail__external-actions">
-            <a className="button button--primary address-link" href={addressUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${value.name} en Google Maps`}>📍 Dirección ↗</a>
+            <a className="button button--primary address-link" href={addressUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${value.name} en Google Maps`}><AddressIcon /> Dirección ↗</a>
           </div>}
           <p className="byline">Creada por {value.createdBy} · editada por {value.updatedBy}</p>
           </>

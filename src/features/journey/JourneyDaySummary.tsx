@@ -67,7 +67,7 @@ export function JourneyDaySummary({
     dayOptions.push({
       value: day,
       label: formatJourneyDay(day),
-      detail: summary?.destinations[0] ?? "Día del viaje",
+      detail: summary?.destinations[0],
     });
   }
   const ownReview = selected?.reviews.find((review) => review.author === session.get()?.username);
@@ -76,21 +76,19 @@ export function JourneyDaySummary({
   return (
     <>
       <section className="journey-day-summary" aria-labelledby="journey-day-title">
-        <section className="journey-day-index" aria-label="Elegir día del viaje">
-          <div className="journey-panel__heading"><h3>Sus días</h3>
-            {days.error && <Button variant="tertiary" onClick={() => void days.refetch()}>Reintentar</Button>}
-          </div>
+        <div className="journey-day-summary__navigation" aria-label="Elegir día del viaje">
           {days.isLoading && <p className="muted" role="status">Cargando días…</p>}
-          {days.error && <p role="alert" className="form-error">{days.error.message}</p>}
+          {days.error && <div className="journey-gallery__error"><p role="alert" className="form-error">{days.error.message}</p><Button variant="tertiary" onClick={() => void days.refetch()}>Reintentar</Button></div>}
           {!days.isLoading && !days.error && <RecordIterator
             ariaLabel="Iterar días del viaje"
             className="journey-day-stepper"
+            hideLabel
             label="Día del viaje"
             options={dayOptions}
             value={date}
             onChange={onDateChange}
           />}
-        </section>
+        </div>
         <div className="journey-panel__heading">
           <div>
             <h2 id="journey-day-title">Resumen del día</h2>

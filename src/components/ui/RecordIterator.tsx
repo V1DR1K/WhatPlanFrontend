@@ -10,6 +10,7 @@ export type RecordIteratorOption = {
 export function RecordIterator({
   ariaLabel,
   className,
+  hideLabel = false,
   label,
   onChange,
   options,
@@ -17,6 +18,7 @@ export function RecordIterator({
 }: {
   ariaLabel: string;
   className?: string;
+  hideLabel?: boolean;
   label: string;
   onChange: (value: string) => void;
   options: RecordIteratorOption[];
@@ -46,7 +48,7 @@ export function RecordIterator({
       </Button>
       <div className="record-iterator__current" aria-live="polite">
         <label>
-          <span>{label}</span>
+          <span className={hideLabel ? "sr-only" : undefined}>{label}</span>
           <select value={value} onChange={(event) => onChange(event.target.value)}>
             {options.map((option) => (
               <option value={option.value} key={option.value}>{option.label}</option>

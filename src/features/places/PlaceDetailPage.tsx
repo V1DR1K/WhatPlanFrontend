@@ -9,6 +9,7 @@ import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { RecordIterator } from "../../components/ui/RecordIterator";
 import { Button } from "../../components/ui/Button";
+import { AddressIcon } from "../../components/ui/AddressIcon";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { StarRating } from "../../components/ui/StarRating";
 import { RatingStars } from "../../components/ui/RatingStars";
@@ -125,7 +126,7 @@ export function PlaceDetailPage() {
 
   return (
     <section className="detail">
-      <Link className="journey-back" to="/app/food">← Volver a WhereFood</Link>
+      <Link className="section-back" to="/app/food">← Volver a WhereFood</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
@@ -156,7 +157,7 @@ export function PlaceDetailPage() {
           <>
           {venue.address && <p className="place-detail__address">{venue.address}</p>}
           <div className="place-detail__external-actions" aria-label="Enlaces del lugar">
-            {mapsUrl && <a className="button button--primary address-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${venue.name} en Google Maps`}>📍 Dirección ↗</a>}
+            {mapsUrl && <a className="button button--primary address-link" href={mapsUrl} target="_blank" rel="noreferrer" aria-label={`Abrir dirección de ${venue.name} en Google Maps`}><AddressIcon /> Dirección ↗</a>}
             {venue.sourceUrl && <a className="button button--secondary source-link" href={venue.sourceUrl} target="_blank" rel="noreferrer">↗ Ver referencia</a>}
           </div>
           {!venue.address && !mapsUrl && <p>Sin dirección</p>}

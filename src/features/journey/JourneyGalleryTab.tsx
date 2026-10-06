@@ -3,11 +3,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useQuery } from "../../lib/locationQuery";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
-import { PhotoManagerModal } from "../../components/ui/PhotoManagerModal";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { photoDateOrNow } from "../../lib/photoMetadata";
-import { formatDate, getJourneyGallery, offsetJourneyDate, uploadJourneyPhoto, setJourneyCover, deleteResource, type Detail, type JourneyFile } from "./journey";
+import { formatDate, getJourneyGallery, uploadJourneyPhoto, setJourneyCover, deleteResource, type Detail, type JourneyFile } from "./journey";
 import type { ExperiencePhoto } from "../../types/domain";
 
 const sectionNames: Record<string, string> = {
@@ -37,12 +36,6 @@ function galleryPhoto(file: JourneyFile, position: number): ExperiencePhoto {
   };
 }
 
-function dayList(from: string, to: string) {
-  const result: string[] = [];
-  for (let day = from; day <= to; day = offsetJourneyDate(day, 1)) result.push(day);
-  return result;
-}
-
 function appHref(href: string) {
   return href.startsWith("/app/") ? href : `/app${href}`;
 }
@@ -55,12 +48,9 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
   onManagerOpenChange?: (open: boolean) => void;
 }) {
   const client = useQueryClient();
-  const [selectedDay, setSelectedDay] = useState(detail.trip.startsOn);
   const [removing, setRemoving] = useState<JourneyFile>();
   const tripPhotos = detail.files.filter((file) => file.purpose === "TRIP");
   const dayPhotos = detail.files.filter((file) => file.purpose === "DAY");
-  const selectedDayPhotos = dayPhotos.filter((file) => file.day === selectedDay);
-  const dates = useMemo(() => dayList(detail.trip.startsOn, detail.trip.endsOn), [detail.trip.startsOn, detail.trip.endsOn]);
   const linked = useQuery({
     // Source sections already invalidate this prefix when their experiences or photos change.
     queryKey: ["journey-day", "gallery", detail.trip.id],
@@ -73,10 +63,10 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
       client.invalidateQueries({ queryKey: ["journeys"] }),
     ]);
   };
-  const upload = async (files: File[], purpose: "TRIP" | "DAY", day?: string, originals: File[] = files) => {
+  const upload = async (files: File[], originals: File[] = files) => {
     for (const [index, file] of files.entries()) {
       const capturedAt = await photoDateOrNow(originals[index] ?? file);
-      await uploadJourneyPhoto(detail.trip.id, file, purpose, day, capturedAt.toISOString());
+      await uploadJourneyPhoto(detail.trip.id, file, "TRIP", undefined, capturedAt.toISOString());
     }
     await Promise.all([invalidate(), onRefresh()]);
   };
@@ -148,11 +138,11 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
     </div>;
     if (origin.kind === "day") return <div className="journey-gallery-origin" aria-live="polite">
       <div className="journey-gallery-origin__badges">
-        <span className="journey-gallery-origin__badge">Foto propia · extra del día</span>
+        <span className="journey-gallery-origin__badge">Foto propia · viaje</span>
         <time dateTime={origin.date}>{formatDate(origin.date)}</time>
         {isCover && <span className="journey-gallery-origin__badge journey-gallery-origin__badge--cover">Portada</span>}
       </div>
-      <strong>Agregada a la galería del día</strong>
+      <strong>Recuerdo del viaje</strong>
     </div>;
     return <div className="journey-gallery-origin" aria-live="polite">
       <div className="journey-gallery-origin__badges">
@@ -189,13 +179,13 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
         name={detail.trip.name}
         photos={galleryPhotos}
         manageInModal={editable}
-        managerPhotos={tripPhotos.map(galleryPhoto)}
+        managerPhotos={[...tripPhotos, ...dayPhotos].map(galleryPhoto)}
         managerLabel="Administrar fotos"
-        managerLimitCount={tripPhotos.length}
+        managerLimitCount={tripPhotos.length + dayPhotos.length}
         managerOpen={managerOpen}
         onManagerOpenChange={onManagerOpenChange}
         maxPhotos={detail.trip.maxTripPhotos}
-        limitCount={tripPhotos.length}
+        limitCount={tripPhotos.length + dayPhotos.length}
         coverPhotoId={detail.trip.coverPhotoId ?? undefined}
         photoDetails={photoDetails}
         metaLabel={`${items.length} fotos · ${ownedCount} propias · ${linkedCount} vinculadas`}
@@ -203,20 +193,7 @@ export function JourneyGalleryTab({ detail, editable, onRefresh, managerOpen, on
         canSetCover={(photo) => ownFiles.has(String(photo.id))}
         onDelete={editable ? askToRemove : undefined}
         canDelete={(photo) => ownFiles.has(String(photo.id))}
-        onUpload={editable ? (files, originals) => upload(files, "TRIP", undefined, originals) : undefined}
-        afterActions={editable ? <div className="journey-gallery-controls" aria-label="Administrar fotos del viaje">
-          <div className="journey-gallery-controls__manager journey-gallery-controls__manager--day">
-            <label className="journey-gallery-day-select">Fotos extra de un día
-              <select value={selectedDay} onChange={(event) => setSelectedDay(event.target.value)}>
-                {dates.map((date) => <option value={date} key={date}>{formatDate(date)}</option>)}
-              </select>
-            </label>
-            <div className="journey-gallery-controls__day-action">
-              <span>{selectedDayPhotos.length} de {detail.trip.maxDayPhotos} fotos</span>
-              <PhotoManagerModal mode="gallery" name={`${detail.trip.name} · ${formatDate(selectedDay)}`} manageLabel="Administrar fotos del día" photos={selectedDayPhotos.map(galleryPhoto)} coverPhotoId={detail.trip.coverPhotoId ?? undefined} maxPhotos={detail.trip.maxDayPhotos} limitCount={selectedDayPhotos.length} onUpload={(files, originals) => upload(files, "DAY", selectedDay, originals)} onSetCover={cover} onDelete={askToRemove} />
-            </div>
-          </div>
-        </div> : undefined}
+        onUpload={editable ? (files, originals) => upload(files, originals) : undefined}
       />
     </section>
 

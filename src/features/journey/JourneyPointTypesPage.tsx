@@ -46,7 +46,7 @@ export function JourneyPointTypesPage() {
   };
 
   return <section className="journey-page journey-point-types-page" aria-labelledby="journey-point-types-title">
-    <Link className="journey-back" to="/app/whither-journey">← Volver a viajes</Link>
+    <Link className="section-back" to="/app/whither-journey">← Volver a viajes</Link>
     <h1 id="journey-point-types-title">Tipos de punto</h1>
     <p>Personalicen las categorías que aparecen en la agenda de todos sus viajes.</p>
     {types.error && <p className="form-error" role="alert">{types.error.message}</p>}

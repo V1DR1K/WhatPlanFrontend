@@ -9,6 +9,7 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
+import { AddressIcon } from "../../components/ui/AddressIcon";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { RecordIterator, type RecordIteratorOption } from "../../components/ui/RecordIterator";
@@ -203,6 +204,12 @@ export function JourneyDetailPage() {
     );
   const value = detail.data;
   const trip = value.trip;
+  const addressStay = value.stays.find((stay) => stay.address || stay.mapsUrl);
+  const stayAddressUrl = addressStay ? mapsSearch(addressStay.address) ?? addressStay.mapsUrl : undefined;
+  const firstImportantDate = value.dates?.[0];
+  const importantDatesHref = firstImportantDate
+    ? `/app/when-dates/${firstImportantDate.specialDateId}/${firstImportantDate.date}`
+    : "/app/when-dates";
   const editable = !trip.archived;
   const selectedDay =
     day === "unscheduled"
@@ -238,7 +245,7 @@ export function JourneyDetailPage() {
   const tripDayOptions: RecordIteratorOption[] = [];
   for (let date = trip.startsOn; date <= trip.endsOn; date = offsetJourneyDate(date, 1)) {
     const stage = trip.stages.find((entry) => date >= entry.startsOn && date <= entry.endsOn);
-    tripDayOptions.push({ value: date, label: formatJourneyDay(date), detail: stage?.cityName ?? "Día del viaje" });
+    tripDayOptions.push({ value: date, label: formatJourneyDay(date), detail: stage?.cityName });
   }
   tripDayOptions.push({
     value: "unscheduled",
@@ -256,7 +263,7 @@ export function JourneyDetailPage() {
   };
   return (
     <section className="journey-page journey-detail">
-      <Link className="journey-back" to="/app/whither-journey">
+      <Link className="section-back" to="/app/whither-journey">
         ← Todos sus viajes
       </Link>
       <EntityDetailHeader
@@ -293,37 +300,27 @@ export function JourneyDetailPage() {
             <p className="journey-detail__route">{trip.stages[0]?.cityName ?? "Destino del viaje"}</p>
           </div>
         }
-        summary={value.stays.length || value.dates?.length ? (
+        summary={
           <div className="journey-detail__header-summary">
-            {value.stays.map((stay) => {
-              const addressUrl = mapsSearch(stay.address) ?? stay.mapsUrl;
-              return <div className="journey-stay-summary" key={stay.id}>
+            {value.stays.map((stay) => (
+              <div className="journey-stay-summary" key={stay.id}>
                 <strong>🏨 {stay.name}</strong>
                 <span>Check-in · {formatStayDateTime(stay.startsOn, stay.checkInTime)}</span>
                 <span>Check-out · {formatStayDateTime(stay.endsOn, stay.checkOutTime)}</span>
-                {addressUrl && <a className="button button--secondary journey-stay-summary__address" href={addressUrl} target="_blank" rel="noreferrer">📍 Dirección</a>}
-              </div>;
-            })}
-            {value.dates?.length ? <div className="journey-linked-dates" aria-label="Fechas importantes vinculadas">
-              <strong>Fechas importantes</strong>
-              <div className="journey-linked-dates__list">
-                {value.dates.map((d) => (
-                  <Link
-                    key={`${d.specialDateId}-${d.date}`}
-                    to={`/app/when-dates/${d.specialDateId}/${d.date}`}
-                    title={`Ver ${d.label} en WhenDates`}
-                  >
-                    {d.label}<span aria-hidden="true"> ↗</span>
-                  </Link>
-                ))}
               </div>
-            </div> : null}
+            ))}
+            <div className="journey-detail__header-actions" aria-label="Accesos del viaje">
+              {stayAddressUrl && <a className="button button--secondary" href={stayAddressUrl} target="_blank" rel="noreferrer"><AddressIcon /> Dirección</a>}
+              <Link className="button button--secondary" to={importantDatesHref}>
+                <span aria-hidden="true">💖✨</span> Fechas importantes
+              </Link>
+            </div>
           </div>
-        ) : null}
+        }
         actions={editable ? (
           <div className="detail-actions">
-            <Button variant="secondary" onClick={() => { setTab("Galería"); setOpenGalleryManager(true); }}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
-            <Button variant="secondary" onClick={() => setEditTrip(true)}>Editar viaje</Button>
+            <Button variant="secondary" icon="🖼️" onClick={() => { setTab("Galería"); setOpenGalleryManager(true); }}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
+            <Button variant="secondary" icon="✏️" onClick={() => setEditTrip(true)}>Editar viaje</Button>
           </div>
         ) : null}
       />
@@ -425,6 +422,7 @@ export function JourneyDetailPage() {
               <RecordIterator
                 ariaLabel="Días del viaje"
                 className="journey-day-stepper"
+                hideLabel
                 label="Día del viaje"
                 options={tripDayOptions}
                 value={selectedDay}
@@ -441,6 +439,7 @@ export function JourneyDetailPage() {
               {points.map((p, index) => {
                 const category = displayPointCategory(p);
                 const categoryType = pointTypes.data?.find((type) => type.code === category);
+                const addressUrl = mapsSearch(p.address) ?? p.mapsUrl;
                 return <li
                   key={p.id}
                   className={`journey-route__point is-${p.status.toLowerCase()}`}
@@ -470,7 +469,7 @@ export function JourneyDetailPage() {
                       <p>{p.notes}</p>
                     </details>}
                     <div className="journey-actions journey-actions--point" style={{ "--point-accent": categoryType?.color ?? "#B9DCE9" } as CSSProperties}>
-                      <div className="journey-point-primary-actions" aria-label={`Acciones principales de ${p.title}`}>
+                      <div className={`journey-point-primary-actions${addressUrl ? " journey-point-primary-actions--with-address" : ""}`} aria-label={`Acciones principales de ${p.title}`}>
                         {editable && <Button className="journey-point-status-action" variant={p.status === "COMPLETED" ? "secondary" : undefined}
                           icon={<JourneyIcon name={p.status === "COMPLETED" ? "PENDING" : "CHECK"} />} disabled={change.isPending}
                           onClick={() => {
@@ -482,8 +481,8 @@ export function JourneyDetailPage() {
                           }}>{p.status === "COMPLETED" ? "Marcar pendiente" : p.status === "CANCELLED" ? "Reactivar punto" : "Marcar realizado"}</Button>}
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
-                        {(mapsSearch(p.address) ?? p.mapsUrl) && <a className="button button--primary journey-action-link journey-address-action" href={mapsSearch(p.address) ?? p.mapsUrl ?? undefined} target="_blank" rel="noreferrer">
-                          <JourneyIcon name="MAPS" /> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                        {addressUrl && <a className="button button--primary journey-action-link journey-address-action" href={addressUrl} target="_blank" rel="noreferrer">
+                          <AddressIcon /> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                         </a>}
                         {(editable || p.source || p.extraActions?.length) && <details className="journey-point-overflow"
                           onBlur={(event) => {
@@ -628,7 +627,7 @@ export function JourneyDetailPage() {
                       coverPending={change.isPending}
                     />
                   </div>
-                  <div>
+                  <div className="journey-stay__info">
                     <h3>{s.name}</h3>
                     <p>
                       {trip.stages.find((st) => st.id === s.stageId)?.cityName}{" "}
@@ -649,8 +648,8 @@ export function JourneyDetailPage() {
                         </a>
                       )}
                       {addressUrl && (
-                        <a className="button button--primary" href={addressUrl} target="_blank" rel="noreferrer">
-                          📍 Dirección ↗
+                        <a className="button button--primary address-link" href={addressUrl} target="_blank" rel="noreferrer">
+                          <AddressIcon /> Dirección ↗
                         </a>
                       )}
                       {editable && (
@@ -976,15 +975,9 @@ export function JourneyDetailPage() {
                           ? "Fondos"
                           : m.kind === "REFUND"
                             ? "Reintegro"
-                            : "Gasto"}{" "}
-                        ·{" "}
-                        {trip.stages.find((s) => s.id === m.stageId)
-                          ?.cityName || "Todo el viaje"}
+                            : "Gasto"}
                         {m.pointId
                           ? ` · ${value.points.find((p) => p.id === m.pointId)?.title ?? "Actividad"}`
-                          : ""}
-                        {m.stayId
-                          ? ` · ${value.stays.find((s) => s.id === m.stayId)?.name ?? "Alojamiento"}`
                           : ""}
                       </span>
                     </div>
@@ -1105,7 +1098,6 @@ export function JourneyDetailPage() {
           detail={value}
           movement={movement ?? undefined}
           initialPointId={movementPoint}
-          initialStageId={trip.stages.find((stage) => selectedDay >= stage.startsOn && selectedDay <= stage.endsOn)?.id}
           onClose={() => setMovement(undefined)}
         />
       )}{" "}

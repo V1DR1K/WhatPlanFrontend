@@ -131,7 +131,7 @@ export function FilmDetailPage() {
 
   return (
     <section className="film-detail">
-      <Link className="journey-back" to="/app/films">← Volver a WhichMovie</Link>
+      <Link className="section-back" to="/app/films">← Volver a WhichMovie</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions

@@ -149,7 +149,6 @@ export function ExperienceJourneyPanel({
           detail={trip.data}
           movement={movement ?? undefined}
           initialPointId={location.data?.pointId ?? undefined}
-          initialStageId={location.data?.stageId ?? undefined}
           onClose={() => setMovement(undefined)}
         />
       )}

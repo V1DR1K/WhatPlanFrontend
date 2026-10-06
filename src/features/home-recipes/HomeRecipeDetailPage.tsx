@@ -81,7 +81,7 @@ export function HomeRecipeDetailPage() {
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   return (
     <section className="home-recipe-detail">
-      <Link className="journey-back" to="/app/how-cook">← Volver a WhoCook</Link>
+      <Link className="section-back" to="/app/how-cook">← Volver a WhoCook</Link>
       <EntityDetailHeader
         actions={
           <EntityDetailActions
