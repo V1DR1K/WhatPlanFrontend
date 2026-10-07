@@ -191,7 +191,8 @@
 .important-dates-link {
   width: fit-content;
   max-width: 100%;
-  margin-top: 12px;
+  margin: 0;
+  align-self: center;
 }
 
 .entity-detail-header .detail-actions {
