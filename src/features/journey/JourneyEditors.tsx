@@ -413,6 +413,7 @@ export function PointEditor({
         <FormError error={experiences.error} />
         <FormError error={save.error} />
         <Button
+          icon={<JourneyIcon name="CHECK" />}
           disabled={
             save.isPending ||
             (!!section && !entityId) ||
@@ -601,7 +602,7 @@ export function StayEditor({
           />
         </label>
         <FormError error={save.error} />
-        <Button disabled={save.isPending}>
+        <Button icon={<JourneyIcon name="CHECK" />} disabled={save.isPending}>
           {save.isPending ? "Guardando…" : "Guardar alojamiento"}
         </Button>
       </form>
@@ -630,7 +631,7 @@ export function MovementEditor({
         detail.trip.id,
         "movements",
         {
-          stageId: point?.stageId ?? null,
+          stageId: point?.stageId ?? movement?.stageId ?? null,
           pointId: pointId || null,
           stayId: null,
           kind: text(form, "kind") as Movement["kind"],
@@ -725,7 +726,7 @@ export function MovementEditor({
           </select>
         </label>
         <FormError error={save.error} />
-        <Button disabled={save.isPending}>
+        <Button icon={<JourneyIcon name="MONEY" />} disabled={save.isPending}>
           {save.isPending ? "Guardando…" : "Guardar movimiento"}
         </Button>
       </form>
@@ -788,7 +789,7 @@ export function ReviewEditor({
           />
         </label>
         <FormError error={save.error} />
-        <Button disabled={save.isPending || !rating}>
+        <Button icon={<JourneyIcon name="STAR" />} disabled={save.isPending || !rating}>
           {save.isPending ? "Guardando…" : "Guardar mi reseña"}
         </Button>
       </form>

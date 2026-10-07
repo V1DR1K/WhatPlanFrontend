@@ -5,6 +5,7 @@ import { fetchMedia } from "../../lib/api";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
+import { JourneyIcon } from "./JourneyIcon";
 import { localDateTimeToIso, photoDateOrNow, toLocalDateTimeInput } from "../../lib/photoMetadata";
 import { preparePhoto } from "../../lib/photos";
 import {
@@ -277,7 +278,7 @@ export function FileUpload({
             {upload.error.message}
           </p>
         )}
-        <Button disabled={upload.isPending || preparingFile || !file || !occurredAt}>
+        <Button icon={<JourneyIcon name="UPLOAD" />} disabled={upload.isPending || preparingFile || !file || !occurredAt}>
           {upload.isPending ? "Guardando…" : "Guardar archivo"}
         </Button>
       </form>
@@ -417,7 +418,7 @@ export function FileLinksEditor({
             {save.error.message}
           </p>
         )}
-        <Button disabled={save.isPending}>Guardar vínculo</Button>
+        <Button icon={<JourneyIcon name="LINK" />} disabled={save.isPending}>Guardar vínculo</Button>
       </form>
     </Modal>
   );
@@ -440,7 +441,7 @@ export function FileDateEditor({ file, tripId, onClose }: { file: JourneyFile; t
       <p className="muted">La fecha de la cámara se usa automáticamente cuando está disponible.</p>
       <label>Fecha y hora<input type="datetime-local" required value={occurredAt} onChange={(event) => setOccurredAt(event.target.value)} /></label>
       {save.error && <p className="form-error" role="alert">{save.error.message}</p>}
-      <Button disabled={save.isPending || !occurredAt}>{save.isPending ? "Guardando…" : "Guardar fecha"}</Button>
+      <Button icon={<JourneyIcon name="CALENDAR" />} disabled={save.isPending || !occurredAt}>{save.isPending ? "Guardando…" : "Guardar fecha"}</Button>
     </form>
   </Modal>;
 }

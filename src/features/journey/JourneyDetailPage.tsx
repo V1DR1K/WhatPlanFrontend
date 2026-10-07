@@ -198,7 +198,7 @@ export function JourneyDetailPage() {
         <p className="form-error" role="alert">
           {detail.error?.message ?? "No encontramos este viaje."}
         </p>
-        <Button variant="secondary" onClick={() => void detail.refetch()}>
+        <Button variant="secondary" icon={<JourneyIcon name="PENDING" />} onClick={() => void detail.refetch()}>
           Reintentar
         </Button>
       </section>
@@ -308,7 +308,7 @@ export function JourneyDetailPage() {
               </div>
             ))}
             <div className="journey-detail__header-actions" aria-label="Accesos del viaje">
-              {stayAddressUrl && <a className="button button--secondary" href={stayAddressUrl} target="_blank" rel="noreferrer"><AddressIcon /> Dirección</a>}
+              {stayAddressUrl && <a className="button button--secondary" href={stayAddressUrl} target="_blank" rel="noreferrer"><span className="button__icon"><JourneyIcon name="MAPS" /></span><span className="button__label">Dirección</span></a>}
               <ImportantDatesLink
                 date={firstImportantDate?.date}
                 specialDateId={firstImportantDate?.specialDateId}
@@ -318,8 +318,8 @@ export function JourneyDetailPage() {
         }
         actions={editable ? (
           <div className="detail-actions">
-            <Button variant="secondary" icon="🖼️" onClick={() => { setTab("Galería"); setOpenGalleryManager(true); }}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
-            <Button variant="secondary" icon="✏️" onClick={() => setEditTrip(true)}>Editar viaje</Button>
+            <Button variant="secondary" icon={<JourneyIcon name="PHOTO" />} onClick={() => { setTab("Galería"); setOpenGalleryManager(true); }}>{trip.coverPhotoUrl ? "Cambiar portada" : "Elegir portada"}</Button>
+            <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} onClick={() => setEditTrip(true)}>Editar viaje</Button>
           </div>
         ) : null}
       />
@@ -342,7 +342,7 @@ export function JourneyDetailPage() {
         </div>
         <div className="journey-review-summary" aria-labelledby="journey-review-title">
           <div className="journey-panel__heading"><div><p className="eyebrow">RESEÑAS</p><h2 id="journey-review-title">¿Cómo estuvo el viaje?</h2></div>
-            {editable && <Button variant="secondary" onClick={() => setReview(null)}>{value.reviews.some((r) => !r.stayId && r.author === session.get()?.username) ? "Editar mi reseña" : "Escribir mi reseña"}</Button>}
+            {editable && <Button variant="secondary" icon={<JourneyIcon name="STAR" />} onClick={() => setReview(null)}>{value.reviews.some((r) => !r.stayId && r.author === session.get()?.username) ? "Editar mi reseña" : "Escribir mi reseña"}</Button>}
           </div>
           {value.reviews.filter((r) => !r.stayId).length ? <div className="journey-review-summary__list">
             {value.reviews.filter((r) => !r.stayId).map((r) => (
@@ -408,6 +408,7 @@ export function JourneyDetailPage() {
               <h2>Un día a la vez</h2>
               {editable && (
                 <Button
+                  icon={<JourneyIcon name="ADD" />}
                   onClick={() => {
                     setPoint(null);
                     setCompleting(false);
@@ -523,7 +524,7 @@ export function JourneyDetailPage() {
             <div className="journey-panel__heading">
               <h2>Todo a mano</h2>
               {editable && (
-                <Button onClick={() => setUpload(null)}>Guardar archivo</Button>
+                <Button icon={<JourneyIcon name="UPLOAD" />} onClick={() => setUpload(null)}>Guardar archivo</Button>
               )}
             </div>
             {!value.files.some((file) => file.purpose === "ATTACHMENT") && (
@@ -543,21 +544,23 @@ export function JourneyDetailPage() {
                     <span className="journey-file-list__date">Fecha del archivo · {formatPhotoDate(f.occurredAt)}</span>
                   </div>
                   <div className="journey-actions">
-                    <Button variant="secondary" onClick={() => setPreview(f)}>
+                    <Button variant="secondary" icon={<JourneyIcon name="EYE" />} onClick={() => setPreview(f)}>
                       Vista previa
                     </Button>
                     <Button
                       variant="secondary"
+                      icon={<JourneyIcon name="DOWNLOAD" />}
                       onClick={() =>
                         void downloadFile(f).catch((e) => setNotice(e.message))
                       }
                     >
                       Descargar
                     </Button>
-                    {editable && <Button variant="secondary" onClick={() => setFileDate(f)}>Editar fecha</Button>}
+                    {editable && <Button variant="secondary" icon={<JourneyIcon name="CALENDAR" />} onClick={() => setFileDate(f)}>Editar fecha</Button>}
                     {editable && (
                       <Button
                         variant="secondary"
+                        icon={<JourneyIcon name="LINK" />}
                         onClick={() => setFileLinks(f)}
                       >
                         Cambiar vínculo
@@ -566,6 +569,7 @@ export function JourneyDetailPage() {
                     {editable && (
                       <Button
                         variant="destructive"
+                        icon={<JourneyIcon name="DELETE" />}
                         onClick={() =>
                           requestDelete("files", f.id, "¿Quitar este archivo?")
                         }
@@ -584,7 +588,7 @@ export function JourneyDetailPage() {
             <div className="journey-panel__heading">
               <h2>Dónde se quedan</h2>
               {editable && (
-                <Button onClick={() => setStay(null)}>
+                <Button icon={<JourneyIcon name="ADD" />} onClick={() => setStay(null)}>
                   Agregar alojamiento
                 </Button>
               )}
@@ -601,100 +605,74 @@ export function JourneyDetailPage() {
                   .map(stayGalleryPhoto);
                 const addressUrl = mapsSearch(s.address) ?? s.mapsUrl;
                 return <article key={s.id} className="journey-stay">
-                  <div className="journey-stay__gallery">
-                    <ExperienceGallery
-                      accentLabel="FOTOS DE LA ESTADÍA"
-                      emptyIcon="🏨"
-                      emptyMessage="Agreguen fotos del alojamiento para verlas acá."
-                      name={s.name}
-                      photos={stayPhotos}
-                      coverPhotoId={s.photoId ?? undefined}
-                      maxPhotos={5}
-                      limitCount={stayPhotos.length}
-                      managerLimitCount={stayPhotos.length}
-                      managerLabel="Administrar fotos"
-                      manageInModal={editable}
-                      onUpload={editable ? async (files, originals) => {
-                        for (const [index, file] of files.entries()) {
-                          const capturedAt = await photoDateOrNow(originals?.[index] ?? file);
-                          await uploadFile(id, file, { stageId: s.stageId, stayId: s.id, occurredAt: capturedAt.toISOString() });
-                        }
-                        await refresh();
-                      } : undefined}
-                      onSetCover={editable ? (photo) => change.mutate({ type: "stay-cover", value: s, ids: [String(photo.id)] }) : undefined}
-                      onDelete={editable ? (photo) => requestDelete("files", String(photo.id), "¿Quitar esta foto?") : undefined}
-                      coverPending={change.isPending}
-                    />
-                  </div>
-                  <div className="journey-stay__info">
-                    <h3>{s.name}</h3>
-                    <p>
-                      {trip.stages.find((st) => st.id === s.stageId)?.cityName}{" "}
-                      · Check-in {formatStayDateTime(s.startsOn, s.checkInTime)}
-                      · Check-out {formatStayDateTime(s.endsOn, s.checkOutTime)}
-                    </p>
-                    <p>{s.address}</p>
-                    {s.price != null && s.currency && (
+                  <div className="journey-stay__content">
+                    <div className="journey-stay__info">
+                      <h3>{s.name}</h3>
                       <p>
-                        {money(s.price, s.currency)} · Precio del alojamiento
+                        {trip.stages.find((st) => st.id === s.stageId)?.cityName}{" "}
+                        · Check-in {formatStayDateTime(s.startsOn, s.checkInTime)}
+                        · Check-out {formatStayDateTime(s.endsOn, s.checkOutTime)}
                       </p>
-                    )}
-                    {s.source && <p>Lo consiguieron en {s.source}</p>}
-                    <div className="journey-actions">
-                      {s.bookingUrl && (
-                        <a href={s.bookingUrl} target="_blank" rel="noreferrer">
-                          Reserva ↗
-                        </a>
+                      <p>{s.address}</p>
+                      {s.price != null && s.currency && (
+                        <p>
+                          {money(s.price, s.currency)} · Precio del alojamiento
+                        </p>
                       )}
-                      {addressUrl && (
-                        <a className="button button--primary address-link" href={addressUrl} target="_blank" rel="noreferrer">
-                          <AddressIcon /> Dirección ↗
-                        </a>
-                      )}
-                      {editable && (
-                        <>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setStay(s)}
-                          >
-                            Editar
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setUpload(s.id)}
-                          >
-                            Adjuntar archivo
-                          </Button>
-                          <Button
-                            variant="secondary"
-                            onClick={() => setReview(s.id)}
-                          >
-                            Mi reseña
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() =>
-                              requestDelete(
-                                "stays",
-                                s.id,
-                                "¿Quitar el alojamiento?",
-                              )
-                            }
-                          >
-                            Quitar
-                          </Button>
-                        </>
-                      )}
+                      {s.source && <p>Lo consiguieron en {s.source}</p>}
+                      {value.reviews
+                        .filter((r) => r.stayId === s.id)
+                        .map((r) => (
+                          <div key={r.id} className="journey-stay-review">
+                            <strong>{r.author}</strong>
+                            <RatingStars label="Alojamiento" value={r.rating} />
+                            <p>{r.comment}</p>
+                          </div>
+                        ))}
                     </div>
-                    {value.reviews
-                      .filter((r) => r.stayId === s.id)
-                      .map((r) => (
-                        <div key={r.id} className="journey-stay-review">
-                          <strong>{r.author}</strong>
-                          <RatingStars label="Alojamiento" value={r.rating} />
-                          <p>{r.comment}</p>
-                        </div>
-                      ))}
+                    <div className="journey-stay__gallery">
+                      <ExperienceGallery
+                        accentLabel="FOTOS DE LA ESTADÍA"
+                        emptyIcon="🏨"
+                        emptyMessage="Agreguen fotos del alojamiento para verlas acá."
+                        name={s.name}
+                        photos={stayPhotos}
+                        coverPhotoId={s.photoId ?? undefined}
+                        maxPhotos={5}
+                        limitCount={stayPhotos.length}
+                        managerLimitCount={stayPhotos.length}
+                        managerLabel="Administrar fotos"
+                        manageInModal={editable}
+                        onUpload={editable ? async (files, originals) => {
+                          for (const [index, file] of files.entries()) {
+                            const capturedAt = await photoDateOrNow(originals?.[index] ?? file);
+                            await uploadFile(id, file, { stageId: s.stageId, stayId: s.id, occurredAt: capturedAt.toISOString() });
+                          }
+                          await refresh();
+                        } : undefined}
+                        onSetCover={editable ? (photo) => change.mutate({ type: "stay-cover", value: s, ids: [String(photo.id)] }) : undefined}
+                        onDelete={editable ? (photo) => requestDelete("files", String(photo.id), "¿Quitar esta foto?") : undefined}
+                        coverPending={change.isPending}
+                      />
+                    </div>
+                  </div>
+                  <div className="journey-stay__actions" aria-label={`Acciones de ${s.name}`}>
+                    {s.bookingUrl && (
+                      <a className="button button--secondary" href={s.bookingUrl} target="_blank" rel="noreferrer">
+                        <span className="button__icon"><JourneyIcon name="TICKET" /></span><span className="button__label">Reserva</span>
+                      </a>
+                    )}
+                    {addressUrl && (
+                      <a className="button button--secondary" href={addressUrl} target="_blank" rel="noreferrer">
+                        <span className="button__icon"><JourneyIcon name="MAPS" /></span><span className="button__label">Dirección</span>
+                      </a>
+                    )}
+                    {editable && <>
+                      <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} onClick={() => setStay(s)}>Editar</Button>
+                      <Button variant="secondary" icon={<JourneyIcon name="UPLOAD" />} onClick={() => setUpload(s.id)}>Adjuntar archivo</Button>
+                      <Button variant="secondary" icon={<JourneyIcon name="STAR" />} onClick={() => setReview(s.id)}>Mi reseña</Button>
+                      <Button variant="destructive" icon={<JourneyIcon name="DELETE" />} onClick={() => requestDelete("stays", s.id, "¿Quitar el alojamiento?")}>Quitar</Button>
+                    </>}
                   </div>
                 </article>;
               })}
@@ -755,7 +733,7 @@ export function JourneyDetailPage() {
                     defaultValue="1"
                   />
                 </label>
-                <Button disabled={addPacking.isPending}>Agregar</Button>
+                <Button icon={<JourneyIcon name="ADD" />} disabled={addPacking.isPending}>Agregar</Button>
               </form>
             )}
             <div className="journey-packing">
@@ -897,6 +875,7 @@ export function JourneyDetailPage() {
               <h2>Dinero del viaje</h2>
               {editable && (
                 <Button
+                  icon={<JourneyIcon name="MONEY" />}
                   onClick={() => {
                     setMovementPoint(undefined);
                     setMovement(null);
@@ -985,12 +964,14 @@ export function JourneyDetailPage() {
                       <div className="journey-actions">
                         <Button
                           variant="secondary"
+                          icon={<JourneyIcon name="EDIT" />}
                           onClick={() => setMovement(m)}
                         >
                           Editar
                         </Button>
                         <Button
                           variant="destructive"
+                          icon={<JourneyIcon name="DELETE" />}
                           onClick={() =>
                             requestDelete(
                               "movements",
@@ -1013,6 +994,7 @@ export function JourneyDetailPage() {
         <footer className="journey-footer">
           <Button
             variant="secondary"
+            icon={<JourneyIcon name="ARCHIVE" />}
             onClick={() =>
               requestDelete("archive", id, "¿Archivar este viaje?")
             }
@@ -1022,6 +1004,7 @@ export function JourneyDetailPage() {
           {empty && (
             <Button
               variant="destructive"
+              icon={<JourneyIcon name="DELETE" />}
               onClick={() =>
                 requestDelete("trip", id, "¿Eliminar este viaje vacío?")
               }
@@ -1200,7 +1183,7 @@ function PackingEditor({
             {error}
           </p>
         )}
-        <Button disabled={pending}>Guardar cambios</Button>
+        <Button icon={<JourneyIcon name="CHECK" />} disabled={pending}>Guardar cambios</Button>
       </form>
     </Modal>
   );
