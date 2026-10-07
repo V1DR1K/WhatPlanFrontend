@@ -217,7 +217,7 @@
   gap: 12px;
 }
 .photo-viewer__toolbar > .button { min-width: 110px; }
-.photo-viewer__zoom { display: flex; align-items: center; gap: 6px; }
+.photo-viewer__zoom { display: flex; align-items: center; justify-content: space-around; gap: 6px; }
 .photo-viewer__zoom > .button { min-width: 44px; min-height: 44px; margin: 0; }
 .photo-viewer__zoom output { min-width: 48px; color: var(--cream); font: 600 12px "DM Mono", ui-monospace, monospace; text-align: center; }
 .photo-viewer__count { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
@@ -260,7 +260,7 @@
   .photo-viewer__toolbar--multiple { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; }
   .photo-viewer__toolbar > .button { width: 44px; min-width: 44px; min-height: 44px; padding-inline: 0; }
   .photo-viewer__toolbar > .button .button__label { display: none; }
-  .photo-viewer__zoom { min-width: 0; justify-content: center; gap: 2px; }
+  .photo-viewer__zoom { min-width: 0; justify-content: space-around; gap: 2px; }
   .photo-viewer__zoom > .button { flex: 0 0 40px; width: 40px; min-width: 40px; padding-inline: 0; }
   .photo-viewer__zoom > .button:last-child { flex: 0 1 auto; width: auto; min-width: 0; padding-inline: 6px; font-size: 12px; }
   .photo-viewer__zoom output { min-width: 34px; }
