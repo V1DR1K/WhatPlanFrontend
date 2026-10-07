@@ -46,25 +46,6 @@ const statusLabel = (trip: Trip) => {
   return "EN CURSO";
 };
 
-export function PlaneIcon() {
-  return (
-    <svg
-      viewBox="0 0 32 32"
-      width="32"
-      height="32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m28 4-8 24-5-10-11-5 24-9Z" />
-      <path d="m15 18 13-14M9 23l-4 4M13 27l-2 2" />
-    </svg>
-  );
-}
-
 export function JourneysPage() {
   const [creating, setCreating] = useState(false);
   const [page, setPage] = useState(0);
@@ -142,7 +123,7 @@ export function JourneysPage() {
         eyebrow="WHITHER JOURNEY · VIAJES COMPARTIDOS"
         title={<>¿Adónde <em>vamos</em>?</>}
         description="Los planes, las experiencias y los recuerdos del viaje en un solo lugar."
-        art={<PlaneIcon />}
+        art="✈️"
       />
       <div className="journey-catalog-action">
         <Button onClick={() => setCreating(true)}>Nuevo viaje</Button>
@@ -235,7 +216,7 @@ export function JourneysPage() {
       )}
       {!trips.isLoading && !trips.error && !dateRangeError && !trips.data?.length && (
         <div className="journey-empty">
-          <PlaneIcon />
+          <span className="journey-empty__emoji" aria-hidden="true">✈️</span>
           <h2>
             {hasFilters
               ? "No hay viajes que coincidan con estos filtros"
@@ -274,7 +255,7 @@ export function JourneysPage() {
               }
               image={trip.coverPhotoUrl
                 ? <MediaImage className="catalog-media-card__image" src={trip.coverPhotoUrl} alt={`Portada de ${trip.name}`} width={720} height={540} loading="lazy" decoding="async" />
-                : <div className="journey-trip__art"><PlaneIcon /><span>{route || "Un viaje por planear"}</span></div>}
+                : <div className="journey-trip__art"><span className="journey-trip__emoji" aria-hidden="true">✈️</span><span>{route || "Un viaje por planear"}</span></div>}
               kpi={<span aria-label={`${duration} días`}>{duration} DÍAS</span>}
               chips={[
                 ...trip.stages.slice(0, 3).map((stage) => <span key={stage.id}>{stage.cityName}</span>),

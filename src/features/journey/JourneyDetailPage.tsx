@@ -10,7 +10,6 @@ import { EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
 import { ImportantDatesLink } from "../../components/ui/ImportantDatesLink";
 import { MediaImage } from "../../components/ui/MediaImage";
 import { PhotoViewer } from "../../components/ui/PhotoViewer";
-import { AddressIcon } from "../../components/ui/AddressIcon";
 import { RatingStars } from "../../components/ui/RatingStars";
 import { ExperienceGallery } from "../../components/ui/ExperienceGallery";
 import { RecordIterator, type RecordIteratorOption } from "../../components/ui/RecordIterator";
@@ -47,7 +46,6 @@ import { JourneyIcon } from "./JourneyIcon";
 import { JourneyForm } from "./JourneyForm";
 import { JourneyDaySummary } from "./JourneyDaySummary";
 import { JourneyGalleryTab } from "./JourneyGalleryTab";
-import { PlaneIcon } from "./JourneysPage";
 import {
   PointEditor,
   StayEditor,
@@ -287,7 +285,7 @@ export function JourneyDetailPage() {
               </button>
             ) : (
               <div className="journey-detail-cover__empty" aria-label="Viaje sin foto de portada">
-                <PlaneIcon />
+                <span className="journey-detail-cover__emoji" aria-hidden="true">✈️</span>
               </div>
             )}
           </div>
@@ -482,7 +480,7 @@ export function JourneyDetailPage() {
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
                         {addressUrl && <a className="button button--primary journey-action-link journey-address-action" href={addressUrl} target="_blank" rel="noreferrer">
-                          <AddressIcon /> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                          <span aria-hidden="true">📍</span> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                         </a>}
                         {(editable || p.source || p.extraActions?.length) && <details className="journey-point-overflow"
                           onBlur={(event) => {
