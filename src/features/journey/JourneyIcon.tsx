@@ -26,6 +26,7 @@ const journeyEmojis: Record<string, string> = {
   MONEY: "💰",
   UP: "⬆️",
   DOWN: "⬇️",
+  MOVE: "↕️",
   DELETE: "🗑️",
   MAPS: "🗺️",
   OPEN: "↗️",
