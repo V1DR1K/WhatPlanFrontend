@@ -296,9 +296,9 @@
 }
 
 .item-date-pager {
-  display: flex;
-  align-items: end;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
   gap: 9px;
   margin: 14px 0 22px;
   width: 100%;
@@ -326,8 +326,9 @@
 }
 .record-iterator {
   display: grid;
-  flex: 0 1 360px;
-  align-self: flex-start;
+  width: 100%;
+  flex: 1 1 auto;
+  align-self: stretch;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
@@ -355,6 +356,7 @@
   text-align: center;
 }
 .record-iterator__current label {
+  position: relative;
   display: grid;
   width: min(100%, 420px);
   gap: 3px;
@@ -363,18 +365,51 @@
   font: 500 10px "DM Mono";
   letter-spacing: 0.8px;
 }
-.record-iterator__current select {
+.record-iterator__current label::after {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  content: "";
+  pointer-events: none;
+  transform: translateY(-65%) rotate(45deg);
+}
+.record-iterator__selected {
+  display: block;
   width: 100%;
+  padding: 7px 28px;
+  border-radius: 8px;
+  color: var(--cream);
+  font: 700 15px/1.25 "DM Sans";
+  letter-spacing: 0;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.record-iterator__current select {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
   min-width: 0;
-  padding: 7px 8px;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
+  color: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+.record-iterator__current label:focus-within .record-iterator__selected {
+  outline: 2px solid var(--section-accent, #a978ff);
+  outline-offset: 2px;
+}
+.record-iterator__current option {
+  background: #211f21;
   color: var(--cream);
-  font: 700 15px "DM Sans";
-  letter-spacing: 0;
-  text-align: center;
-  text-overflow: ellipsis;
 }
 .record-iterator__current small {
   color: var(--muted);
@@ -407,8 +442,9 @@
   grid-template-columns: minmax(0, 1fr);
 }
 .item-date-pager > .record-iterator {
-  flex: 1 1 360px;
-  max-width: 540px;
+  width: 100%;
+  max-width: none;
+  flex: 1 1 auto;
   align-self: stretch;
 }
 @media (max-width: 540px) {
@@ -1022,4 +1058,4 @@
 .item-review h4 { font-size: 13px; }
 .item-review p { color: var(--muted); font-size: 13px; line-height: 1.4; }
 .visit-history { margin-top: 34px; }
-@media (max-width: 540px) { .item-review-columns, .home-recipe-review-columns { grid-template-columns: 1fr; } .rating-breakdown--cook > .rating-breakdown__metrics { grid-template-columns: 1fr; } .item-card-actions { justify-content: space-around; } .item-date-pager { align-items: center; flex-wrap: wrap; } .item-date-pager label { order: -1; width: 100%; } }
+@media (max-width: 540px) { .item-review-columns, .home-recipe-review-columns { grid-template-columns: 1fr; } .rating-breakdown--cook > .rating-breakdown__metrics { grid-template-columns: 1fr; } .item-card-actions { justify-content: space-around; } }

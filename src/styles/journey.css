@@ -54,11 +54,6 @@
 .journey-gallery-origin__description strong, .journey-gallery-origin > strong { min-width: 0; overflow-wrap: anywhere; }
 .journey-gallery-origin__description a { color: var(--section-accent); font-weight: 800; text-underline-offset: 3px; }
 @media (max-width: 600px) {
-  .journey-point-primary-actions { grid-template-columns: repeat(2, minmax(0, 1fr)) 44px; gap: 6px; }
-  .journey-point-primary-actions--with-address { grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; }
-  .journey-point-primary-actions > .button { min-height: 48px; padding-inline: 7px; font-size: 0.78rem; }
-  .journey-point-overflow > summary { width: 44px; height: 48px; }
-  .journey-point-overflow__menu { width: min(280px, calc(100vw - 48px)); }
   .journey-gallery .journey-panel__heading { align-items: stretch; flex-direction: column; }
   .journey-gallery__totals { justify-items: start; align-self: stretch; }
   .journey-gallery-origin__description { align-items: flex-start; flex-direction: column; }
@@ -411,50 +406,9 @@
   width: 100%;
 }
 .journey-day-stepper {
-  display: grid;
-  flex: 0 1 360px;
-  align-self: flex-start;
   width: 100%;
-  height: auto;
-  min-height: 0;
-  max-height: 140px;
-  box-sizing: border-box;
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
-  gap: 12px;
-  align-items: center;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid #467488;
-  border-radius: 14px;
-  background: #12232d;
-}
-.journey-day-stepper > .button--icon {
-  border-color: #467488;
-  color: #83d8f5;
-}
-.journey-day-stepper > .button--icon svg {
-  width: 20px;
-  height: 20px;
-}
-.journey-day-stepper__date {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  min-width: 0;
-  text-align: center;
-}
-.journey-day-stepper__date > span,
-.journey-day-stepper__date > small {
-  color: #b9dce9;
-  font-size: 11px;
-}
-.journey-day-stepper__date > strong {
-  color: #e4f6ff;
-  font-size: 1rem;
-  overflow-wrap: anywhere;
-}
-.journey-day-stepper__date > small {
-  font-variant-numeric: tabular-nums;
+  max-width: none;
+  align-self: stretch;
 }
 .journey-route {
   width: 100%;
@@ -1172,7 +1126,6 @@
   .journey-day-stepper {
     width: 100%;
     min-width: 0;
-    grid-template-columns: 42px minmax(0, 1fr) 42px;
   }
   .journey-actions .journey-map-action {
     margin-left: 0;
@@ -1687,6 +1640,7 @@
     gap: 22px;
   }
   .journey-day-summary__columns {
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
   .journey-day-route,
@@ -1772,7 +1726,29 @@
 
 @media (max-width: 600px) {
   .journey-point-primary-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 6px; }
-  .journey-point-primary-actions--with-address { grid-template-columns: repeat(3, minmax(0, 1fr)) 44px; }
+  .journey-point-primary-actions--with-address {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+    grid-template-rows: auto auto;
+  }
+  .journey-point-primary-actions--with-address > .journey-address-action {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .journey-point-primary-actions--with-address > .journey-point-overflow {
+    grid-column: 3;
+    grid-row: 1;
+  }
+  .journey-point-primary-actions--with-address:not(:has(.journey-point-status-action)) {
+    grid-template-columns: minmax(0, 1fr) 44px;
+  }
+  .journey-point-primary-actions--with-address:not(:has(.journey-point-status-action)) > .journey-address-action {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .journey-point-primary-actions--with-address:not(:has(.journey-point-status-action)) > .journey-point-overflow {
+    grid-column: 2;
+    grid-row: 2;
+  }
   .journey-point-primary-actions > .button { min-height: 48px; padding-inline: 7px; font-size: 0.78rem; }
   .journey-point-overflow > summary { width: 44px; height: 48px; }
   .journey-point-overflow__menu { width: min(280px, calc(100vw - 48px)); }

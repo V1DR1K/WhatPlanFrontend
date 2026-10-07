@@ -49,6 +49,7 @@ export function RecordIterator({
       <div className="record-iterator__current" aria-live="polite">
         <label>
           <span className={hideLabel ? "sr-only" : undefined}>{label}</span>
+          <span className="record-iterator__selected" aria-hidden="true">{selected?.label ?? ""}</span>
           <select value={value} onChange={(event) => onChange(event.target.value)}>
             {options.map((option) => (
               <option value={option.value} key={option.value}>{option.label}</option>
