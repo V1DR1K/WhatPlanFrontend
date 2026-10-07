@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useQuery } from "../../lib/locationQuery";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -43,6 +43,7 @@ import {
   uploadFile,
 } from "./journey";
 import { JourneyIcon } from "./JourneyIcon";
+import { JourneyPackingLists } from "./JourneyPackingLists";
 import { JourneyForm } from "./JourneyForm";
 import { JourneyDaySummary } from "./JourneyDaySummary";
 import { JourneyGalleryTab } from "./JourneyGalleryTab";
@@ -64,39 +65,6 @@ import {
 const tabs = ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 const displayPointCategory = (point: Point) =>
   point.source?.section ?? point.category ?? "GENERAL";
-
-type PackingOrderDraft = { userId: number; ids: string[] };
-type PackingGesture = {
-  userId: number;
-  itemId: string;
-  overId: string;
-  phase: "arming" | "dragging";
-};
-type PackingPress = {
-  userId: number;
-  itemId: string;
-  packed: boolean;
-  pointerId: number;
-  startX: number;
-  startY: number;
-  list: HTMLUListElement;
-  initialIds: string[];
-  ids: string[];
-  timer: number;
-  dragging: boolean;
-};
-type PackingLayoutSnapshot = {
-  list: HTMLUListElement;
-  positions: Map<string, DOMRect>;
-};
-
-const capturePackingLayout = (list: HTMLUListElement): PackingLayoutSnapshot => ({
-  list,
-  positions: new Map(
-    Array.from(list.querySelectorAll<HTMLElement>("[data-packing-item]"))
-      .map((item): [string, DOMRect] => [item.dataset.packingItem ?? "", item.getBoundingClientRect()]),
-  ),
-});
 
 function stayGalleryPhoto(file: JourneyFile, position: number): ExperiencePhoto {
   return {
@@ -148,39 +116,6 @@ export function JourneyDetailPage() {
   }>();
   const [notice, setNotice] = useState("");
   const [packingUser, setPackingUser] = useState<number | "BOTH">(0);
-  const [packingOrderDraft, setPackingOrderDraft] = useState<PackingOrderDraft | null>(null);
-  const [packingGesture, setPackingGesture] = useState<PackingGesture | null>(null);
-  const packingPress = useRef<PackingPress | null>(null);
-  const packingLayoutSnapshot = useRef<PackingLayoutSnapshot | null>(null);
-  const suppressedPackingClick = useRef<{ until: number; itemId: string } | null>(null);
-
-  useLayoutEffect(() => {
-    const snapshot = packingLayoutSnapshot.current;
-    packingLayoutSnapshot.current = null;
-    if (!snapshot || !snapshot.list.isConnected) return;
-
-    snapshot.list.querySelectorAll<HTMLElement>("[data-packing-item]").forEach((item) => {
-      const before = snapshot.positions.get(item.dataset.packingItem ?? "");
-      if (!before) return;
-      const after = item.getBoundingClientRect();
-      const x = before.left - after.left;
-      const y = before.top - after.top;
-      if (Math.abs(x) < 1 && Math.abs(y) < 1) return;
-
-      item.style.transition = "none";
-      item.style.translate = `${x}px ${y}px`;
-      void item.offsetHeight;
-      item.style.transition = "";
-      window.requestAnimationFrame(() => {
-        item.style.translate = "0 0";
-      });
-    });
-  }, [packingOrderDraft]);
-
-  useEffect(() => () => {
-    if (packingPress.current) window.clearTimeout(packingPress.current.timer);
-  }, []);
-
   const change = useMutation({
     mutationFn: async (action: {
       type: string;
@@ -224,17 +159,11 @@ export function JourneyDetailPage() {
           body: JSON.stringify(action.ids),
         });
     },
-    onSuccess: async (_result, action) => {
-      await refresh();
-      if (action.type === "packing-order") setPackingOrderDraft(null);
-    },
-    onError: (_error, action) => {
-      if (action.type !== "packing-order") return;
-      const list = document.querySelector<HTMLUListElement>(
-        `ul[data-packing-list="${action.userId}"]`,
-      );
-      if (list) packingLayoutSnapshot.current = capturePackingLayout(list);
-      setPackingOrderDraft(null);
+    onSuccess: refresh,
+    onError: (error, action) => {
+      if (action.type === "packing-order") {
+        showNotice(error.message || "No se pudo guardar el nuevo orden de la valija.");
+      }
     },
   });
   const remove = useMutation({
@@ -265,22 +194,6 @@ export function JourneyDetailPage() {
     },
     onSuccess: refresh,
   });
-  const cancelPackingPress = (restoreOrder: boolean, suppressClick = false) => {
-    const press = packingPress.current;
-    if (!press) return;
-    window.clearTimeout(press.timer);
-    packingPress.current = null;
-    setPackingGesture(null);
-    if (suppressClick) {
-      suppressedPackingClick.current = { until: Date.now() + 350, itemId: press.itemId };
-    }
-    const hasPreview = packingOrderDraft?.userId === press.userId &&
-      press.ids.some((itemId, index) => itemId !== press.initialIds[index]);
-    if (restoreOrder && press.dragging && hasPreview) {
-      packingLayoutSnapshot.current = capturePackingLayout(press.list);
-      setPackingOrderDraft(null);
-    }
-  };
   if (detail.isLoading) return <LoadingSkeleton variant="detail" section="journey" />;
   if (!detail.data)
     return (
@@ -830,272 +743,19 @@ export function JourneyDetailPage() {
             {editable && (
               <p className="journey-packing-hint">
                 <JourneyIcon name="MOVE" />
-                Mantené un ítem presionado durante 1 segundo y arrastralo para ordenarlo. En celular, iniciá desde el agarre. También podés usar las flechas.
+                Mantené presionado un ítem medio segundo y arrastralo para ordenarlo. Si lo deslizás antes, la página sigue scrolleando. También podés usar las flechas.
               </p>
             )}
-            <div className="journey-packing">
-              {value.members.map((member) => {
-                const draftPositions = packingOrderDraft?.userId === member.id
-                  ? new Map(packingOrderDraft.ids.map((itemId, index): [string, number] => [itemId, index]))
-                  : null;
-                const items = value.packing
-                  .filter((p) => p.userId === member.id)
-                  .sort(
-                    (a, b) =>
-                      Number(a.packed) - Number(b.packed) ||
-                      (draftPositions
-                        ? (draftPositions.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
-                          (draftPositions.get(b.id) ?? Number.MAX_SAFE_INTEGER)
-                        : a.position - b.position) ||
-                      a.position - b.position ||
-                      a.id.localeCompare(b.id),
-                  );
-                const done = items.filter((p) => p.packed).length;
-                return (
-                  <section key={member.id}>
-                    <h3>{member.username}</h3>
-                    <p>
-                      {done} de {items.length} guardadas
-                    </p>
-                    <progress
-                      max={Math.max(1, items.length)}
-                      value={done}
-                      aria-label={`Valija de ${member.username}`}
-                    />
-                    {!items.length && (
-                      <p className="muted">
-                        Todavía no hay cosas en esta lista.
-                      </p>
-                    )}
-                    <ul data-packing-list={member.id}>
-                      {items.map((item) => {
-                        const gesture = packingGesture?.userId === member.id
-                          && packingGesture.itemId === item.id
-                          ? packingGesture
-                          : null;
-                        const dropTarget = packingGesture?.phase === "dragging"
-                          && packingGesture.userId === member.id
-                          && packingGesture.overId === item.id;
-                        const sameStatus = items.filter(
-                          (candidate) => candidate.packed === item.packed,
-                        );
-                        const statusIndex = sameStatus.findIndex(
-                          (candidate) => candidate.id === item.id,
-                        );
-                        const move = (direction: -1 | 1) => {
-                          const currentIndex = items.findIndex(
-                            (candidate) => candidate.id === item.id,
-                          );
-                          const target = sameStatus[statusIndex + direction];
-                          if (!target) return;
-                          const targetIndex = items.findIndex(
-                            (candidate) => candidate.id === target.id,
-                          );
-                          const reordered = [...items];
-                          [reordered[currentIndex], reordered[targetIndex]] = [
-                            reordered[targetIndex],
-                            reordered[currentIndex],
-                          ];
-                          change.mutate({
-                            type: "packing-order",
-                            userId: member.id,
-                            ids: reordered.map((candidate) => candidate.id),
-                          });
-                        };
-                        return (
-                        <li
-                          key={item.id}
-                          data-packing-item={item.id}
-                          data-packed={item.packed}
-                          className={[
-                            "journey-packing-item",
-                            gesture ? `journey-packing-item--${gesture.phase}` : "",
-                            dropTarget && !gesture ? "journey-packing-item--drop-target" : "",
-                          ].filter(Boolean).join(" ")}
-                          onPointerDown={(event) => {
-                            const target = event.target;
-                            const dragHandle = target instanceof Element
-                              ? target.closest(".journey-packing-drag-handle")
-                              : null;
-                            if (!editable || change.isPending || !event.isPrimary || packingPress.current) return;
-                            if (event.pointerType === "touch" && !dragHandle) return;
-                            if (!dragHandle && target instanceof Element && target.closest("button, input, select, textarea, a")) return;
-                            if (event.pointerType !== "touch" && event.button !== 0) return;
-
-                            event.currentTarget.setPointerCapture(event.pointerId);
-                            const ids = items.map((candidate) => candidate.id);
-                            const press: PackingPress = {
-                              userId: member.id,
-                              itemId: item.id,
-                              packed: item.packed,
-                              pointerId: event.pointerId,
-                              startX: event.clientX,
-                              startY: event.clientY,
-                              list: event.currentTarget.parentElement as HTMLUListElement,
-                              initialIds: ids,
-                              ids: [...ids],
-                              timer: 0,
-                              dragging: false,
-                            };
-                            packingPress.current = press;
-                            setPackingGesture({ userId: member.id, itemId: item.id, overId: item.id, phase: "arming" });
-                            press.timer = window.setTimeout(() => {
-                              if (packingPress.current !== press) return;
-                              press.dragging = true;
-                              setPackingGesture({ userId: member.id, itemId: item.id, overId: item.id, phase: "dragging" });
-                            }, 1000);
-                          }}
-                          onPointerMove={(event) => {
-                            const press = packingPress.current;
-                            if (!press || press.pointerId !== event.pointerId) return;
-                            if (!press.dragging) {
-                              if (Math.hypot(event.clientX - press.startX, event.clientY - press.startY) > 12) {
-                                cancelPackingPress(false, true);
-                              }
-                              return;
-                            }
-
-                            event.preventDefault();
-                            const underPointer = document.elementFromPoint(event.clientX, event.clientY);
-                            const targetRow = underPointer instanceof Element
-                              ? underPointer.closest<HTMLLIElement>("li[data-packing-item]")
-                              : null;
-                            if (!targetRow || targetRow.parentElement !== press.list || targetRow.dataset.packed !== String(press.packed)) return;
-                            const targetId = targetRow.dataset.packingItem;
-                            if (!targetId) return;
-                            setPackingGesture((current) =>
-                              current?.userId === press.userId && current.overId !== targetId
-                                ? { ...current, overId: targetId }
-                                : current,
-                            );
-                            const sourceIndex = press.ids.indexOf(press.itemId);
-                            const targetIndex = press.ids.indexOf(targetId);
-                            if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
-
-                            const nextIds = [...press.ids];
-                            nextIds.splice(sourceIndex, 1);
-                            const targetAfterRemoval = nextIds.indexOf(targetId);
-                            const insertAfterTarget = event.clientY > targetRow.getBoundingClientRect().top + targetRow.offsetHeight / 2;
-                            nextIds.splice(targetAfterRemoval + (insertAfterTarget ? 1 : 0), 0, press.itemId);
-                            if (nextIds.every((id, index) => id === press.ids[index])) return;
-
-                            packingLayoutSnapshot.current = capturePackingLayout(press.list);
-                            press.ids = nextIds;
-                            setPackingOrderDraft({ userId: press.userId, ids: nextIds });
-                          }}
-                          onPointerUp={(event) => {
-                            const press = packingPress.current;
-                            if (!press || press.pointerId !== event.pointerId) return;
-                            window.clearTimeout(press.timer);
-                            packingPress.current = null;
-                            setPackingGesture(null);
-                            if (!press.dragging) return;
-                            suppressedPackingClick.current = { until: Date.now() + 350, itemId: press.itemId };
-                            const changedOrder = press.ids.some((itemId, index) => itemId !== press.initialIds[index]);
-                            if (changedOrder) {
-                              change.mutate({ type: "packing-order", userId: press.userId, ids: press.ids });
-                            } else if (packingOrderDraft?.userId === press.userId) {
-                              packingLayoutSnapshot.current = capturePackingLayout(press.list);
-                              setPackingOrderDraft(null);
-                            }
-                          }}
-                          onPointerCancel={() => cancelPackingPress(true, true)}
-                          onLostPointerCapture={(event) => {
-                            if (packingPress.current?.pointerId === event.pointerId) cancelPackingPress(true, true);
-                          }}
-                          onClickCapture={(event) => {
-                            if (
-                              event.detail > 0 &&
-                              suppressedPackingClick.current?.itemId === item.id &&
-                              Date.now() < suppressedPackingClick.current.until
-                            ) {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              suppressedPackingClick.current = null;
-                            }
-                          }}
-                        >
-                          <div className="journey-packing-item-main">
-                            {editable && (
-                              <span className="journey-packing-drag-handle" aria-hidden="true">
-                                <JourneyIcon name="MOVE" />
-                              </span>
-                            )}
-                            <label className="journey-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={item.packed}
-                                disabled={!editable || change.isPending}
-                                onChange={(e) =>
-                                  change.mutate({
-                                    type: "packing",
-                                    value: { ...item, packed: e.target.checked },
-                                  })
-                                }
-                              />
-                              <span>
-                                {item.description}{" "}
-                                <small>× {item.quantity}</small>
-                              </span>
-                            </label>
-                          </div>
-                          {editable && (
-                            <div className="journey-packing-item-actions">
-                              <div className="journey-packing-order">
-                                <Button
-                                  type="button"
-                                  variant="icon"
-                                  icon={<JourneyIcon name="UP" />}
-                                  aria-label={`Subir ${item.description}`}
-                                  title="Subir"
-                                  disabled={change.isPending || statusIndex === 0}
-                                  onClick={() => move(-1)}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="icon"
-                                  icon={<JourneyIcon name="DOWN" />}
-                                  aria-label={`Bajar ${item.description}`}
-                                  title="Bajar"
-                                  disabled={
-                                    change.isPending || statusIndex === sameStatus.length - 1
-                                  }
-                                  onClick={() => move(1)}
-                                />
-                              </div>
-                              <div className="journey-packing-item-manage">
-                                <Button
-                                  type="button"
-                                  variant="secondary"
-                                  icon={<JourneyIcon name="EDIT" />}
-                                  onClick={() => setPackingEdit(item)}
-                                >
-                                  Editar
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="destructive"
-                                  icon={<JourneyIcon name="DELETE" />}
-                                  onClick={() =>
-                                    requestDelete(
-                                      "packing",
-                                      item.id,
-                                      "¿Quitar de la valija?",
-                                    )
-                                  }
-                                >
-                                  Quitar
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </li>
-                      );})}
-                    </ul>
-                  </section>
-                );
-              })}
-            </div>
+            <JourneyPackingLists
+              members={value.members}
+              packing={value.packing}
+              editable={editable}
+              disabled={change.isPending}
+              onToggle={(item, packed) => change.mutate({ type: "packing", value: { ...item, packed } })}
+              onReorder={(userId, ids) => change.mutateAsync({ type: "packing-order", userId, ids })}
+              onEdit={setPackingEdit}
+              onRemove={(item) => requestDelete("packing", item.id, "¿Quitar de la valija?")}
+            />
           </>
         )}
         {tab === "Dinero" && (
