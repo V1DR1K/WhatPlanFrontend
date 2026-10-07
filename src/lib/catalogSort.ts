@@ -1,4 +1,5 @@
 export type CatalogSort =
+  | "created-desc"
   | "rating-desc"
   | "rating-asc"
   | "date-desc"
@@ -10,7 +11,7 @@ export const catalogSortOptions: ReadonlyArray<{
   value: CatalogSortValue;
   label: string;
 }> = [
-  { value: "", label: "Última modificación primero" },
+  { value: "created-desc", label: "Creación: más recientes" },
   { value: "rating-desc", label: "Mejor puntuación" },
   { value: "rating-asc", label: "Menor puntuación" },
   { value: "date-desc", label: "Modificados recientemente" },
@@ -20,5 +21,5 @@ export const catalogSortOptions: ReadonlyArray<{
 export function catalogSortFromQuery(value: string | null): CatalogSortValue {
   return catalogSortOptions.some((option) => option.value === value)
     ? (value as CatalogSortValue)
-    : "";
+    : "created-desc";
 }

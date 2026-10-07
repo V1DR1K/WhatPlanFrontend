@@ -14,9 +14,11 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
+import { CatalogReviewFilter } from "../../components/ui/CatalogReviewFilter";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
+import { reviewStatusFromQuery, type ReviewStatusFilter } from "../../lib/reviewStatus";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -28,6 +30,7 @@ function useFilmPages({
   platformId,
   search,
   sort,
+  reviewStatus,
   watched,
   pageSize,
 }: {
@@ -35,12 +38,13 @@ function useFilmPages({
   platformId?: number;
   search: string;
   sort: CatalogSortValue;
+  reviewStatus: ReviewStatusFilter;
   watched: boolean;
   pageSize: number;
 }) {
   const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["films", ...locationScope, watched, genre, platformId, search, sort, pageSize],
+    queryKey: ["films", ...locationScope, watched, genre, platformId, search, sort, reviewStatus, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getFilms({
         genre,
@@ -48,6 +52,7 @@ function useFilmPages({
         watched,
         search: search || undefined,
         sort: sort || undefined,
+        reviewStatus,
         cursor: pageParam,
         size: pageSize,
         signal,
@@ -110,6 +115,9 @@ export function WhichFilmPage() {
   const [sort, setSort] = useState<CatalogSortValue>(() =>
     catalogSortFromQuery(searchParams.get("sort")),
   );
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>(() =>
+    reviewStatusFromQuery(searchParams.get("reviewStatus")),
+  );
   const [showForm, setShowForm] = useState(false);
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
@@ -119,6 +127,7 @@ export function WhichFilmPage() {
     platformId,
     search: deferredSearch,
     sort,
+    reviewStatus,
     watched: false,
     pageSize,
   });
@@ -127,6 +136,7 @@ export function WhichFilmPage() {
     platformId,
     search: deferredSearch,
     sort,
+    reviewStatus,
     watched: true,
     pageSize,
   });
@@ -136,8 +146,9 @@ export function WhichFilmPage() {
     if (genre) next.set("genre", genre);
     if (platformId) next.set("platform", String(platformId));
     if (sort) next.set("sort", sort);
+    if (reviewStatus !== "ALL") next.set("reviewStatus", reviewStatus);
     setSearchParams(next, { replace: true });
-  }, [genre, platformId, searchTerm, setSearchParams, sort]);
+  }, [genre, platformId, reviewStatus, searchTerm, setSearchParams, sort]);
   const platforms = useQuery({
     queryKey: ["watch-platforms"],
     queryFn: getPlatforms,
@@ -156,7 +167,7 @@ export function WhichFilmPage() {
         label: `${option.emoji} ${option.name}`,
       }))
     : [];
-  const filtered = Boolean(genre || platformId || searchTerm || sort);
+  const filtered = Boolean(genre || platformId || searchTerm || sort !== "created-desc" || reviewStatus !== "ALL");
   return (
     <CatalogExperienceLayout
       section="film"
@@ -191,6 +202,7 @@ export function WhichFilmPage() {
             </select>
           </label>
         </div>
+        <CatalogReviewFilter value={reviewStatus} onChange={setReviewStatus} />
         <CatalogFilterChips
           label="Géneros"
           allLabel="Todos"
@@ -217,13 +229,13 @@ export function WhichFilmPage() {
         <LoadingSkeleton variant="catalog" section="film" />
       ) : (
         <>
-          <FilmSection
+          {reviewStatus === "ALL" && <FilmSection
             query={pendingFilms}
             eyebrow="EN LA LISTA"
             title="Para ver"
             empty="Todavía no hay películas en la lista. ¡Busquen la primera!"
             filtered={filtered}
-          />
+          />}
           <FilmSection
             query={watchedFilms}
             eyebrow="YA PASARON POR LA SALA"

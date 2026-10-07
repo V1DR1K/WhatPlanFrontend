@@ -2529,6 +2529,15 @@
   margin: 4px 0 16px;
   font: 600 27px "Fraunces";
 }
+.fun-single-occurrence {
+  display: grid;
+  gap: 4px;
+  margin: -4px 0 14px;
+  color: var(--muted);
+}
+.fun-single-occurrence strong {
+  color: var(--section-accent);
+}
 .fun-hours {
   display: grid;
   gap: 6px;

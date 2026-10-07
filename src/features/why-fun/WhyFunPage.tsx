@@ -10,12 +10,14 @@ import type { FunCategory } from "../../types/domain";
 import { FunVenueCard } from "./FunVenueCard";
 import { ActivityForm } from "./ActivityForm";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogReviewFilter } from "../../components/ui/CatalogReviewFilter";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
+import { reviewStatusFromQuery, type ReviewStatusFilter } from "../../lib/reviewStatus";
 import { getActivities, getFunCategories } from "./whyFun";
 import {
   catalogSortFromQuery,
@@ -40,6 +42,7 @@ function useActivityPages({
   subcategoryId,
   search,
   sort,
+  reviewStatus,
   visited,
   pageSize,
 }: {
@@ -47,12 +50,13 @@ function useActivityPages({
   subcategoryId?: number;
   search: string;
   sort: CatalogSortValue;
+  reviewStatus: ReviewStatusFilter;
   visited: boolean;
   pageSize: number;
 }) {
   const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["activities", ...locationScope, visited, categoryId, subcategoryId, search, sort, pageSize],
+    queryKey: ["activities", ...locationScope, visited, categoryId, subcategoryId, search, sort, reviewStatus, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getActivities({
         categoryId,
@@ -60,6 +64,7 @@ function useActivityPages({
         visited,
         search: search || undefined,
         sort: sort || undefined,
+        reviewStatus,
         cursor: pageParam,
         size: pageSize,
         signal,
@@ -103,6 +108,9 @@ export function WhyFunPage() {
   const [sort, setSort] = useState<CatalogSortValue>(() =>
     catalogSortFromQuery(searchParams.get("sort")),
   );
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>(() =>
+    reviewStatusFromQuery(searchParams.get("reviewStatus")),
+  );
   const [creating, setCreating] = useState(false);
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
@@ -113,6 +121,7 @@ export function WhyFunPage() {
     subcategoryId,
     search: deferredSearch,
     sort,
+    reviewStatus,
     visited: false,
     pageSize,
   });
@@ -121,6 +130,7 @@ export function WhyFunPage() {
     subcategoryId,
     search: deferredSearch,
     sort,
+    reviewStatus,
     visited: true,
     pageSize,
   });
@@ -130,7 +140,7 @@ export function WhyFunPage() {
   ];
   const roots = (categories.data ?? []).filter((category) => !category.parentId);
   const subcategories = (categories.data ?? []).filter((category) => category.parentId === categoryId);
-  const filtered = Boolean(categoryId || subcategoryId || searchTerm || sort);
+  const filtered = Boolean(categoryId || subcategoryId || searchTerm || sort !== "created-desc" || reviewStatus !== "ALL");
 
   useEffect(() => {
     const next = new URLSearchParams();
@@ -138,8 +148,9 @@ export function WhyFunPage() {
     if (subcategoryId) next.set("subcategory", String(subcategoryId));
     if (searchTerm) next.set("search", searchTerm);
     if (sort) next.set("sort", sort);
+    if (reviewStatus !== "ALL") next.set("reviewStatus", reviewStatus);
     setSearchParams(next, { replace: true });
-  }, [categoryId, searchTerm, setSearchParams, sort, subcategoryId]);
+  }, [categoryId, reviewStatus, searchTerm, setSearchParams, sort, subcategoryId]);
 
   return (
     <CatalogExperienceLayout
@@ -170,13 +181,14 @@ export function WhyFunPage() {
             </select>
           </label>
         </div>
+        <CatalogReviewFilter value={reviewStatus} onChange={setReviewStatus} />
         <FilterChips label="Categorías" options={roots} selected={categoryId} onSelect={(id) => { setCategoryId(id); setSubcategoryId(undefined); }} />
         {categoryId && <FilterChips label="Subcategorías" options={subcategories} selected={subcategoryId} onSelect={setSubcategoryId} />}
       </section>}
     >
       {categories.isError && <p className="form-error" role="alert">No pudimos cargar las categorías.</p>}
       {pendingActivities.isLoading && doneActivities.isLoading ? <LoadingSkeleton variant="catalog" section="fun" /> : <>
-        <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />
+        {reviewStatus === "ALL" && <ActivitySection query={pendingActivities} eyebrow="PARA HACER" title="Pendientes para salir" empty="Todavía no hay actividades pendientes." filtered={filtered} />}
         <ActivitySection query={doneActivities} eyebrow="YA SALIERON" title="Salidas registradas" empty="Cuando registren una salida, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <ActivityForm onClose={() => setCreating(false)} />}

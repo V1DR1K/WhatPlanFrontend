@@ -1,15 +1,17 @@
 import { api } from '../../lib/api';
+import type { ReviewStatusFilter } from '../../lib/reviewStatus';
 import type { Film, FilmGenreOption, FilmReview, FilmView, Slice, TmdbMovie, WatchPlatform } from '../../types/domain';
 
 export type FilmInput = { tmdbId?: number; title?: string; originalTitle?: string; synopsis?: string; releaseDate?: string; posterPath?: string; watchedOn?: string; genres: string[]; platformId?: number; zoneId?: number; stageId?: string | null };
 export type PlatformInput = { name: string; icon: string; active: boolean };
-export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean; search?: string; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
+export const getFilms = (filters: { genre?: string; platformId?: number; watched?: boolean; search?: string; sort?: string; reviewStatus?: ReviewStatusFilter; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();
   if (filters.genre) query.set('genre', filters.genre);
   if (filters.platformId) query.set('platformId', String(filters.platformId));
   if (filters.watched !== undefined) query.set('watched', String(filters.watched));
   if (filters.search) query.set('search', filters.search);
   if (filters.sort) query.set('sort', filters.sort);
+  if (filters.reviewStatus && filters.reviewStatus !== 'ALL') query.set('reviewStatus', filters.reviewStatus);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
   return api<Slice<Film>>(`/films${query.size ? `?${query}` : ''}`, { signal: filters.signal });

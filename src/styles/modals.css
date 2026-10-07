@@ -110,6 +110,39 @@
 .place-editor-form > .tag-picker { align-self: start; min-width: 0; margin: 0; }
 .place-editor-form > .modal-form__actions { margin-top: 0; }
 .modal .tag-options { max-height: none; overflow: visible; }
+.activity-editor-form__single-toggle {
+  display: flex !important;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  color: var(--cream);
+  font-weight: 600;
+}
+.activity-editor-form__single-toggle input {
+  width: 20px !important;
+  height: 20px;
+  min-height: 20px;
+  margin: 0;
+  accent-color: var(--section-accent);
+}
+.activity-editor-form__date-range { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-columns.activity-editor-form__schedule-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+.activity-editor-form__schedule-row > .button--tertiary {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  align-self: end;
+  justify-self: stretch;
+  margin: 0;
+}
+.activity-editor-form .tag-picker > .button--secondary {
+  width: 100%;
+  justify-self: stretch;
+}
 @media (min-width: 1050px) {
   .activity-editor-form > :is(.activity-editor-form__category, .activity-editor-form__subcategory) { grid-column: auto !important; }
 }
@@ -264,4 +297,14 @@
   .photo-viewer__zoom > .button { flex: 0 0 40px; width: 40px; min-width: 40px; padding-inline: 0; }
   .photo-viewer__zoom > .button:last-child { flex: 0 1 auto; width: auto; min-width: 0; padding-inline: 6px; font-size: 12px; }
   .photo-viewer__zoom output { min-width: 34px; }
+}
+@media (max-width: 700px) {
+  .modal .activity-editor-form__schedule-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+  .activity-editor-form__schedule-row > label:first-child,
+  .activity-editor-form__schedule-row > .button--tertiary {
+    grid-column: 1 / -1;
+  }
 }

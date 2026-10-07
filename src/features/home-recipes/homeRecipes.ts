@@ -1,15 +1,17 @@
 import { getHistory } from '../../lib/history';
 import { api } from '../../lib/api';
+import type { ReviewStatusFilter } from '../../lib/reviewStatus';
 import type { Cooking, CookingReview, Home, MealType, Recipe, RecipeIngredient, RecipeStep, Slice } from '../../types/domain';
 
 export type RecipeInput = { name: string; sourceUrl?: string; ingredients: RecipeIngredient[]; steps: RecipeStep[]; zoneId?: number; stageId?: string | null };
 export type CookingInput = import("../journey/journey").Binding & { home: Home; servings: number; cookedOn: string; mealType: MealType };
-export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boolean; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
+export const getRecipes = (filters: { search?: string; home?: Home; cooked?: boolean; sort?: string; reviewStatus?: ReviewStatusFilter; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
   const query = new URLSearchParams();
   if (filters.search) query.set('search', filters.search);
   if (filters.home) query.set('home', filters.home);
   if (filters.cooked !== undefined) query.set('cooked', String(filters.cooked));
   if (filters.sort) query.set('sort', filters.sort);
+  if (filters.reviewStatus && filters.reviewStatus !== 'ALL') query.set('reviewStatus', filters.reviewStatus);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
   return api<Slice<Recipe>>(`/how-cook/recipes${query.size ? `?${query}` : ''}`, { signal: filters.signal });

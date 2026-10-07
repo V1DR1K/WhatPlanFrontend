@@ -1,9 +1,13 @@
 import { getPhotoOrientation, ResponsiveImage } from "../../components/ui/AdaptivePhoto";
 import { CatalogMediaCard } from "../../components/ui/CatalogMediaCard";
 import type { Activity } from "../../types/domain";
+import { formatActivityDateRange } from "./whyFun";
 
 export function FunVenueCard({ activity }: { activity: Activity }) {
   const photo = activity.profilePhoto;
+  const occurrenceDateRange = activity.singleOccurrence
+    ? formatActivityDateRange(activity.startDate, activity.endDate)
+    : undefined;
   const kpi = activity.rating != null
     ? { label: `Puntuación promedio: ${activity.rating.toFixed(1)} de 5`, value: `★ ${activity.rating.toFixed(1)}` }
     : activity.visitCount
@@ -22,6 +26,7 @@ export function FunVenueCard({ activity }: { activity: Activity }) {
       title={activity.name}
       to={`/app/why-fun/${activity.id}`}
     >
+      {occurrenceDateRange && <p className="catalog-media-card__note">Fecha única · {occurrenceDateRange}</p>}
       <p className="catalog-media-card__note">📍 {activity.address || "Dirección por definir"}</p>
     </CatalogMediaCard>
   );

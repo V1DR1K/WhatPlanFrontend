@@ -9,6 +9,7 @@ import { Button } from "../../components/ui/Button";
 import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
 import { AsyncState } from "../../components/ui/AsyncState";
 import { CatalogFilterChips } from "../../components/ui/CatalogFilterChips";
+import { CatalogReviewFilter } from "../../components/ui/CatalogReviewFilter";
 import type { PlaceStatus } from "../../types/domain";
 import { getCategories } from "../categories/categories";
 import { getHighlightTags } from "./highlightTags";
@@ -22,6 +23,7 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
+import { reviewStatusFromQuery, type ReviewStatusFilter } from "../../lib/reviewStatus";
 import {
   catalogSortFromQuery,
   catalogSortOptions,
@@ -37,6 +39,7 @@ function PlaceSection({
   highlightTagId,
   search,
   sort,
+  reviewStatus,
   title,
   eyebrow,
   empty,
@@ -48,6 +51,7 @@ function PlaceSection({
   highlightTagId?: number;
   search: string;
   sort: CatalogSortValue;
+  reviewStatus: ReviewStatusFilter;
   title: string;
   eyebrow: string;
   empty: string;
@@ -57,7 +61,7 @@ function PlaceSection({
   const locationScope = useLocationQueryScope();
   const query = useInfiniteQuery({
     // A changed search or sort starts a distinct infinite query at cursor zero.
-    queryKey: ["places", ...locationScope, status, category, highlightTagId, search, sort, pageSize],
+    queryKey: ["places", ...locationScope, status, category, highlightTagId, search, sort, reviewStatus, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getPlaces(
         category,
@@ -68,6 +72,7 @@ function PlaceSection({
         sort || undefined,
         pageSize,
         signal,
+        reviewStatus,
       ),
     initialPageParam: undefined as number | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -114,6 +119,9 @@ export function DiscoverPage() {
   const [sort, setSort] = useState<CatalogSortValue>(() =>
     catalogSortFromQuery(searchParams.get("sort")),
   );
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>(() =>
+    reviewStatusFromQuery(searchParams.get("reviewStatus")),
+  );
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const pageSize = useCatalogPageSize();
@@ -148,9 +156,10 @@ export function DiscoverPage() {
     if (highlightTagId) next.set("highlightTag", String(highlightTagId));
     if (searchTerm) next.set("search", searchTerm);
     if (sort) next.set("sort", sort);
+    if (reviewStatus !== "ALL") next.set("reviewStatus", reviewStatus);
     setSearchParams(next, { replace: true });
-  }, [category, highlightTagId, searchTerm, setSearchParams, sort]);
-  const hasFilter = Boolean(category || highlightTagId || searchTerm || sort);
+  }, [category, highlightTagId, reviewStatus, searchTerm, setSearchParams, sort]);
+  const hasFilter = Boolean(category || highlightTagId || searchTerm || sort !== "created-desc" || reviewStatus !== "ALL");
   return (
     <CatalogExperienceLayout
       section="food"
@@ -185,6 +194,7 @@ export function DiscoverPage() {
             </select>
           </label>
         </div>
+        <CatalogReviewFilter value={reviewStatus} onChange={setReviewStatus} />
         <CatalogFilterChips
           label="Categorías"
           allLabel="🍽️ Todos"
@@ -207,24 +217,26 @@ export function DiscoverPage() {
         />
       </section>}
     >
-      <PlaceSection
+      {reviewStatus === "ALL" && <PlaceSection
         status="PENDING"
         category={category}
         highlightTagId={highlightTagId}
         search={deferredSearch}
         sort={sort}
+        reviewStatus={reviewStatus}
         eyebrow="POR PROBAR"
         title="Pendientes para ir"
         empty="Todavía no agendaste ningún lugar."
         hasFilter={hasFilter}
         pageSize={pageSize}
-      />
+      />}
       <PlaceSection
         status="REVIEWED"
         category={category}
         highlightTagId={highlightTagId}
         search={deferredSearch}
         sort={sort}
+        reviewStatus={reviewStatus}
         eyebrow="YA FUIMOS"
         title="Visitas registradas"
         empty="Cuando registren la primera visita, aparecerá acá."

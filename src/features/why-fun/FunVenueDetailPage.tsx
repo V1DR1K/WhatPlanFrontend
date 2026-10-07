@@ -20,7 +20,7 @@ import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types
 import { ActivityForm } from "./ActivityForm";
 import { ActivityReviewForm } from "./ActivityReviewForm";
 import { ActivityVisitForm } from "./ActivityVisitForm";
-import { deleteActivity, deleteActivityPhoto, getActivity, getActivityVisits, setActivityCover, uploadActivityPhoto } from "./whyFun";
+import { deleteActivity, deleteActivityPhoto, formatActivityDateRange, getActivity, getActivityVisits, setActivityCover, uploadActivityPhoto } from "./whyFun";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
@@ -108,6 +108,9 @@ export function FunVenueDetailPage() {
 
   const value = activity.data!;
   const profilePhoto = value.profilePhoto?.url ?? value.profilePhoto?.thumbnailUrl;
+  const occurrenceDateRange = value.singleOccurrence
+    ? formatActivityDateRange(value.startDate, value.endDate)
+    : undefined;
   const ownReview = current?.reviews.find((review) => review.author === session.get()?.username);
   const addressUrl = mapsSearch(value.address);
   return (
@@ -151,6 +154,7 @@ export function FunVenueDetailPage() {
         <div className="fun-detail-panel">
           <p className="eyebrow">HORARIOS</p>
           <h2>Cuándo se puede ir</h2>
+          {occurrenceDateRange && <p className="fun-single-occurrence"><span>Fecha única</span><strong>{occurrenceDateRange}</strong></p>}
           {value.schedules.length ? <div className="fun-hours">{value.schedules.map((schedule) => <div key={`${schedule.dayOfWeek}-${schedule.opensAt}`}><strong>{dayLabel[schedule.dayOfWeek]}</strong><span>{schedule.opensAt} a {schedule.closesAt}</span></div>)}</div> : <p className="muted">No cargaron horarios para esta actividad.</p>}
         </div>
         <div className="fun-detail-panel"><p className="eyebrow">HISTORIAL</p><h2>{list.length} salida{list.length === 1 ? "" : "s"}</h2><p className="muted">Cada fecha conserva su propia galería y reseñas.</p></div>

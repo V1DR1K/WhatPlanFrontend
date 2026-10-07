@@ -7,6 +7,7 @@ import { RecipeForm } from "./RecipeForm";
 import { EntityCreateButton } from "../../components/ui/EntityCreateButton";
 import { ExperienceHero } from "../../components/ui/ExperienceHero";
 import { CatalogEntitySearch } from "../../components/ui/CatalogEntitySearch";
+import { CatalogReviewFilter } from "../../components/ui/CatalogReviewFilter";
 import { CatalogMoreButton } from "../../components/ui/IncrementalCatalog";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { CatalogExperienceLayout } from "../../components/ui/CatalogExperienceLayout";
@@ -14,6 +15,7 @@ import { useCatalogPageSize } from "../../lib/settings";
 import { useDebouncedValue } from "../../lib/useDebouncedValue";
 import { useLocationQueryScope } from "../../lib/locationQueryScope";
 import { useZoneContext } from "../../lib/zoneContext";
+import { reviewStatusFromQuery, type ReviewStatusFilter } from "../../lib/reviewStatus";
 import { homeName } from "../../lib/homeLabels";
 import { getRecipes } from "./homeRecipes";
 import { CatalogRecipeCard } from "./CatalogRecipeCard";
@@ -32,23 +34,26 @@ function useRecipePages({
   home,
   search,
   sort,
+  reviewStatus,
   pageSize,
 }: {
   cooked: boolean;
   home?: Home;
   search: string;
   sort: CatalogSortValue;
+  reviewStatus: ReviewStatusFilter;
   pageSize: number;
 }) {
   const locationScope = useLocationQueryScope();
   return useInfiniteQuery({
-    queryKey: ["recipes", ...locationScope, cooked, home, search, sort, pageSize],
+    queryKey: ["recipes", ...locationScope, cooked, home, search, sort, reviewStatus, pageSize],
     queryFn: ({ pageParam, signal }) =>
       getRecipes({
         cooked,
         home,
         search: search || undefined,
         sort: sort || undefined,
+        reviewStatus,
         cursor: pageParam,
         size: pageSize,
         signal,
@@ -91,6 +96,9 @@ export function HomeRecipesPage() {
   const [sort, setSort] = useState<CatalogSortValue>(() =>
     catalogSortFromQuery(searchParams.get("sort")),
   );
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusFilter>(() =>
+    reviewStatusFromQuery(searchParams.get("reviewStatus")),
+  );
   const pageSize = useCatalogPageSize();
   const searchTerm = search.trim();
   const deferredSearch = useDebouncedValue(searchTerm);
@@ -99,6 +107,7 @@ export function HomeRecipesPage() {
     home: home === "ALL" ? undefined : home,
     search: deferredSearch,
     sort,
+    reviewStatus,
     pageSize,
   });
   const doneRecipes = useRecipePages({
@@ -106,21 +115,23 @@ export function HomeRecipesPage() {
     home: home === "ALL" ? undefined : home,
     search: deferredSearch,
     sort,
+    reviewStatus,
     pageSize,
   });
   const recipes = [
     ...(pendingRecipes.data?.pages.flatMap((page) => page.content) ?? []),
     ...(doneRecipes.data?.pages.flatMap((page) => page.content) ?? []),
   ];
-  const filtered = Boolean(searchTerm || home !== "ALL" || sort);
+  const filtered = Boolean(searchTerm || home !== "ALL" || sort !== "created-desc" || reviewStatus !== "ALL");
 
   useEffect(() => {
     const next = new URLSearchParams();
     if (searchTerm) next.set("search", searchTerm);
     if (home !== "ALL") next.set("home", home);
     if (sort) next.set("sort", sort);
+    if (reviewStatus !== "ALL") next.set("reviewStatus", reviewStatus);
     setSearchParams(next, { replace: true });
-  }, [home, searchTerm, setSearchParams, sort]);
+  }, [home, reviewStatus, searchTerm, setSearchParams, sort]);
 
   return (
     <CatalogExperienceLayout
@@ -157,6 +168,7 @@ export function HomeRecipesPage() {
             </select>
           </label>
         </div>
+        <CatalogReviewFilter value={reviewStatus} onChange={setReviewStatus} />
         <div className="home-recipe-home-filters" aria-label="Filtrar recetas por casa">
           <button aria-pressed={home === "ALL"} className={home === "ALL" ? "selected" : ""} type="button" onClick={() => setHome("ALL")}>Todas</button>
           <button aria-pressed={home === "TOMAS"} className={home === "TOMAS" ? "selected" : ""} type="button" onClick={() => setHome("TOMAS")}>{homeName("TOMAS", homeLabels)}</button>
@@ -165,7 +177,7 @@ export function HomeRecipesPage() {
       </section>}
     >
       {pendingRecipes.isLoading && doneRecipes.isLoading ? <LoadingSkeleton variant="catalog" section="cook" /> : <>
-        <RecipeSection query={pendingRecipes} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} />
+        {reviewStatus === "ALL" && <RecipeSection query={pendingRecipes} eyebrow="PARA PROBAR" title="Pendientes para cocinar" empty="Todavía no hay recetas pendientes." filtered={filtered} />}
         <RecipeSection query={doneRecipes} eyebrow="YA COCINARON" title="Cocinadas registradas" empty="Cuando registren una cocinada, aparecerá acá." filtered={filtered} />
       </>}
       {creating && <RecipeForm onClose={() => setCreating(false)} />}

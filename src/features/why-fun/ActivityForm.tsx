@@ -30,6 +30,9 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
   const [schedules, setSchedules] = useState<ActivitySchedule[]>(
     activity?.schedules.length ? activity.schedules : [],
   );
+  const [singleOccurrence, setSingleOccurrence] = useState(activity?.singleOccurrence ?? false);
+  const [startDate, setStartDate] = useState(activity?.startDate ?? "");
+  const [endDate, setEndDate] = useState(activity?.endDate ?? "");
   const [photo, setPhoto] = useState<File>();
   const [preparingPhoto, setPreparingPhoto] = useState(false);
   const categories = useQuery({ queryKey: ["fun-categories"], queryFn: getFunCategories });
@@ -44,6 +47,9 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
           address: String(form.get("address")).trim(),
           categoryId,
           subcategoryId,
+          singleOccurrence,
+          startDate: singleOccurrence ? startDate : undefined,
+          endDate: singleOccurrence ? endDate : undefined,
           schedules,
           zoneId: zoneId ?? undefined, stageId: !activity ? stageId : null,
         },
@@ -139,10 +145,44 @@ export function ActivityForm({ activity, onClose }: { activity?: Activity; onClo
             ))}
           </div>
         </fieldset>
+        <fieldset className="tag-picker activity-editor-form__occurrence">
+          <legend>Ocurrencia</legend>
+          <label className="activity-editor-form__single-toggle">
+            <input
+              type="checkbox"
+              checked={singleOccurrence}
+              onChange={(event) => setSingleOccurrence(event.target.checked)}
+            />
+            Fecha única
+          </label>
+          {singleOccurrence && (
+            <div className="form-columns activity-editor-form__date-range">
+              <label>
+                Fecha de inicio
+                <input
+                  type="date"
+                  value={startDate}
+                  required
+                  onChange={(event) => setStartDate(event.target.value)}
+                />
+              </label>
+              <label>
+                Fecha de fin
+                <input
+                  type="date"
+                  min={startDate || undefined}
+                  value={endDate}
+                  required
+                  onChange={(event) => setEndDate(event.target.value)}
+                />
+              </label>
+            </div>
+          )}
+        </fieldset>
         <fieldset className="tag-picker">
           <legend>Horarios <small className="tiny">Opcional</small></legend>
           {schedules.map((schedule, index) => (
-            <div className="form-columns" key={`${schedule.dayOfWeek}-${index}`}>
+            <div className="form-columns activity-editor-form__schedule-row" key={`${schedule.dayOfWeek}-${index}`}>
               <label>
                 Día
                 <select

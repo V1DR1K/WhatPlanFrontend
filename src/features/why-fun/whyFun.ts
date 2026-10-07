@@ -1,25 +1,39 @@
 import { getHistory } from '../../lib/history';
 import { api } from '../../lib/api';
 import type { Activity, ActivityReview, ActivityVisit, FunCategory, Slice } from '../../types/domain';
+import type { ReviewStatusFilter } from '../../lib/reviewStatus';
 
 export type FunCategoryInput = { parentId?: number; name: string; icon: string; active: boolean };
-export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[]; zoneId?: number; stageId?: string | null };
+export type ActivityInput = { name: string; address: string; categoryId: number; subcategoryId: number; singleOccurrence: boolean; startDate?: string; endDate?: string; schedules: { dayOfWeek: string; opensAt: string; closesAt: string }[]; zoneId?: number; stageId?: string | null };
 export type ActivityVisitInput = import("../journey/journey").Binding & { scheduledAt?: string };
 
 export const getFunCategories = () => api<FunCategory[]>('/why-fun/categories');
 export const getAllFunCategories = () => api<FunCategory[]>('/why-fun/categories/all');
 export const saveFunCategory = (input: FunCategoryInput, id?: number) => api<FunCategory>(`/why-fun/categories${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
 export const deleteFunCategory = (id: number) => api<void>(`/why-fun/categories/${id}`, { method: 'DELETE' });
-export const getActivities = (filters: { categoryId?: number; subcategoryId?: number; search?: string; visited?: boolean; sort?: string; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
+export const getActivities = (filters: { categoryId?: number; subcategoryId?: number; search?: string; visited?: boolean; sort?: string; reviewStatus?: ReviewStatusFilter; cursor?: number; size?: number; signal?: AbortSignal } = {}) => {
  const query = new URLSearchParams();
  if (filters.categoryId) query.set('categoryId', String(filters.categoryId));
   if (filters.subcategoryId) query.set('subcategoryId', String(filters.subcategoryId));
   if (filters.search) query.set('search', filters.search);
   if (filters.visited !== undefined) query.set('visited', String(filters.visited));
   if (filters.sort) query.set('sort', filters.sort);
+  if (filters.reviewStatus && filters.reviewStatus !== 'ALL') query.set('reviewStatus', filters.reviewStatus);
   if (filters.cursor !== undefined) query.set('cursor', String(filters.cursor));
   if (filters.size !== undefined) query.set('size', String(filters.size));
    return api<Slice<Activity>>(`/why-fun/activities${query.size ? `?${query}` : ''}`, { signal: filters.signal });
+};
+export const formatActivityDateRange = (startDate?: string | null, endDate?: string | null) => {
+ if (!startDate || !endDate) return undefined;
+ const format = (value: string, year = true) => new Intl.DateTimeFormat('es-AR', {
+  day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}),
+ }).format(new Date(`${value}T12:00:00`));
+ if (startDate === endDate) return format(startDate);
+ if (startDate.slice(0, 7) === endDate.slice(0, 7)) {
+  const day = new Intl.DateTimeFormat('es-AR', { day: 'numeric' }).format(new Date(`${startDate}T12:00:00`));
+  return `${day}–${format(endDate)}`;
+ }
+ return `${format(startDate)} – ${format(endDate)}`;
 };
 export const getActivity = (id: number) => api<Activity>(`/why-fun/activities/${id}`);
 export const saveActivity = (input: ActivityInput, id?: number) => api<Activity>(`/why-fun/activities${id ? `/${id}` : ''}`, { method: id ? 'PUT' : 'POST', body: JSON.stringify(input) });
