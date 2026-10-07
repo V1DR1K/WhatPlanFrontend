@@ -30,7 +30,7 @@ test("journey catalog filters trips and renders shared photo cards", async ({ pa
 
   const cards = page.locator(".journey-catalog > a");
   await expect(cards).toHaveCount(1);
-  await expect(cards.first().locator(".journey-trip__art svg")).toBeVisible();
+  await expect(cards.first().locator(".journey-trip__emoji")).toBeVisible();
   await expect(cards.first().getByRole("heading", { name: "Volvemos a Buenos Aires" })).toBeVisible();
   await expect(cards.first().locator(".catalog-media-card__kpi")).toContainText("3 DÍAS");
 

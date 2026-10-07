@@ -453,7 +453,7 @@ export function JourneyDetailPage() {
                     <h3>{p.title}</h3>
                     <span className="journey-point-category" style={{ "--point-accent": categoryType?.color ?? "#B9DCE9" } as CSSProperties}>
                       <JourneyIcon name={categoryType?.icon ?? "ACTIVITY"} />
-                      {categoryType?.name ?? pointCategoryLabels[category] ?? category}
+                      <span>{categoryType?.name ?? pointCategoryLabels[category] ?? category}</span>
                     </span>
                     <span className="journey-status">
                       {p.status === "COMPLETED"
