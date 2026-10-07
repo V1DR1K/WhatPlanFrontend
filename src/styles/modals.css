@@ -256,8 +256,12 @@
     max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
     padding: 4px 8px 8px;
   }
-  .photo-viewer__toolbar { flex-wrap: wrap; gap: 6px; }
-  .photo-viewer__toolbar > .button { min-width: 86px; min-height: 44px; }
-  .photo-viewer__zoom { order: -1; justify-content: center; width: 100%; }
-  .photo-viewer__zoom > .button { flex: 0 1 auto; }
+  .photo-viewer__toolbar { display: flex; justify-content: center; gap: 6px; }
+  .photo-viewer__toolbar--multiple { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 4px; }
+  .photo-viewer__toolbar > .button { width: 44px; min-width: 44px; min-height: 44px; padding-inline: 0; }
+  .photo-viewer__toolbar > .button .button__label { display: none; }
+  .photo-viewer__zoom { min-width: 0; justify-content: center; gap: 2px; }
+  .photo-viewer__zoom > .button { flex: 0 0 40px; width: 40px; min-width: 40px; padding-inline: 0; }
+  .photo-viewer__zoom > .button:last-child { flex: 0 1 auto; width: auto; min-width: 0; padding-inline: 6px; font-size: 12px; }
+  .photo-viewer__zoom output { min-width: 34px; }
 }

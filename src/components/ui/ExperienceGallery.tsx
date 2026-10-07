@@ -18,21 +18,6 @@ export const nextPhotoIndex = (current: number, total: number) =>
 export const previousPhotoIndex = (current: number, total: number) =>
   total > 0 ? (current - 1 + total) % total : 0;
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(() =>
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(query.matches);
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  return reduced;
-}
-
 type ExperienceGalleryProps = {
   accentLabel: string;
   afterActions?: ReactNode;
@@ -64,7 +49,6 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
   const coverIndex = Math.max(0, photos.findIndex((photo) => photo.id === coverPhotoId));
   const [selected, setSelected] = useState(coverIndex);
   const [manualPaused, setManualPaused] = useState(false);
-  const [playbackOverride, setPlaybackOverride] = useState(false);
   const [lightbox, setLightbox] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [preparingPhotos, setPreparingPhotos] = useState(false);
@@ -72,9 +56,8 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
   const [pickerKey, setPickerKey] = useState(0);
   const [uploadError, setUploadError] = useState<string>();
   const touchStart = useRef<{ x: number; y: number } | undefined>(undefined);
-  const reducedMotion = useReducedMotion();
   const photo = photos[selected];
-  const paused = photos.length < 2 || lightbox || ((manualPaused || reducedMotion) && !playbackOverride);
+  const paused = photos.length < 2 || lightbox || manualPaused;
   useEffect(() => {
     setSelected((current) => Math.min(current, Math.max(photos.length - 1, 0)));
   }, [photos.length]);
@@ -90,6 +73,7 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
   }, [paused, photos.length]);
 
   const move = (direction: "next" | "previous") => {
+    setManualPaused(true);
     setSelected((current) => direction === "next" ? nextPhotoIndex(current, photos.length) : previousPhotoIndex(current, photos.length));
   };
 
@@ -115,7 +99,7 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
 
   return <section className="experience-gallery" aria-label={`Galería de ${name}`}>
      <div className="experience-gallery__stage" role={photos.length > 1 ? "tabpanel" : undefined} id={photos.length > 1 ? "experience-gallery-panel" : undefined} aria-live="polite" onTouchStart={(event) => { const touch = event.changedTouches[0]; if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY }; }} onTouchEnd={(event) => { const start = touchStart.current; const touch = event.changedTouches[0]; touchStart.current = undefined; if (!start || !touch) return; const dx = touch.clientX - start.x; const dy = touch.clientY - start.y; if (Math.abs(dx) < 36 || Math.abs(dx) <= Math.abs(dy)) return; move(dx < 0 ? "next" : "previous"); }}>
-       {photo ? <button className="experience-gallery__image-button" type="button" onClick={() => setLightbox(true)} aria-label={`Ampliar foto ${selected + 1} de ${photos.length} de ${name}`}><MediaImage className="catalog-media-card__image" src={photo.url} alt={`Foto ${selected + 1} de ${name}`} width={photo.width} height={photo.height} loading="eager" /></button> : <div className="experience-gallery__empty" aria-label="Sin fotos todavía"><span aria-hidden="true">{emptyIcon}</span><p>{emptyMessage ?? "Esta experiencia todavía no tiene fotos."}</p></div>}
+       {photo ? <button className="experience-gallery__image-button" type="button" onClick={() => { setManualPaused(true); setLightbox(true); }} aria-label={`Ampliar foto ${selected + 1} de ${photos.length} de ${name}`}><MediaImage className="catalog-media-card__image" src={photo.url} alt={`Foto ${selected + 1} de ${name}`} width={photo.width} height={photo.height} loading="eager" /></button> : <div className="experience-gallery__empty" aria-label="Sin fotos todavía"><span aria-hidden="true">{emptyIcon}</span><p>{emptyMessage ?? "Esta experiencia todavía no tiene fotos."}</p></div>}
       {photo && <span className="experience-gallery__count">{selected + 1} / {photos.length}</span>}
     </div>
     {photos.length > 1 && <div className="experience-gallery__navigation" aria-label="Navegar fotos">
@@ -123,7 +107,7 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
       <Button icon="›" type="button" variant="secondary" onClick={() => move("next")} aria-label="Ver foto siguiente" title="Ver foto siguiente">Siguiente</Button>
     </div>}
     {photo && photoDetails?.(photo)}
-     <div className="experience-gallery__dots" role={photos.length > 1 ? "tablist" : undefined} aria-label={photos.length > 1 ? "Elegir foto" : undefined}>{photos.length > 1 && photos.map((value, index) => <button key={value.id} id={`experience-gallery-tab-${value.id}`} type="button" role="tab" aria-controls="experience-gallery-panel" aria-selected={selected === index} tabIndex={selected === index ? 0 : -1} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => setSelected(index)} onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowDown") { event.preventDefault(); const next = nextPhotoIndex(index, photos.length); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "ArrowLeft" || event.key === "ArrowUp") { event.preventDefault(); const next = previousPhotoIndex(index, photos.length); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "Home" || event.key === "End") { event.preventDefault(); const next = event.key === "Home" ? 0 : photos.length - 1; setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } }} />)}</div>
+    <div className="experience-gallery__dots" role={photos.length > 1 ? "tablist" : undefined} aria-label={photos.length > 1 ? "Elegir foto" : undefined}>{photos.length > 1 && photos.map((value, index) => <button key={value.id} id={`experience-gallery-tab-${value.id}`} type="button" role="tab" aria-controls="experience-gallery-panel" aria-selected={selected === index} tabIndex={selected === index ? 0 : -1} aria-label={`Ver foto ${index + 1}`} className={selected === index ? "is-selected" : ""} onClick={() => { setManualPaused(true); setSelected(index); }} onKeyDown={(event) => { if (event.key === "ArrowRight" || event.key === "ArrowDown") { event.preventDefault(); const next = nextPhotoIndex(index, photos.length); setManualPaused(true); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "ArrowLeft" || event.key === "ArrowUp") { event.preventDefault(); const next = previousPhotoIndex(index, photos.length); setManualPaused(true); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } if (event.key === "Home" || event.key === "End") { event.preventDefault(); const next = event.key === "Home" ? 0 : photos.length - 1; setManualPaused(true); setSelected(next); document.getElementById(`experience-gallery-tab-${photos[next].id}`)?.focus(); } }} />)}</div>
     <div className="experience-gallery__actions">
       {manageInModal && onUpload && <PhotoManagerModal mode="gallery" triggerClassName="experience-gallery__manager-button" name={name} manageLabel={managerLabel} photos={managerPhotos ?? photos} coverPhotoId={coverPhotoId} maxPhotos={maxPhotos} limitCount={managerLimitCount ?? uploadCount} coverPending={coverPending} open={managerOpen} onOpenChange={onManagerOpenChange} onUpload={onUpload} onSetCover={onSetCover} onDelete={onDelete} />}
       {!manageInModal && onUpload && <div className="experience-gallery__upload"><PhotoPicker key={pickerKey} multiple maxFiles={experiencePhotoSlots(uploadCount, maxPhotos)} disabled={uploading} onChange={setPendingPhotos} onPreparingChange={setPreparingPhotos} selectLabel="Agregar fotos" />{pendingPhotos.length > 0 && <Button type="button" variant="secondary" disabled={uploading || preparingPhotos} onClick={() => { void upload(); }}>{uploading ? "Subiendo fotos..." : `Subir ${pendingPhotos.length} ${pendingPhotos.length === 1 ? "foto" : "fotos"}`}</Button>}</div>}
@@ -131,22 +115,7 @@ export function ExperienceGallery({ accentLabel, afterActions, canDelete, canSet
       {!manageInModal && photo && onDelete && (!canDelete || canDelete(photo)) && <Button className="experience-gallery__delete" icon="🗑️" variant="destructive" type="button" onClick={() => onDelete(photo)}>Quitar foto</Button>}
     </div>
     {afterActions}
-    <div className="experience-gallery__meta-row">
-      <p className="experience-gallery__meta">{metaLabel ?? `${accentLabel} · ${uploadCount}/${maxPhotos} fotos`}{paused && photos.length > 1 ? " · carrusel pausado" : ""}</p>
-      {photos.length > 1 && <Button
-        className="experience-gallery__playback"
-        type="button"
-        variant="tertiary"
-        aria-pressed={paused}
-        onClick={() => {
-          const resume = paused;
-          setManualPaused(!resume);
-          setPlaybackOverride(resume);
-        }}
-      >
-        {paused ? "▶️ Reanudar carrusel" : "⏸️ Pausar carrusel"}
-      </Button>}
-    </div>
+    <p className="experience-gallery__meta">{metaLabel ?? `${accentLabel} · ${uploadCount}/${maxPhotos} fotos`}{manualPaused && photos.length > 1 ? " · navegación manual" : ""}</p>
     {uploadError && <p className="form-error">{uploadError}</p>}
      {lightbox && photo && <PhotoViewer photos={photos.map((value, index) => ({ src: value.url, alt: `Foto ${index + 1} de ${name}`, width: value.width, height: value.height }))} initialIndex={selected} onIndexChange={setSelected} onClose={() => setLightbox(false)} />}
   </section>;

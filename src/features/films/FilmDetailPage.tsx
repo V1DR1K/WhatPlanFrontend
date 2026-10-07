@@ -334,12 +334,13 @@ export function FilmDetailPage() {
         </div>
       </section>
       <section className="reviews-section">
-        <div className="section-title">
+        <div className="section-title section-title--with-actions">
           <div>
             <p className="eyebrow">HISTORIAL DE VISTAS</p>
             <h2>Vistas registradas</h2>
           </div>
           <strong>{views.length}</strong>
+          {selectedView && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button></div>}
         </div>
         {!!views.length && (
           <div className="item-date-pager" aria-label="Navegar vistas">
@@ -350,7 +351,7 @@ export function FilmDetailPage() {
               options={views.map((view, index) => ({ value: String(view.id), label: viewedLabel(view.watchedOn) + specialDateOptionSuffix(view.watchedOn, specialDateList), detail: `Vista #${views.length - index}` }))}
               onChange={(value) => setSelectedViewId(Number(value))}
             />
-            {selectedView && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingView(selectedView)}>Editar vista</Button><Button icon="🗑️" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button></div>}
+            {selectedView && <div className="item-date-pager__actions"><Button icon="🗑️" variant="destructive" type="button" onClick={() => setConfirmingDeleteView(selectedView)}>Borrar vista</Button></div>}
           </div>
         )}
         {selectedView && (
@@ -360,12 +361,13 @@ export function FilmDetailPage() {
                 {viewedLabel(selectedView.watchedOn)}<SpecialDateLabels date={selectedView.watchedOn} specialDates={specialDateList} />.
               Registrada por {selectedView.createdBy}; última edición de {selectedView.updatedBy}.
             </p>
-            <div className="section-title section-title--compact">
+            <div className="section-title section-title--compact section-title--with-actions">
               <div>
                 <p className="eyebrow">RESEÑAS DE ESTA VISTA</p>
                 <h2>Qué les pareció</h2>
               </div>
               <strong>{selectedView.reviews.length}/2</strong>
+              <div className="section-title__actions"><Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button></div>
             </div>
             <div className="film-review-columns">
               {selectedView.reviews.map((review) => (
@@ -376,11 +378,6 @@ export function FilmDetailPage() {
                 />
               ))}
             </div>
-            <div className="experience-review-action">
-              <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewing({ view: selectedView, review: ownReview })}>
-                {ownReview ? "Editar reseña" : "Agregar reseña"}
-              </Button>
-            </div>
           </>
         )}
         {!views.length && (
@@ -389,7 +386,7 @@ export function FilmDetailPage() {
           </p>
         )}
       </section>
-      {selectedViewId && <ExperienceJourneyPanel key={selectedViewId} source={{section:"FILM",entityId:id,experienceId:selectedViewId}} physicalCity={undefined} />}
+      {selectedViewId && <ExperienceJourneyPanel key={selectedViewId} source={{section:"FILM",entityId:id,experienceId:selectedViewId}} />}
       {editing && <FilmForm film={film} onClose={() => setEditing(false)} />}
       {addingView && (
         <FilmViewForm

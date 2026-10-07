@@ -164,13 +164,13 @@ export function PhotoViewer({ photos, initialIndex = 0, onClose, onIndexChange }
       <div className={`photo-viewer__stage${scale > MIN_ZOOM ? ' is-zoomed' : ''}`} ref={stageRef} onWheel={onWheel} onDoubleClick={() => updateScale(scale > MIN_ZOOM ? MIN_ZOOM : 2)} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerEnd} onPointerCancel={(event) => onPointerEnd(event, false)}>
         <MediaImage key={photo.src} className={`photo-viewer__image${imageFitted ? ' is-fitted' : ''}`} src={photo.src} alt={photo.alt} loading="eager" draggable={false} onLoad={onImageLoad} style={{ width: imageFitted ? fitted.width : undefined, height: imageFitted ? fitted.height : undefined, transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }} />
       </div>
-      <div className="photo-viewer__toolbar" aria-label="Controles de imagen">
+      <div className={`photo-viewer__toolbar${photos.length > 1 ? ' photo-viewer__toolbar--multiple' : ''}`} aria-label="Controles de imagen">
         {photos.length > 1 && <Button type="button" variant="secondary" icon="‹" onClick={() => move(-1)} aria-label="Imagen anterior">Anterior</Button>}
         <div className="photo-viewer__zoom">
           <Button type="button" variant="secondary" icon="−" onClick={() => updateScale(scale - ZOOM_STEP)} disabled={scale <= MIN_ZOOM} aria-label="Alejar" title="Alejar" />
           <output aria-live="polite">{Math.round(scale * 100)}%</output>
           <Button type="button" variant="secondary" icon="+" onClick={() => updateScale(scale + ZOOM_STEP)} disabled={scale >= MAX_ZOOM} aria-label="Acercar" title="Acercar" />
-          <Button type="button" variant="secondary" onClick={resetView} disabled={scale === MIN_ZOOM}>Ajustar</Button>
+          <Button type="button" variant="secondary" onClick={resetView} disabled={scale === MIN_ZOOM} aria-label="Ajustar imagen" title="Ajustar imagen">Ajustar</Button>
         </div>
         {photos.length > 1 && <Button type="button" variant="secondary" icon="›" onClick={() => move(1)} aria-label="Imagen siguiente">Siguiente</Button>}
       </div>

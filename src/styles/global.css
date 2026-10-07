@@ -222,10 +222,37 @@
 .section-title > strong {
   display: none;
 }
+.section-title--with-actions {
+  align-items: center;
+}
+.section-title__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+.section-title__actions > .button {
+  width: auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
 @media (max-width: 540px) {
   .section-title {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .section-title--with-actions {
+    align-items: center;
+    flex-direction: row;
+  }
+  .section-title--with-actions > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .section-title--with-actions .section-title__actions {
+    flex: 0 0 auto;
   }
 }
 .place-grid {

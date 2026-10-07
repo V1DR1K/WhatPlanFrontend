@@ -178,9 +178,9 @@ export function PlaceDetailPage() {
         </div>
       </section>
       <section className="reviews-section place-venue-reviews">
-        <div className="section-title">
+        <div className="section-title section-title--with-actions">
           <div><p className="eyebrow">EL LUGAR</p><h2>Espacio y atención</h2></div>
-          <Button icon={venueOwnReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button>
+          <div className="section-title__actions"><Button icon={venueOwnReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={() => setReviewingPlace(true)}>{venueOwnReview ? "Editar reseña" : "Agregar reseña"}</Button></div>
         </div>
         {venue.reviews.length ? <div className="review-columns">{venue.reviews.map((review) => <VenueReview key={review.author} review={review} />)}</div> : <p className="empty-state">Todavía no hay opiniones sobre el lugar.</p>}
       </section>
@@ -193,9 +193,10 @@ export function PlaceDetailPage() {
       </section>
       {visitList.length > 0 && (
         <section className="reviews-section">
-          <div className="section-title">
+          <div className="section-title section-title--with-actions">
             <div><p className="eyebrow">DETALLE DE VISITA</p><h2>La experiencia</h2></div>
             <strong>{visitList.length} fechas</strong>
+            {selectedVisitId && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           <div className="item-date-pager">
             <RecordIterator
@@ -205,14 +206,13 @@ export function PlaceDetailPage() {
               options={visitList.map((entry) => ({ value: String(entry.id), label: `${dateLabel(entry.visitedOn)}${specialDateOptionSuffix(entry.visitedOn, specialDateList)}`, detail: `Registrada por ${entry.createdBy}` }))}
               onChange={(value) => setSelectedVisitId(Number(value))}
             />
-            {selectedVisitId && <div className="item-date-pager__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
           </div>
           {visit.isLoading && <LoadingSkeleton variant="experience" section="food" compactExperience />}
           {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(Number(photo.id))} />}
         </section>
       )}
       {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
-      {visit.data?.id && <ExperienceJourneyPanel key={visit.data?.id} source={{section:"FOOD",entityId:id,experienceId:visit.data?.id}} physicalCity={venue.zoneId} />}
+      {visit.data?.id && <ExperienceJourneyPanel key={visit.data?.id} source={{section:"FOOD",entityId:id,experienceId:visit.data?.id}} />}
       {editingPlace && <PlaceForm place={venue} onClose={() => setEditingPlace(false)} />}
       {reviewingPlace && <PlaceReviewForm place={venue} review={venue.reviews.find((review) => review.author === session.get()?.username)} onClose={() => setReviewingPlace(false)} />}
       {editingVisit !== undefined && <VisitForm physicalCity={venue.zoneId} placeId={venue.id} visit={editingVisit ?? undefined} onClose={() => setEditingVisit(undefined)} onSaved={(saved) => setSelectedVisitId(saved.id)} onDeleted={() => setSelectedVisitId(undefined)} />}
@@ -244,9 +244,10 @@ function VisitExperience({
     <div className="experience-detail">
       <p className="muted">Visita del {dateLabel(visit.visitedOn)}<SpecialDateLabels date={visit.visitedOn} specialDates={specialDates} />. Registrada por {visit.createdBy}; última edición de {visit.updatedBy}.</p>
       <ExperienceGallery accentLabel="VISITA" emptyIcon="🍽️" manageInModal name={`la visita del ${dateLabel(visit.visitedOn)}`} photos={visit.photos} coverPhotoId={visit.coverPhoto?.id} onUpload={async (files) => { await onUpload(files); }} onDelete={onDeletePhoto} onSetCover={onSetCover} />
-      <div className="section-title section-title--compact">
+      <div className="section-title section-title--compact section-title--with-actions">
         <div><p className="eyebrow">RESEÑAS</p><h2>Cómo estuvo</h2></div>
         <strong>{visit.reviews.length}</strong>
+        <div className="section-title__actions"><Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>{ownReview ? "Editar reseña" : "Agregar reseña"}</Button></div>
       </div>
       {visit.reviews.length ? (
         <div className="review-columns">
@@ -273,11 +274,6 @@ function VisitExperience({
           ))}
         </div>
       ) : <p className="empty-state">Todavía no hay reseñas para esta visita.</p>}
-      <div className="experience-review-action">
-        <Button icon={ownReview ? "✏️" : "💬"} variant="secondary" type="button" onClick={onReview}>
-          {ownReview ? "Editar reseña" : "Agregar reseña"}
-        </Button>
-      </div>
     </div>
   );
 }
