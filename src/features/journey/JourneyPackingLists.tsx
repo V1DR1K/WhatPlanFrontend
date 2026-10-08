@@ -22,6 +22,7 @@ type PackingPress = {
   startY: number;
   x: number;
   y: number;
+  captureTarget: HTMLDivElement;
   list: HTMLUListElement;
   row: HTMLLIElement;
   initialIds: string[];
@@ -246,12 +247,8 @@ export function JourneyPackingLists({
     if (!editable || disabled || !event.isPrimary || packingPress.current) return;
     if (target instanceof Element && target.closest("button, input, select, textarea, a, [data-packing-no-drag]")) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
-
-    try {
-      event.currentTarget.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture may be unavailable in synthetic or older browser events.
-    }
+    const captureTarget = event.currentTarget.closest<HTMLDivElement>(".journey-packing");
+    if (!captureTarget) return;
 
     const ids = items.map((candidate) => candidate.id);
     const press: PackingPress = {
@@ -263,6 +260,7 @@ export function JourneyPackingLists({
       startY: event.clientY,
       x: event.clientX,
       y: event.clientY,
+      captureTarget,
       list: event.currentTarget.parentElement as HTMLUListElement,
       row: event.currentTarget,
       initialIds: ids,
@@ -275,13 +273,18 @@ export function JourneyPackingLists({
     press.timer = window.setTimeout(() => {
       if (packingPress.current !== press || press.mode !== "holding") return;
       press.mode = "dragging";
+      try {
+        press.captureTarget.setPointerCapture(press.pointerId);
+      } catch {
+        // Pointer capture may be unavailable in synthetic or older browser events.
+      }
       suppressedClick.current = { until: Date.now() + 1500, itemId: item.id };
       positionDragPreview(press.x, press.y);
       setGesture({ userId, item, itemId: item.id, overId: item.id, phase: "dragging" });
     }, LONG_PRESS_DURATION);
   };
 
-  const movePackingPress = (event: ReactPointerEvent<HTMLLIElement>) => {
+  const movePackingPress = (event: ReactPointerEvent<HTMLDivElement>) => {
     const press = packingPress.current;
     if (!press || press.pointerId !== event.pointerId) return;
 
@@ -294,7 +297,9 @@ export function JourneyPackingLists({
         packingPress.current = null;
         setGesture(null);
         try {
-          if (press.row.hasPointerCapture(press.pointerId)) press.row.releasePointerCapture(press.pointerId);
+          if (press.captureTarget.hasPointerCapture(press.pointerId)) {
+            press.captureTarget.releasePointerCapture(press.pointerId);
+          }
         } catch {
           // The browser may already have canceled this pointer while scrolling.
         }
@@ -309,7 +314,7 @@ export function JourneyPackingLists({
     updateAutoScroll(press.y);
   };
 
-  const finishPackingPress = (event: ReactPointerEvent<HTMLLIElement>) => {
+  const finishPackingPress = (event: ReactPointerEvent<HTMLDivElement>) => {
     const press = packingPress.current;
     if (!press || press.pointerId !== event.pointerId) return;
     window.clearTimeout(press.timer);
@@ -330,10 +335,14 @@ export function JourneyPackingLists({
       .catch(() => resetDraft(true, press.list));
   };
 
-  const handleClickCapture = (event: ReactMouseEvent<HTMLLIElement>, itemId: string) => {
+  const handleClickCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const targetRow = event.target instanceof Element
+      ? event.target.closest<HTMLElement>("[data-packing-item]")
+      : null;
     if (
       event.detail > 0 &&
-      suppressedClick.current?.itemId === itemId &&
+      suppressedClick.current &&
+      (!targetRow || suppressedClick.current.itemId === targetRow.dataset.packingItem) &&
       Date.now() < suppressedClick.current.until
     ) {
       event.preventDefault();
@@ -344,7 +353,19 @@ export function JourneyPackingLists({
 
   return (
     <>
-      <div className="journey-packing">
+      <div
+        className="journey-packing"
+        onPointerMove={movePackingPress}
+        onPointerUp={finishPackingPress}
+        onPointerCancel={() => cancelPackingPress(true)}
+        onLostPointerCapture={(event) => {
+          if (
+            event.target === event.currentTarget &&
+            packingPress.current?.pointerId === event.pointerId
+          ) cancelPackingPress(true);
+        }}
+        onClickCapture={handleClickCapture}
+      >
         {members.map((member) => {
           const draftPositions = draftOrder?.userId === member.id
             ? new Map(draftOrder.ids.map((itemId, index): [string, number] => [itemId, index]))
@@ -405,13 +426,6 @@ export function JourneyPackingLists({
                         dropTarget && !itemGesture ? "journey-packing-item--drop-target" : "",
                       ].filter(Boolean).join(" ")}
                       onPointerDown={(event) => startPackingPress(event, member.id, item, items)}
-                      onPointerMove={movePackingPress}
-                      onPointerUp={finishPackingPress}
-                      onPointerCancel={() => cancelPackingPress(true)}
-                      onLostPointerCapture={(event) => {
-                        if (packingPress.current?.pointerId === event.pointerId) cancelPackingPress(true);
-                      }}
-                      onClickCapture={(event) => handleClickCapture(event, item.id)}
                       onContextMenu={(event) => {
                         if (gesture?.phase === "dragging") event.preventDefault();
                       }}
