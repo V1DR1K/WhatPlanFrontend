@@ -44,6 +44,14 @@ const chapters = [
     description: 'Reúnan visitas, películas, recetas y salidas alrededor de sus fechas importantes.',
     action: 'Volver a recordar',
   },
+  {
+    id: 'whitherjourney',
+    label: 'WhitherJourney',
+    color: '#83d8f5',
+    title: 'De elegir el destino a guardar todo el viaje.',
+    description: 'Reúnan destinos, recorridos por día, estadías, valijas y gastos en un solo lugar para disfrutar también de la planificación.',
+    action: 'Preparar el viaje',
+  },
 ] as const;
 
 export function LandingPage() {
@@ -109,7 +117,7 @@ export function LandingPage() {
       <div className="landing-hero__copy">
         <p className="landing-kicker">UN RINCÓN PARA SUS PRÓXIMOS PLANES</p>
         <h1 id="landing-title">Lo mejor de un plan es <em>volver a él.</em></h1>
-        <p className="landing-hero__intro">WhatPlan reúne los lugares, películas, recetas, salidas y recuerdos que hacen que cada día juntos tenga algo para esperar.</p>
+        <p className="landing-hero__intro">WhatPlan reúne los lugares, películas, recetas, salidas, fechas y viajes que hacen que cada día juntos tenga algo para esperar.</p>
         <div className="landing-hero__actions">
           <Link className="landing-button landing-button--primary" to="/login">Entrar a WhatPlan <span aria-hidden="true">↗</span></Link>
           <a className="landing-button landing-button--quiet" href="#recorrido">Ver cómo funciona <span aria-hidden="true">↓</span></a>
@@ -121,6 +129,7 @@ export function LandingPage() {
         <span className="orbit-dot orbit-dot--cook">⌁</span>
         <span className="orbit-dot orbit-dot--fun">+</span>
         <span className="orbit-dot orbit-dot--date">♥</span>
+        <span className="orbit-dot orbit-dot--journey"><PlaneMark /></span>
         <div className="orbit-core"><strong>What</strong><b>Plan</b><small>todo lo que quieren hacer</small></div>
       </div>
     </section>
@@ -158,9 +167,9 @@ export function LandingPage() {
     <section className="landing-teaser" aria-labelledby="coming-title">
       <div>
         <p className="landing-kicker">TODO EL SISTEMA, EN UN SOLO RINCÓN</p>
-        <h2>Cinco formas de armar un buen día y volver a vivirlo.</h2>
+        <h2>Seis formas de guardar todo lo que quieren vivir juntos.</h2>
       </div>
-      <p>La escena muestra la misma lógica que encontrarán dentro de WhatPlan: catálogo, filtros, fichas y experiencias registradas.</p>
+      <p>Desde elegir un destino hasta volver a un recuerdo: cada plan encuentra su lugar en WhatPlan.</p>
     </section>
 
     <section className="landing-close" aria-labelledby="close-title">
@@ -182,6 +191,7 @@ function DemoWindow({ active, progress }: { active: number; progress: number }) 
       <CookDemo active={active === 2} />
       <FunDemo active={active === 3} />
       <DatesDemo active={active === 4} />
+      <JourneyDemo active={active === 5} />
     </div>
   </div>;
 }
@@ -227,6 +237,42 @@ function FunDemo({ active }: { active: boolean }) {
 
 function DatesDemo({ active }: { active: boolean }) {
   return <DemoScene active={active} className="demo-scene--dates"><DemoHero eyebrow="WHENDATES · RECUERDOS COMPARTIDOS" title="¿Qué recordamos hoy?" description="Reunimos las visitas, vistas, cocinadas y salidas que coincidieron con sus fechas importantes." art="💝" /><div className="demo-date-filter"><span>Fecha importante</span><b>Todas las fechas⌄</b></div><DemoSectionTitle eyebrow="RECUERDOS COMPARTIDOS" title="Fechas importantes" count="3 recuerdos" /><div className="demo-card-grid demo-card-grid--dates"><DemoCard theme="dates" media={<div className="demo-date-art"><b>14</b><small>FEB<br />2026</small></div>} badge="14/02/2026" eyebrow="FECHA IMPORTANTE" title="Nuestro aniversario" kpi="Anual" chips={['3 experiencias']} footer="3 experiencias vinculadas" /><DemoCard theme="dates" media={<div className="demo-date-art demo-date-art--alt"><b>08</b><small>MAR<br />2025</small></div>} badge="08/03/2025" eyebrow="FECHA IMPORTANTE" title="Primer viaje" kpi="Única" chips={['2 experiencias']} footer="2 experiencias vinculadas" /></div></DemoScene>;
+}
+
+function JourneyDemo({ active }: { active: boolean }) {
+  return <DemoScene active={active} className="demo-scene--journey">
+    <div className="journey-demo">
+      <div className="journey-demo__header">
+        <div>
+          <small>WHITHERJOURNEY · ENERO</small>
+          <h3>Ruta de los lagos</h3>
+          <p>8—18 ene · 3 destinos</p>
+        </div>
+        <span className="journey-demo__plane"><PlaneMark /></span>
+      </div>
+      <div className="journey-demo__stages" role="group" aria-label="Etapas del viaje">
+        <span className="journey-demo__stage is-current">Bariloche</span>
+        <span className="journey-demo__stage">Villa La Angostura</span>
+        <span className="journey-demo__stage">San Martín</span>
+      </div>
+      <div className="journey-demo__agenda">
+        <div className="journey-demo__agenda-head">
+          <div><small>DÍA 08 · BARILOCHE</small><h4>Un día por vez</h4></div>
+          <span>08 de 11 días</span>
+        </div>
+        <ol className="journey-demo__stops">
+          <li><b>01</b><time>09:30</time><span><strong>Centro Cívico</strong><small>Paseo por el centro</small></span></li>
+          <li><b>02</b><time>12:00</time><span><strong>Circuito Chico</strong><small>Parada junto al lago</small></span></li>
+          <li><b>03</b><time>17:00</time><span><strong>Hostería del Lago</strong><small>Check-in · 2 noches</small></span></li>
+        </ol>
+      </div>
+      <div className="journey-demo__extras"><span>Estadías</span><span>Valijas</span><span>Gastos por moneda</span></div>
+    </div>
+  </DemoScene>;
+}
+
+function PlaneMark() {
+  return <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M29 3.3a1 1 0 0 0-1.16-.18L3.2 14.76a1 1 0 0 0 .18 1.86l9.17 2.75 2.75 9.17a1 1 0 0 0 1.86.18L29.2 4.46a1 1 0 0 0-.2-1.16ZM16.08 25.2l-1.86-6.22 7.96-7.96-9.3 6.78-6.2-1.86L25.7 6.28Z" fill="currentColor" /></svg>;
 }
 
 function DemoCreate({ label, icon }: { label: string; icon: string }) {

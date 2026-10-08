@@ -9,6 +9,7 @@ Review disposition supplied by the orchestrator: **ship**, at the sole fix-verdi
 ## Surface brief
 
 - **Catalog:** plane cue, Spanish introduction and create action; route/date cards lead to a trip. Preserve loading/error/empty states and pagination. Two columns become one on narrow screens.
+- **Public presentation at `/`:** show WhitherJourney as the sixth chapter, with the approved cyan and airplane cue. Its illustrative trip view makes destinations, daily agenda, stays, packing and currency-separated expenses visible; keep the scene labelled as illustrative.
 - **Detail overview:** trip name and dates, destination stages, completed agenda count/progress, balances for each currency and member reviews precede the five panels. A destination filters the working context without losing trip-level orientation.
 - **Agenda:** daily ordered route; timing, destination, status, optional linked catalog record and actions sit beside a circular marker. Completed markers use the local arrival animation: scale 0.85 to 1 and blur 1 px to 0 over 0.4 s, with the existing arrival easing. Reduced motion disables animation and transitions. Up/down buttons support ordering by keyboard without requiring drag gestures.
 - **Archivos:** private original PDFs and images linked to the trip, stage, point, stay or movement. Authenticated media becomes a temporary blob URL; images open in shared `PhotoViewer`; PDFs use the browser-native iframe viewer with page/zoom and original download fallback. Native PDF rendering varies by browser.

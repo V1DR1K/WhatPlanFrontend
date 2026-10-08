@@ -29,6 +29,7 @@ import './styles/experience-hero.css';
 import './styles/motion.css';
 import './styles/loading.css';
 import './styles/landing.css';
+import './styles/landing-journey.css';
 import './styles/modals.css';
 
 function isStandaloneApp() {
