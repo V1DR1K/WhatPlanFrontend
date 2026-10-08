@@ -216,6 +216,8 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await expect(page).toHaveURL(/\/app\/admin$/);
   await expect(page.getByRole('heading', { name: 'Panel administrativo' })).toBeVisible();
   await expect(page.getByText('Tomás y Avril')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
   await page.getByRole('button', { name: /Usuarios/ }).click();
   await expect(page.getByText('tomas', { exact: true })).toBeVisible();
@@ -227,6 +229,7 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await page.getByRole('button', { name: /Parejas/ }).click();
   await page.getByRole('button', { name: 'Administrar' }).click();
   await expect(page.getByRole('navigation', { name: 'Secciones de la pareja' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Auditoría/ }).click();
   await expect(page.getByRole('navigation', { name: 'Paginación de auditoría de la pareja' })).toBeVisible();
   await page.getByRole('button', { name: /Dónde comemos/ }).click();
