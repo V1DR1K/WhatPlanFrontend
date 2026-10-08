@@ -21,13 +21,19 @@ export function AdminDashboardPage() {
   const [tab, setTab] = useState<AdminTab>(searchParams.get('tab') === 'audit' ? 'audit' : 'couples');
   const [firstMemberUserId, setFirstMemberUserId] = useState('');
   const [auditCoupleId, setAuditCoupleId] = useState(searchParams.get('coupleId') ?? '');
+  const [auditActorId, setAuditActorId] = useState('');
   const [auditPage, setAuditPage] = useState(0);
   const overview = useQuery({ queryKey: ['admin', 'overview'], queryFn: getAdminOverview });
   const couples = useQuery({ queryKey: ['admin', 'couples'], queryFn: getAdminCouples, enabled: tab === 'couples' || tab === 'audit' });
-  const users = useQuery({ queryKey: ['admin', 'users'], queryFn: getAdminUsers, enabled: tab === 'users' || tab === 'couples' });
+  const users = useQuery({ queryKey: ['admin', 'users'], queryFn: getAdminUsers, enabled: tab === 'users' || tab === 'couples' || tab === 'audit' });
   const audit = useQuery({
-    queryKey: ['admin', 'audit', auditCoupleId, auditPage],
-    queryFn: () => getAdminAudit({ coupleId: auditCoupleId || undefined, page: auditPage, limit: AUDIT_PAGE_SIZE }),
+    queryKey: ['admin', 'audit', auditCoupleId, auditActorId, auditPage],
+    queryFn: () => getAdminAudit({
+      coupleId: auditCoupleId || undefined,
+      actorId: auditActorId ? Number(auditActorId) : undefined,
+      page: auditPage,
+      limit: AUDIT_PAGE_SIZE,
+    }),
     enabled: tab === 'audit',
   });
   const createCouple = useMutation({
@@ -116,6 +122,12 @@ export function AdminDashboardPage() {
         <select value={auditCoupleId} onChange={event => { setAuditCoupleId(event.target.value); setAuditPage(0); }}>
           <option value="">Todas las parejas</option>
           {couples.data?.map(couple => <option key={couple.id} value={couple.id}>{activeNames(couple)} · {couple.id.slice(0, 8)}</option>)}
+        </select>
+      </label>
+      <label>Filtrar por persona
+        <select value={auditActorId} onChange={event => { setAuditActorId(event.target.value); setAuditPage(0); }}>
+          <option value="">Todas las personas</option>
+          {users.data?.map(user => <option key={user.id} value={user.id}>{user.username}</option>)}
         </select>
       </label>
       {audit.isLoading && <p className="async-state async-state--loading">Cargando actividad…</p>}

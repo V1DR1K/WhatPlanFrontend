@@ -156,6 +156,7 @@ test('registration validates matching credentials and opens the no-couple onboar
 
 test('Tomás admin sees the panel for couples, users, and audit history', async ({ page }) => {
   const coupleId = 'e20b1b64-cc9e-4d82-a332-e1b6282b7425';
+  let lastAuditActorId: string | null = null;
   const adminCouple = {
     id: coupleId, status: 'ACTIVE', originCityId: 1, createdBy: 'tomas',
     createdAt: '2026-01-01T00:00:00Z', closedAt: null,
@@ -197,11 +198,15 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
       status: 200,
       contentType: 'application/json',
       body: (() => {
-        const pageNumber = Number(new URL(route.request().url()).searchParams.get('page') ?? '0');
-        const entry = pageNumber === 0
+        const params = new URL(route.request().url()).searchParams;
+        const pageNumber = Number(params.get('page') ?? '0');
+        lastAuditActorId = params.get('actorId');
+        const entry = params.get('actorId') === '2'
+          ? { id: 8, actorUserId: 2, actorUsername: 'avril', coupleId, action: 'API_MUTATION', method: 'POST', path: '/api/places', status: 201, occurredAt: '2026-01-02T00:00:00Z' }
+          : pageNumber === 0
           ? { id: 7, actorUserId: 1, actorUsername: 'tomas', coupleId, action: 'COUPLE_CREATED', method: 'POST', path: '/api/admin/couples', status: 201, occurredAt: '2026-01-01T00:00:00Z' }
           : { id: 6, actorUserId: 1, actorUsername: 'tomas', coupleId, action: 'API_MUTATION', method: 'PATCH', path: '/api/places/{id}', status: 200, occurredAt: '2025-12-31T00:00:00Z' };
-        return JSON.stringify({ entries: [entry], total: 51, page: pageNumber, limit: 50, totalPages: 2 });
+        return JSON.stringify({ entries: [entry], total: params.has('actorId') ? 1 : 51, page: pageNumber, limit: 50, totalPages: params.has('actorId') ? 1 : 2 });
       })(),
     }),
   });
@@ -226,12 +231,19 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await page.getByRole('button', { name: 'Siguiente →' }).click();
   await expect(page.getByText(/Cambio en datos/)).toBeVisible();
   await page.getByRole('button', { name: '← Anterior' }).click();
+  await page.getByLabel('Filtrar por persona').selectOption('2');
+  await expect(page.locator('.category-list').getByText('avril', { exact: true })).toBeVisible();
+  await expect.poll(() => lastAuditActorId).toBe('2');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Parejas/ }).click();
   await page.getByRole('button', { name: 'Administrar' }).click();
   await expect(page.getByRole('navigation', { name: 'Secciones de la pareja' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Auditoría/ }).click();
   await expect(page.getByRole('navigation', { name: 'Paginación de auditoría de la pareja' })).toBeVisible();
+  await page.getByLabel('Filtrar por persona').selectOption('1');
+  await expect.poll(() => lastAuditActorId).toBe('1');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Dónde comemos/ }).click();
   await expect(page).toHaveURL(/\/app\/food$/);
 });

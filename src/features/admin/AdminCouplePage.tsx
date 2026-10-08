@@ -20,12 +20,18 @@ export function AdminCouplePage() {
   const { selectCouple } = useAdminScope();
   const [tab, setTab] = useState<DetailTab>('members');
   const [userId, setUserId] = useState('');
+  const [auditActorId, setAuditActorId] = useState('');
   const [auditPage, setAuditPage] = useState(0);
   const couple = useQuery({ queryKey: ['admin', 'couple', id], queryFn: () => getAdminCouple(id), enabled: Boolean(id) });
   const users = useQuery({ queryKey: ['admin', 'users'], queryFn: getAdminUsers });
   const audit = useQuery({
-    queryKey: ['admin', 'audit', id, auditPage],
-    queryFn: () => getAdminAudit({ coupleId: id, page: auditPage, limit: AUDIT_PAGE_SIZE }),
+    queryKey: ['admin', 'audit', id, auditActorId, auditPage],
+    queryFn: () => getAdminAudit({
+      coupleId: id,
+      actorId: auditActorId ? Number(auditActorId) : undefined,
+      page: auditPage,
+      limit: AUDIT_PAGE_SIZE,
+    }),
     enabled: tab === 'audit' && Boolean(id),
   });
   const refreshAdmin = () => queryClient.invalidateQueries({ queryKey: ['admin'] });
@@ -99,6 +105,12 @@ export function AdminCouplePage() {
 
     {tab === 'audit' && <section>
       <div className="section-title"><div><p className="eyebrow">ACCIONES REGISTRADAS</p><h2>Auditoría de la pareja</h2></div><strong>{audit.data?.total ?? 0}</strong></div>
+      <label>Filtrar por persona
+        <select value={auditActorId} onChange={event => { setAuditActorId(event.target.value); setAuditPage(0); }}>
+          <option value="">Todas las personas</option>
+          {users.data?.map(user => <option key={user.id} value={user.id}>{user.username}</option>)}
+        </select>
+      </label>
       {audit.isLoading && <p className="async-state async-state--loading">Cargando actividad…</p>}
       {audit.isError && <p className="form-error" role="alert">{audit.error.message}</p>}
       <div className="category-list">
