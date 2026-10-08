@@ -22,12 +22,6 @@ test(`${role}: switching to all cities reloads Rosario's historical catalog`, as
     updatedAt: "2025-01-01T00:00:00Z",
   };
 
-  await page.addInitScript((sessionRole) => localStorage.setItem("wherefood.session", JSON.stringify({
-    token: "location-filter-test",
-    username: "tomas",
-    role: sessionRole,
-  })), role);
-
   await page.route("**/api/**", async (route) => {
     const url = new URL(route.request().url());
     const path = url.pathname.replace("/api", "");
@@ -36,6 +30,17 @@ test(`${role}: switching to all cities reloads Rosario's historical catalog`, as
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(value),
+    });
+
+    if (path === "/auth/refresh") return reply({ accessToken: "location-filter-test", username: "tomas", role });
+    if (path === "/couple") return reply({
+      id: "00000000-0000-0000-0000-000000000001",
+      status: "ACTIVE",
+      members: [
+        { id: 1, userId: 1, username: "tomas", displayName: "Tomás", current: true },
+        { id: 2, userId: 2, username: "avril", displayName: "Avril", current: false },
+      ],
+      pendingInvitation: null,
     });
 
     if (path === "/location-context") return reply({
@@ -76,11 +81,17 @@ test(`${role}: switching to all cities reloads Rosario's historical catalog`, as
 
 test("an administrator without a location context sees the error instead of an empty catalog", async ({ page }) => {
   let catalogRequests = 0;
-  await page.addInitScript(() => localStorage.setItem("wherefood.session", JSON.stringify({
-    token: "location-filter-test", username: "admin-without-couple", role: "ADMIN",
-  })));
   await page.route("**/api/**", async route => {
-    if (new URL(route.request().url()).pathname === "/api/location-context") {
+    const path = new URL(route.request().url()).pathname.replace("/api", "");
+    if (path === "/auth/refresh") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        accessToken: "location-filter-test", username: "admin-without-couple", role: "ADMIN",
+      }) });
+    }
+    if (path === "/couple") {
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: null, status: "NONE", members: [] }) });
+    }
+    if (path === "/location-context") {
       return route.fulfill({ status: 403, contentType: "application/problem+json",
         body: JSON.stringify({ detail: "Necesitás una pareja activa" }) });
     }

@@ -271,16 +271,6 @@ export async function journeyFixture(page: Page, rich = false) {
       balances: calc(d.movements.filter((m) => m.stageId === stageId)),
     }));
   };
-  await page.addInitScript(() =>
-    localStorage.setItem(
-      "wherefood.session",
-      JSON.stringify({
-        token: "ui-contract-test",
-        username: "tomas",
-        role: "USER",
-      }),
-    ),
-  );
   await page.route("**/api/**", async (route) => {
     const req = route.request(),
       url = new URL(req.url()),
@@ -297,6 +287,16 @@ export async function journeyFixture(page: Page, rich = false) {
         contentType: "application/json",
         body: JSON.stringify(value),
       });
+    if (path === "/auth/refresh") return reply({ accessToken: "ui-contract-test", username: "tomas", role: "USER" });
+    if (path === "/couple") return reply({
+      id: "00000000-0000-0000-0000-000000000001",
+      status: "ACTIVE",
+      members: [
+        { id: 1, userId: 1, username: "tomas", displayName: "Tomás", current: true },
+        { id: 2, userId: 2, username: "avril", displayName: "Avril", current: false },
+      ],
+      pendingInvitation: null,
+    });
     const context = () => ({
       coupleId: "00000000-0000-0000-0000-000000000001",
       originCityId: origin,

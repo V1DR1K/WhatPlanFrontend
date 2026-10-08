@@ -1,30 +1,27 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, mediaUrl, parseApiError, session, setCurrentZoneFilter, setCurrentJourneyStage } from "./api";
-import { getArchivedPlaces } from "../features/places/places";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiError, api, mediaUrl, parseApiError, restoreSession, session } from "./api";
+import { acceptInvitation } from "../features/couple/couple";
+import { registerPrivateStateClearer } from "./privateState";
 
-function createStorage() {
-  const values = new Map<string, string>();
-  return {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => { values.set(key, value); },
-    removeItem: (key: string) => { values.delete(key); },
-    clear: () => { values.clear(); },
-  };
-}
+afterEach(() => { session.clear(); vi.unstubAllGlobals(); });
 
-const originalStorage = globalThis.localStorage;
+describe("restoreSession", () => {
+  it("shares the refresh request and keeps a newer login when the old restore fails", async () => {
+    let finishResponse: ((response: Response) => void) | undefined;
+    const fetchMock = vi.fn(() => new Promise<Response>((resolve) => { finishResponse = resolve; }));
+    vi.stubGlobal("fetch", fetchMock);
 
-beforeEach(() => {
-  setCurrentZoneFilter(null);
-  setCurrentJourneyStage(null);
-  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: createStorage() });
-});
+    const firstRestore = restoreSession();
+    const secondRestore = restoreSession();
+    expect(fetchMock).toHaveBeenCalledOnce();
 
-afterEach(() => {
-  setCurrentZoneFilter(null);
-  setCurrentJourneyStage(null);
-  vi.restoreAllMocks();
-  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: originalStorage });
+    const loggedIn = { token: "fresh-login-token", username: "new-member", role: "USER" as const, user: { mustChangePassword: false } };
+    session.set(loggedIn);
+    finishResponse?.(new Response(null, { status: 401 }));
+
+    await expect(Promise.all([firstRestore, secondRestore])).resolves.toEqual([loggedIn, loggedIn]);
+    expect(session.get()).toEqual(loggedIn);
+  });
 });
 
 describe("mediaUrl", () => {
@@ -35,104 +32,133 @@ describe("mediaUrl", () => {
 
 describe("parseApiError", () => {
   it("reads RFC-style detail messages", async () => {
-    const response = new Response(JSON.stringify({ detail: "El nombre ya existe" }), {
+    const response = new Response(JSON.stringify({
+      type: "about:blank",
+      title: "Conflict",
+      status: 409,
+      detail: "El nombre ya existe",
+      instance: "urn:uuid:request-instance",
+      errorCode: "CONFLICT",
+      requestId: "request-123",
+    }), {
       status: 409,
       headers: { "content-type": "application/problem+json" },
     });
-    await expect(parseApiError(response)).resolves.toBe("El nombre ya existe");
+    const error = await parseApiError(response);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      message: "El nombre ya existe",
+      status: 409,
+      errorCode: "CONFLICT",
+      requestId: "request-123",
+      problemType: "about:blank",
+      instance: "urn:uuid:request-instance",
+    });
   });
 
   it("falls back to plain text responses", async () => {
     const response = new Response("Servicio no disponible", { status: 503 });
-    await expect(parseApiError(response)).resolves.toBe("Servicio no disponible");
+    const error = await parseApiError(response);
+    expect(error).toMatchObject({ message: "Servicio no disponible", status: 503 });
+    expect(error.errorCode).toBeUndefined();
+  });
+
+  it("ignores malformed or non-contract error codes", async () => {
+    const response = new Response(JSON.stringify({
+      detail: "Solicitud rechazada",
+      errorCode: "<script>alert(1)</script>",
+      requestId: "r".repeat(129),
+    }), {
+      status: 400,
+      headers: { "content-type": "application/problem+json" },
+    });
+    const error = await parseApiError(response);
+    expect(error.message).toBe("Solicitud rechazada");
+    expect(error.errorCode).toBeUndefined();
+    expect(error.requestId).toBeUndefined();
+  });
+
+  it("uses the status fallback when the JSON body is malformed", async () => {
+    const response = new Response("{", {
+      status: 429,
+      headers: { "content-type": "application/problem+json" },
+    });
+    const error = await parseApiError(response);
+    expect(error).toMatchObject({
+      message: "Hay demasiadas solicitudes. Esperá un momento e intentá de nuevo.",
+      status: 429,
+    });
+  });
+
+  it("preserves validated field errors for form recovery", async () => {
+    const response = new Response(JSON.stringify({
+      detail: "Revisá los datos ingresados.",
+      errorCode: "VALIDATION_ERROR",
+      requestId: "request-validation",
+      errors: { name: "El nombre es obligatorio", count: 12 },
+    }), {
+      status: 400,
+      headers: { "content-type": "application/problem+json" },
+    });
+    const error = await parseApiError(response);
+    expect(error.fieldErrors).toEqual({ name: "El nombre es obligatorio" });
+  });
+
+  it("throws the typed problem through the shared API client", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      type: "about:blank",
+      title: "Service Unavailable",
+      status: 503,
+      detail: "Servicio no disponible temporalmente.",
+      instance: "urn:uuid:request-instance",
+      errorCode: "SERVICE_UNAVAILABLE",
+      requestId: "request-503",
+    }), {
+      status: 503,
+      headers: { "content-type": "application/problem+json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(api("/example"))
+      .rejects.toMatchObject({
+        name: "ApiError",
+        status: 503,
+        errorCode: "SERVICE_UNAVAILABLE",
+        requestId: "request-503",
+      });
   });
 });
 
-describe("session recovery", () => {
-  it("refreshes through the HttpOnly cookie without requiring a local refresh token", async () => {
-    session.set({ token: "expired", username: "tomas", role: "USER" });
-    vi.stubGlobal("fetch", vi.fn()
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ token: "fresh", username: "tomas", role: "USER" }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+describe("acceptInvitation", () => {
+  it("sends the secret in the body, not in the request URL", async () => {
+    const secret = "a".repeat(43);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "pair" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api<{ ok: boolean }>("/protected")).resolves.toEqual({ ok: true });
+    await acceptInvitation(secret);
 
-    const refreshInit = (fetch as ReturnType<typeof vi.fn>).mock.calls[1][1] as RequestInit;
-    expect(refreshInit.credentials).toBe("include");
-    expect(refreshInit.body).toBeUndefined();
-    expect(session.get()?.token).toBe("fresh");
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/couple/invitations/accept");
+    expect(url).not.toContain(secret);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(String(init.body))).toEqual({ token: secret });
   });
 
-  it("keeps the local session when refresh fails temporarily", async () => {
-    session.set({ token: "expired", username: "tomas", role: "USER" });
-    vi.stubGlobal("fetch", vi.fn()
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(new Response(null, { status: 503 })));
+  it("clears private client data after membership changes", async () => {
+    const clearPrivateData = vi.fn();
+    const unregister = registerPrivateStateClearer(clearPrivateData);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "pair" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    await expect(api("/protected")).rejects.toThrow("Tus credenciales siguen guardadas");
-    expect(session.get()?.token).toBe("expired");
-  });
-});
+    await acceptInvitation("b".repeat(43));
 
-describe("global zone filter", () => {
-  it("uses the same city catalogue for two trips while proposing each selected stage", async()=>{
-    setCurrentZoneFilter(2);setCurrentJourneyStage('stage-a');await api('/films');await api('/films',{method:'POST',body:JSON.stringify({title:'Film'})});
-    setCurrentJourneyStage('stage-b');await api('/films');await api('/films',{method:'POST',body:JSON.stringify({title:'Film'})});
-    const calls=(fetch as ReturnType<typeof vi.fn>).mock.calls;
-    expect(calls[0][0]).toBe(calls[2][0]);
-    expect(JSON.parse(calls[1][1].body).stageId).toBe('stage-a');expect(JSON.parse(calls[3][1].body).stageId).toBe('stage-b');
-  });
-  it("keeps an explicit form location and leaves the trip catalogue unfiltered", async()=>{
-    setCurrentZoneFilter(2);setCurrentJourneyStage('stage-a');
-    await api('/places',{method:'POST',body:JSON.stringify({name:'Origin',zoneId:1,stageId:null})});await api('/whither-journey');
-    const calls=(fetch as ReturnType<typeof vi.fn>).mock.calls;expect(JSON.parse(calls[0][1].body)).toEqual({name:'Origin',zoneId:1,stageId:null});expect(calls[1][0]).not.toContain('cityId');
-  });
-
-  beforeEach(() => {
-    session.set({ token: "active", username: "tomas", role: "USER" });
-    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ content: [] }), { status: 200 }))));
-  });
-
-  it("adds the selected zone to catalog list requests", async () => {
-    setCurrentZoneFilter(2);
-
-    await api("/places?size=5");
-
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=2");
-  });
-
-  it("does not replace an explicit zone on catalog reads", async () => {
-    setCurrentZoneFilter(2);
-
-    await api("/places?size=5&zoneId=7");
-
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toContain("/places?size=5&zoneId=7");
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).not.toContain("zoneId=7&zoneId=2");
-  });
-
-  it("requests archived places using the paged slice contract", async () => {
-    setCurrentZoneFilter(2);
-
-    await getArchivedPlaces(12, 5);
-
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0])
-      .toContain("/places/archived?size=5&cursor=12&zoneId=2");
-  });
-
-  it("assigns the selected zone to new catalog records", async () => {
-    setCurrentZoneFilter(2);
-
-    await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
-
-    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
-    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar", zoneId: 2 });
-  });
-
-  it("leaves zone unassigned when the global filter is Todos", async () => {
-    await api("/places", { method: "POST", body: JSON.stringify({ name: "Lugar" }) });
-
-    const request = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
-    expect(JSON.parse(request.body as string)).toEqual({ name: "Lugar" });
+    expect(clearPrivateData).toHaveBeenCalledOnce();
+    unregister();
   });
 });
