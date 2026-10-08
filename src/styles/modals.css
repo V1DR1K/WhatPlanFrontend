@@ -84,6 +84,7 @@
 .modal__content > form.modal-form--paired > .button { grid-column: 1 / -1; }
 .modal-form__actions {
   display: flex;
+  width: 100%;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
@@ -93,7 +94,8 @@
 .modal-form__actions > .button--secondary { order: 1; }
 .modal-form__actions > :is(.button--tertiary, .button--destructive) { order: 2; }
 .modal-form__actions > .button--primary { order: 3; }
-.modal-form__actions > .button { flex: 0 1 220px; min-width: min(220px, 100%); min-height: 44px; margin: 0; }
+.modal-form__actions > [data-modal-cancel] { order: 1; }
+.modal-form__actions > .button { flex: 1 1 180px; min-width: 0; min-height: 44px; margin: 0; }
 .modal__content > form > .form-error { margin: 0; }
 .modal .review-textarea { min-height: clamp(88px, 13dvh, 140px); }
 
@@ -286,6 +288,9 @@
   .modal-form__actions { flex-direction: column; gap: 8px; }
   .modal-form__actions > .button { flex: none; width: 100%; }
   .modal__content > form > .button--primary { width: 100%; min-width: 0; justify-self: stretch; }
+  .modal-form__actions > [data-modal-cancel] { order: 1; }
+  .modal-form__actions > .button--primary { order: 2; }
+  .modal-form__actions > .button:not([data-modal-cancel]):not(.button--primary) { order: 3; }
   .modal .venue-score-grid,
   .modal .film-metric-fields,
   .confirm-dialog__actions,

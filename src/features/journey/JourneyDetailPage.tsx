@@ -486,7 +486,7 @@ export function JourneyDetailPage() {
                         {editable && <Button className="journey-point-expense-action" variant="secondary" icon={<JourneyIcon name="MONEY" />}
                           onClick={() => { setMovementPoint(p.id); setMovement(null); }}>Registrar gasto</Button>}
                         {addressUrl && <a className="button button--primary journey-action-link journey-address-action" href={addressUrl} target="_blank" rel="noreferrer">
-                          <span aria-hidden="true">📍</span> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                          <span aria-hidden="true">🗺️</span> Dirección <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                         </a>}
                         {(editable || p.source || p.extraActions?.length) && <details className="journey-point-overflow"
                           onBlur={(event) => {
