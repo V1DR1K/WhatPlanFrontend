@@ -22,6 +22,7 @@ type PackingPress = {
   startY: number;
   x: number;
   y: number;
+  axis: "x" | "y" | null;
   captureTarget: HTMLDivElement;
   list: HTMLUListElement;
   row: HTMLLIElement;
@@ -245,8 +246,11 @@ export function JourneyPackingLists({
   ) => {
     const target = event.target;
     if (!editable || disabled || !event.isPrimary || packingPress.current) return;
-    if (target instanceof Element && target.closest("button, input, select, textarea, a, [data-packing-no-drag]")) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    const isControl = target instanceof Element && Boolean(
+      target.closest("button, input, select, textarea, a, [data-packing-no-drag]"),
+    );
+    if (isControl && event.pointerType === "mouse") return;
     const captureTarget = event.currentTarget.closest<HTMLDivElement>(".journey-packing");
     if (!captureTarget) return;
 
@@ -260,15 +264,18 @@ export function JourneyPackingLists({
       startY: event.clientY,
       x: event.clientX,
       y: event.clientY,
+      axis: null,
       captureTarget,
       list: event.currentTarget.parentElement as HTMLUListElement,
       row: event.currentTarget,
       initialIds: ids,
       ids: [...ids],
       timer: 0,
-      mode: "holding",
+      mode: isControl ? "scrolling" : "holding",
     };
     packingPress.current = press;
+    if (isControl) return;
+
     setGesture({ userId, item, itemId: item.id, overId: item.id, phase: "holding" });
     press.timer = window.setTimeout(() => {
       if (packingPress.current !== press || press.mode !== "holding") return;
@@ -288,21 +295,33 @@ export function JourneyPackingLists({
     const press = packingPress.current;
     if (!press || press.pointerId !== event.pointerId) return;
 
+    const previousY = press.y;
     press.x = event.clientX;
     press.y = event.clientY;
     if (press.mode === "holding") {
       if (Math.max(Math.abs(press.x - press.startX), Math.abs(press.y - press.startY)) > LONG_PRESS_MOVE_TOLERANCE) {
         window.clearTimeout(press.timer);
+        press.axis = Math.abs(press.x - press.startX) > Math.abs(press.y - press.startY) ? "x" : "y";
         press.mode = "scrolling";
-        packingPress.current = null;
+        suppressedClick.current = { until: Date.now() + 350, itemId: press.item.id };
         setGesture(null);
-        try {
-          if (press.captureTarget.hasPointerCapture(press.pointerId)) {
-            press.captureTarget.releasePointerCapture(press.pointerId);
-          }
-        } catch {
-          // The browser may already have canceled this pointer while scrolling.
+        if (press.axis === "y" && event.pointerType !== "mouse") {
+          window.scrollBy(0, previousY - press.y);
         }
+      }
+      return;
+    }
+    if (press.mode === "scrolling") {
+      if (
+        !press.axis &&
+        Math.max(Math.abs(press.x - press.startX), Math.abs(press.y - press.startY)) > LONG_PRESS_MOVE_TOLERANCE
+      ) {
+        press.axis = Math.abs(press.x - press.startX) > Math.abs(press.y - press.startY) ? "x" : "y";
+        suppressedClick.current = { until: Date.now() + 350, itemId: press.item.id };
+      }
+      if (press.axis === "y" && event.pointerType !== "mouse") {
+        if (event.cancelable) event.preventDefault();
+        window.scrollBy(0, previousY - press.y);
       }
       return;
     }
