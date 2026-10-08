@@ -53,3 +53,9 @@ export function useAdminScope() {
   if (!value) throw new Error('AdminScopeProvider is missing');
   return value;
 }
+
+// ZoneProvider is also used by standalone UI previews that do not mount the admin scope provider.
+// eslint-disable-next-line react-refresh/only-export-components
+export function useOptionalAdminScope() {
+  return useContext(AdminScopeContext);
+}

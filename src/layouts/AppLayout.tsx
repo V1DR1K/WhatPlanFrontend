@@ -74,13 +74,13 @@ export function AppLayout() {
     <main className={`app-shell ${sectionShell}`} style={section ? sectionThemeStyle(section) : undefined}>
       <header className="app-header">
         <Link className="brand" to="/app" aria-label="WhatPlan, ir al selector">What<span>Plan</span><i>✦</i></Link>
-        <label className="zone-filter" aria-label="Filtrar registros por ciudad">
+        {section && <label className="zone-filter" aria-label="Filtrar registros por ciudad">
           <span>Ciudad</span>
           <select aria-label="Filtrar por ciudad" value={zoneContext.selectedLocationKey} disabled={zoneContext.loading} onChange={event => zoneContext.selectLocation(event.target.value)}>
             <option value="all">Todas las ciudades</option>
             {zoneContext.options.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
           </select>
-        </label>
+        </label>}
         <div className="header-actions">
           {(inFood || inFilms || inCook || inFun || inDates || inJourney) && <>
             <Link className={buttonClassName('icon', 'round round--section-home')} to="/app" aria-label="Cambiar de aplicación" title="Cambiar de aplicación">🏠</Link>

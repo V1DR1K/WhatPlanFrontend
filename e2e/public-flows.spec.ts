@@ -154,9 +154,64 @@ test('registration validates matching credentials and opens the no-couple onboar
   expect(await page.evaluate(() => Object.values(localStorage).some((value) => value.includes('e2e-registration-token')))).toBe(false);
 });
 
+test('couple exit lives in Settings and leaves the shared space after confirmation', async ({ page }) => {
+  let coupleIsActive = true;
+  let leaveRequests = 0;
+  await mockApi(page, {
+    'POST /api/auth/login': (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ accessToken: 'e2e-settings-token', username: 'alex', role: 'USER' }),
+    }),
+    'POST /api/auth/refresh': (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ accessToken: 'e2e-settings-token', username: 'alex', role: 'USER' }),
+    }),
+    'GET /api/couple': (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(coupleIsActive ? activeCouple : { id: null, status: 'NONE', members: [] }),
+    }),
+    'GET /api/cities/1': (route) => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: 1, name: 'Rosario', countryCode: 'AR' }),
+    }),
+    'POST /api/couple/leave': (route) => {
+      leaveRequests += 1;
+      coupleIsActive = false;
+      return route.fulfill({ status: 204 });
+    },
+  });
+
+  await page.goto('/login');
+  await page.getByLabel('Usuario').fill('alex');
+  await page.getByLabel('Contraseña').fill('temporary-password');
+  await page.getByRole('button', { name: 'Entrar a elegir' }).click();
+  await expect(page.getByRole('heading', { name: /Hola Alex y Sam/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Desvincularme' })).toHaveCount(0);
+
+  await page.getByRole('link', { name: 'Configuración' }).click();
+  await expect(page.getByRole('heading', { name: 'Configuración' })).toBeVisible();
+  await page.getByRole('button', { name: 'Desvincularme' }).click();
+  const confirmation = page.getByRole('dialog');
+  await expect(confirmation.getByRole('heading', { name: 'Desvincularme de esta pareja' })).toBeVisible();
+  await confirmation.getByRole('button', { name: 'Cancelar' }).click();
+  expect(leaveRequests).toBe(0);
+
+  await page.getByRole('button', { name: 'Desvincularme' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Desvincularme' }).click();
+  await expect(page.getByRole('heading', { name: 'Armen su pareja' })).toBeVisible();
+  expect(leaveRequests).toBe(1);
+});
+
 test('Tomás admin sees the panel for couples, users, and audit history', async ({ page }) => {
+  test.setTimeout(45_000);
   const coupleId = 'e20b1b64-cc9e-4d82-a332-e1b6282b7425';
   let lastAuditActorId: string | null = null;
+  let locationContextRequests = 0;
+  const locationContextAdminScopes: string[] = [];
   const adminCouple = {
     id: coupleId, status: 'ACTIVE', originCityId: 1, createdBy: 'tomas',
     createdAt: '2026-01-01T00:00:00Z', closedAt: null,
@@ -194,6 +249,15 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
         { id: 2, username: 'avril', role: 'USER', createdAt: '2026-01-01T00:00:00Z', coupleId, coupleStatus: 'ACTIVE' },
       ]),
     }),
+    'GET /api/location-context': (route) => {
+      locationContextRequests += 1;
+      locationContextAdminScopes.push(route.request().headers()['x-whatplan-admin-couple'] ?? '');
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...activeLocationContext, coupleId }),
+      });
+    },
     'GET /api/admin/audit': (route) => route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -221,6 +285,9 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await expect(page).toHaveURL(/\/app\/admin$/);
   await expect(page.getByRole('heading', { name: 'Panel administrativo' })).toBeVisible();
   await expect(page.getByText('Tomás y Avril')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Filtrar por ciudad' })).toHaveCount(0);
+  await page.waitForTimeout(16_000);
+  expect(locationContextRequests).toBe(0);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 
@@ -232,7 +299,7 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await expect(page.getByText(/Cambio en datos/)).toBeVisible();
   await page.getByRole('button', { name: '← Anterior' }).click();
   await page.getByLabel('Filtrar por persona').selectOption('2');
-  await expect(page.locator('.category-list').getByText('avril', { exact: true })).toBeVisible();
+  await expect(page.locator('.admin-list').getByText(/avril · Cambio en datos/)).toBeVisible();
   await expect.poll(() => lastAuditActorId).toBe('2');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Parejas/ }).click();
@@ -246,9 +313,12 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.getByRole('button', { name: /Dónde comemos/ }).click();
   await expect(page).toHaveURL(/\/app\/food$/);
+  await expect(page.getByRole('combobox', { name: 'Filtrar por ciudad' })).toBeVisible();
+  await expect.poll(() => locationContextAdminScopes.at(-1)).toBe(coupleId);
 });
 
 test('expired private media session clears the private screen and returns to login', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1600 });
   let protectedMediaRequests = 0;
   await mockApi(page, {
     'GET /api/places': (route) => {
@@ -289,10 +359,9 @@ test('expired private media session clears the private screen and returns to log
   await page.getByLabel('Usuario').fill('new-member');
   await page.getByLabel('Contraseña').fill('temporary-password');
   await page.getByRole('button', { name: 'Entrar a elegir' }).click();
+  const mediaRequest = page.waitForRequest((request) => request.url().includes('/api/places/101/photo'));
   await page.getByRole('link', { name: /Guarden cada lugar y opinión/ }).click();
-  const placePhoto = page.getByRole('img', { name: 'Foto de Private place awaiting media' });
-  await placePhoto.scrollIntoViewIfNeeded();
-  await page.waitForRequest((request) => request.url().includes('/api/places/101/photo'));
+  await mediaRequest;
   await expect(page).toHaveURL(/\/login$/, { timeout: 10_000 });
   expect(protectedMediaRequests).toBe(1);
   await expect(page.getByLabel('Usuario')).toBeVisible();

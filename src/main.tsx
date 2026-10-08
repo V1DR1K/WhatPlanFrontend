@@ -31,6 +31,7 @@ import './styles/loading.css';
 import './styles/landing.css';
 import './styles/landing-journey.css';
 import './styles/modals.css';
+import './styles/admin.css';
 
 function isStandaloneApp() {
   return window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { Button } from '../../components/ui/Button';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { showNotice } from '../../lib/flash';
 import { createCouple, createInvitation, getCouple, invitationUrl, leaveCouple, revokeInvitation } from './couple';
 
@@ -11,10 +12,11 @@ function memberNames(members: Member[]) {
   return members.map(member => member.displayName).join(' y ');
 }
 
-export function CouplePanel({ compact = false }: { compact?: boolean }) {
+export function CouplePanel({ compact = false, showLeaveAction = false }: { compact?: boolean; showLeaveAction?: boolean }) {
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: coupleQueryKey, queryFn: getCouple });
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
   const invitationInput = useRef<HTMLInputElement>(null);
   const invalidate = () => queryClient.invalidateQueries({ queryKey: coupleQueryKey });
   const create = useMutation({ mutationFn: createCouple, onSuccess: invalidate });
@@ -29,7 +31,7 @@ export function CouplePanel({ compact = false }: { compact?: boolean }) {
   const leave = useMutation({ mutationFn: leaveCouple, onSuccess: () => {
     setInviteToken(null);
     window.location.assign('/app');
-  } });
+  }, onError: () => setConfirmingLeave(false) });
 
   if (query.isLoading) return <section className="async-state async-state--loading" aria-busy="true">
     <p className="eyebrow">PAREJA</p><p>Preparando su espacio…</p>
@@ -83,9 +85,17 @@ export function CouplePanel({ compact = false }: { compact?: boolean }) {
       {couple.pendingInvitation && <button type="button" className="text-button"
         onClick={() => revoke.mutate(couple.pendingInvitation!.id)} disabled={revoke.isPending}>Revocar invitación</button>}
     </> : <p>Todo lo que guarden queda visible solamente para los integrantes de esta pareja: {names}.</p>}
-    <button type="button" className="text-button"
-      onClick={() => { if (window.confirm('¿Querés desvincularte? El histórico se conserva, pero perderás acceso a esta pareja.')) leave.mutate(); }}
-      disabled={leave.isPending}>{leave.isPending ? 'Desvinculando…' : 'Desvincularme'}</button>
+    {showLeaveAction && <Button type="button" variant="destructive" onClick={() => setConfirmingLeave(true)} disabled={leave.isPending}>
+      Desvincularme
+    </Button>}
     {(invite.error || revoke.error || leave.error) && <p className="form-error" role="alert">{(invite.error || revoke.error || leave.error)!.message}</p>}
+    {confirmingLeave && <ConfirmDialog
+      title="Desvincularme de esta pareja"
+      message="El histórico se conserva, pero vas a perder acceso a este espacio compartido."
+      confirmLabel="Desvincularme"
+      pending={leave.isPending}
+      onClose={() => setConfirmingLeave(false)}
+      onConfirm={() => leave.mutate()}
+    />}
   </section>;
 }

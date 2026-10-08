@@ -7,6 +7,7 @@ import { LoadingSkeleton } from '../../components/ui/LoadingSkeleton';
 import { showNotice } from '../../lib/flash';
 import { getGlobalSettings, maxCatalogPageSize, saveGlobalSettings } from '../../lib/settings';
 import { session } from '../../lib/api';
+import { CouplePanel } from '../couple/CouplePanel';
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
@@ -28,6 +29,7 @@ export function SettingsPage() {
   return <section className="settings-page" aria-labelledby="settings-title">
     <p className="eyebrow">PREFERENCIAS</p>
     <h1 id="settings-title">Configuración</h1>
+    <CouplePanel showLeaveAction />
     {!isAdmin && <OriginSettingsPanel />}
     {isAdmin && <>
       <p className="eyebrow settings-page__global-label">CONFIGURACIÓN GLOBAL</p>

@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { session, setCurrentZoneFilter, setCurrentJourneyStage } from './api';
+import { ApiError, session, setCurrentZoneFilter, setCurrentJourneyStage } from './api';
 import { getLocationContext, type LocationOption } from '../features/journey/journey';
 import { Button } from '../components/ui/Button';
 import { LoadingSkeletonForPath } from '../components/ui/LoadingSkeleton';
 import type { Home } from '../types/domain';
+import { useOptionalAdminScope } from './adminScope';
 
 type ZoneContextValue = {
   zones: { id: number; name: string }[]; options: LocationOption[]; coupleId: string;
@@ -14,10 +15,19 @@ type ZoneContextValue = {
   selectZone: (zoneId: number | null) => void; selectLocation: (key: string) => void;
 };
 const ZoneContext = createContext<ZoneContextValue | null>(null);
-export function ZoneProvider({ children }: { children: ReactNode }) {
-  const pathname = window.location.pathname;
+export function ZoneProvider({ children, pathname = typeof window === 'undefined' ? '/' : window.location.pathname }: { children: ReactNode; pathname?: string }) {
+  const adminScope = useOptionalAdminScope();
   const client = useQueryClient();
-  const context = useQuery({ queryKey: ['location-context', session.get()?.username], queryFn: getLocationContext, refetchInterval: 15_000 });
+  const needsLocationContext = /^\/app\/(food|films|how-cook|why-fun|when-dates|whither-journey)(\/|$)/.test(pathname);
+  const settingsRoute = pathname === '/app/settings';
+  const context = useQuery({
+    queryKey: ['location-context', session.get()?.username, adminScope?.coupleId ?? null],
+    queryFn: getLocationContext,
+    enabled: needsLocationContext || settingsRoute,
+    refetchInterval: query => query.state.error instanceof ApiError && query.state.error.status === 403
+      ? false
+      : 15_000,
+  });
   const [selectedLocationKey, setSelectedLocationKey] = useState('origin');
   const selected = context.data?.options.find(option => option.key === selectedLocationKey) ?? (selectedLocationKey === 'all' ? undefined : context.data?.options[0]);
   const cityId = selected?.cityId ?? null;
@@ -46,8 +56,7 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
     selectZone, selectLocation,
   }), [context.data, context.isLoading, cityId, stageId, selectedLocationKey, selectZone, selectLocation]);
   if (context.isLoading) return <LoadingSkeletonForPath pathname={pathname} />;
-  const onboardingOrAdminRoute = pathname === '/app' || pathname.startsWith('/app/admin');
-  if (context.isError && !context.data && !onboardingOrAdminRoute) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
+  if (context.isError && !context.data && needsLocationContext) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
   return <ZoneContext.Provider value={value}>{context.isRefetchError&&<p className="form-error" role="status">No pudimos actualizar las ubicaciones. <Button variant="secondary" onClick={()=>void context.refetch()}>Reintentar</Button></p>}{children}</ZoneContext.Provider>;
 }
 // eslint-disable-next-line react-refresh/only-export-components
