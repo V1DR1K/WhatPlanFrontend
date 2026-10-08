@@ -26,11 +26,9 @@ export type CoupleSnapshot = {
 export function getCouple() {
   return api<CoupleSnapshot>('/couple');
 }
-
 export function createCouple() {
   return api<CoupleSnapshot>('/couples', { method: 'POST' });
 }
-
 export function createInvitation() {
   return api<CoupleInvitation>('/couple/invitations', { method: 'POST' });
 }
@@ -57,4 +55,3 @@ export function leaveCouple() {
 export function invitationUrl(token: string) {
   return buildInvitationUrl(token, window.location.origin);
 }
-
