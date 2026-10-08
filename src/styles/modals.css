@@ -75,6 +75,11 @@
   margin: 4px 0 0;
   justify-self: stretch;
 }
+.modal__content > form > .button--primary {
+  width: auto;
+  min-width: min(220px, 100%);
+  justify-self: end;
+}
 
 .modal__content > form.modal-form--paired > .button { grid-column: 1 / -1; }
 .modal-form__actions {
@@ -85,7 +90,10 @@
   gap: 12px;
   margin-top: 4px;
 }
-.modal-form__actions > .button { flex: 1 1 180px; min-height: 44px; margin: 0; }
+.modal-form__actions > .button--secondary { order: 1; }
+.modal-form__actions > :is(.button--tertiary, .button--destructive) { order: 2; }
+.modal-form__actions > .button--primary { order: 3; }
+.modal-form__actions > .button { flex: 0 1 220px; min-width: min(220px, 100%); min-height: 44px; margin: 0; }
 .modal__content > form > .form-error { margin: 0; }
 .modal .review-textarea { min-height: clamp(88px, 13dvh, 140px); }
 
@@ -277,6 +285,7 @@
   .modal__content > form > * { grid-column: 1 / -1; }
   .modal-form__actions { flex-direction: column; gap: 8px; }
   .modal-form__actions > .button { flex: none; width: 100%; }
+  .modal__content > form > .button--primary { width: 100%; min-width: 0; justify-self: stretch; }
   .modal .venue-score-grid,
   .modal .film-metric-fields,
   .confirm-dialog__actions,

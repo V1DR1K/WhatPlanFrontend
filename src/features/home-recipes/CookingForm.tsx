@@ -83,9 +83,11 @@ export function CookingForm({ recipe, cooking, onClose, onSaved }: { recipe: Rec
           <label>Comida<select value={mealType} onChange={event => setMealType(event.target.value as MealType)}>{meals.map(meal => <option key={meal.value} value={meal.value}>{meal.label}</option>)}</select></label>
         </div>
         <label>Porciones<input type="number" min="1" max="100" value={servings} onChange={event => setServings(Number(event.target.value))} required /></label>
-        <Button icon={cooking ? '💾' : '📅'} disabled={location.loading || !!location.error || mutation.isPending || remove.isPending}>{mutation.isPending ? 'Guardando…' : cooking ? 'Guardar cocinada' : 'Registrar cocinada'}</Button>
         {location.error && <p className="form-error" role="alert">{location.error.message}</p>}
-        {cooking && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirming(true)}>Borrar cocinada</Button>}
+        <div className="modal-form__actions">
+          {cooking && <Button variant="destructive" icon="🗑️" type="button" disabled={mutation.isPending || remove.isPending} onClick={() => setConfirming(true)}>Borrar cocinada</Button>}
+          <Button icon={cooking ? '💾' : '📅'} disabled={location.loading || !!location.error || mutation.isPending || remove.isPending}>{mutation.isPending ? 'Guardando…' : cooking ? 'Guardar cocinada' : 'Registrar cocinada'}</Button>
+        </div>
         {(mutation.error || remove.error) && <p className="form-error" role="alert">{(mutation.error || remove.error)!.message}</p>}
       </form>
     </Modal>

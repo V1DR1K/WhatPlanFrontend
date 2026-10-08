@@ -164,8 +164,10 @@ function StoryEditor({ story, pending, error, onClose, onSave, onDelete }: {
       <label>Relato compartido<textarea autoFocus rows={7} maxLength={4000} value={text}
         onChange={(event) => setText(event.target.value)} placeholder="Anoten los momentos que hicieron especial este día…" /></label>
       {error && <p className="form-error" role="alert">{error}</p>}
-      <Button disabled={pending}>{pending ? "Guardando…" : "Guardar relato"}</Button>
-      {onDelete && <Button type="button" variant="destructive" disabled={pending} onClick={onDelete}>Quitar relato</Button>}
+      <div className="modal-form__actions">
+        {onDelete && <Button type="button" variant="destructive" disabled={pending} onClick={onDelete}>Quitar relato</Button>}
+        <Button disabled={pending}>{pending ? "Guardando…" : "Guardar relato"}</Button>
+      </div>
     </form>
   </Modal>;
 }
@@ -196,8 +198,10 @@ function ReviewEditor({ review, pending, tripId, day, onClose, onRefresh }: {
         onChange={(event) => setComment(event.target.value)} placeholder="¿Qué les gustó de este día?" /></label>
       {!rating && !comment.trim() && <p className="muted">Agregá una puntuación o un comentario.</p>}
       {(save.error || remove.error) && <p className="form-error" role="alert">{(save.error || remove.error)?.message}</p>}
-      <Button disabled={saving || (rating === undefined && !comment.trim())}>{saving ? "Guardando…" : "Guardar reseña"}</Button>
-      {review && <Button type="button" variant="destructive" disabled={saving} onClick={() => remove.mutate()}>Borrar mi reseña</Button>}
+      <div className="modal-form__actions">
+        {review && <Button type="button" variant="destructive" disabled={saving} onClick={() => remove.mutate()}>Borrar mi reseña</Button>}
+        <Button disabled={saving || (rating === undefined && !comment.trim())}>{saving ? "Guardando…" : "Guardar reseña"}</Button>
+      </div>
     </form>
   </Modal>;
 }

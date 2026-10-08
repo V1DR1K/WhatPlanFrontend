@@ -843,7 +843,7 @@
   justify-self: stretch;
   width: 100%;
 }
-.home-recipe-form .button--primary {
+.home-recipe-form > .button--primary {
   width: 100%;
   margin-top: 8px;
 }

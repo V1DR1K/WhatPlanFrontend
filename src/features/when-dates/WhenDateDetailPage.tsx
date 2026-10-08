@@ -46,5 +46,17 @@ export function WhenDateDetailPage() {
 }
 
 function CommentForm({ comment, pending, error, onClose, onSave, onDelete }: { comment?: WhenDateComment; pending: boolean; error?: string; onClose: () => void; onSave: (comment: string) => void; onDelete?: () => void }) {
-  const [text, setText] = useState(comment?.comment ?? ''); return <Modal size="compact" onClose={onClose} confirmDiscard pending={pending}><form onSubmit={(event) => { event.preventDefault(); onSave(text.trim()); }}><p className="eyebrow">RECUERDO PERSONAL</p><h2>{comment ? 'Editar comentario' : 'Agregar comentario'}</h2><label>Comentario<textarea className="review-textarea" required value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} placeholder="Contá qué hizo especial este día…" /></label><Button icon="💾" disabled={pending}>{pending ? 'Guardando…' : 'Guardar comentario'}</Button>{onDelete && <Button icon="🗑️" variant="destructive" type="button" disabled={pending} onClick={onDelete}>Borrar comentario</Button>}{error && <p className="form-error" role="alert">{error}</p>}</form></Modal>;
+  const [text, setText] = useState(comment?.comment ?? '');
+  return <Modal size="compact" onClose={onClose} confirmDiscard pending={pending}>
+    <form onSubmit={(event) => { event.preventDefault(); onSave(text.trim()); }}>
+      <p className="eyebrow">RECUERDO PERSONAL</p>
+      <h2>{comment ? 'Editar comentario' : 'Agregar comentario'}</h2>
+      <label>Comentario<textarea className="review-textarea" required value={text} maxLength={2000} onChange={(event) => setText(event.target.value)} placeholder="Contá qué hizo especial este día…" /></label>
+      <div className="modal-form__actions">
+        {onDelete && <Button icon="🗑️" variant="destructive" type="button" disabled={pending} onClick={onDelete}>Borrar comentario</Button>}
+        <Button icon="💾" disabled={pending}>{pending ? 'Guardando…' : 'Guardar comentario'}</Button>
+      </div>
+      {error && <p className="form-error" role="alert">{error}</p>}
+    </form>
+  </Modal>;
 }

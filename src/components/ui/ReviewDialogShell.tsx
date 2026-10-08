@@ -54,7 +54,6 @@ export function ReviewDialogShell({
           {context && <p className="muted">{context}</p>}
           {children}
           <div className="modal-form__actions">
-            <Button icon={submitIcon} disabled={pending}>{submitLabel}</Button>
             {deleteAction && (
               <Button
                 variant="destructive"
@@ -66,6 +65,7 @@ export function ReviewDialogShell({
                 Borrar reseña
               </Button>
             )}
+            <Button icon={submitIcon} disabled={pending}>{submitLabel}</Button>
           </div>
           {error && <p className="form-error" role="alert">{error}</p>}
         </form>

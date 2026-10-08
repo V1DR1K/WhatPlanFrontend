@@ -2139,9 +2139,7 @@
   color: var(--muted);
   line-height: 1.5;
 }
-.review-prompt .button--secondary {
-  justify-self: center;
-}
+.review-prompt .modal-form__actions { margin-top: 0; }
 .film-form {
   display: grid;
   gap: 2px;

@@ -1126,10 +1126,14 @@
 }
 .journey-form__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
+  justify-content: flex-end;
   margin-top: 12px;
 }
+.journey-form__actions > .button { flex: 0 1 220px; }
+.journey-form > .modal-form__actions { width: 100%; margin: 0; }
 .journey-page ::selection,
 .journey-form ::selection {
   background: #83d8f5;
@@ -1314,6 +1318,7 @@
     gap: 7px;
   }
   .journey-file-list .journey-actions .button { flex: 1 1 128px; min-width: 0; }
+  .journey-form__actions > .button { flex: 1 1 100%; width: 100%; }
   .journey-form .form-columns {
     grid-template-columns: 1fr;
   }

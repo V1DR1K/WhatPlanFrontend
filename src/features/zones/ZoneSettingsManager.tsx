@@ -33,16 +33,18 @@ export function ZoneSettingsManager() {
         {editingId === zone.id ? <form onSubmit={event => { event.preventDefault(); edit.mutate(); }}>
           <label className="sr-only" htmlFor={`zone-${zone.id}`}>Nombre de la Zona</label>
           <input id={`zone-${zone.id}`} value={editingName} maxLength={80} required onChange={event => setEditingName(event.target.value)} />
-          <Button disabled={edit.isPending}>Guardar</Button>
-          <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>Cancelar</Button>
+          <div className="zone-settings__edit-actions">
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>Cancelar</Button>
+            <Button disabled={edit.isPending}>Guardar</Button>
+          </div>
         </form> : <>
           <span><strong>{zone.name}</strong>{!zone.active && <small>Dada de baja</small>}</span>
           <div>
             <Button type="button" variant="secondary" onClick={() => { setEditingId(zone.id); setEditingName(zone.name); }}>Editar</Button>
             {zone.active && (confirmingId === zone.id ? <>
+              <Button type="button" variant="tertiary" onClick={() => setConfirmingId(null)}>Cancelar</Button>
               <span className="zone-settings__confirm">¿Dar de baja?</span>
               <Button type="button" variant="secondary" disabled={deactivate.isPending} onClick={() => deactivate.mutate(zone.id)}>Confirmar</Button>
-              <Button type="button" variant="tertiary" onClick={() => setConfirmingId(null)}>Cancelar</Button>
             </> : <Button type="button" variant="tertiary" onClick={() => setConfirmingId(zone.id)}>Dar de baja</Button>)}
           </div>
         </>}
