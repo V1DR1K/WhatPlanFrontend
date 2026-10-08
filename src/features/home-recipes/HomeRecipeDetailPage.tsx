@@ -1,8 +1,8 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
@@ -18,7 +18,7 @@ import type { Cooking, CookingReview, SpecialDate } from "../../types/domain";
 import { CookingForm } from "./CookingForm";
 import { CookingReviewForm } from "./CookingReviewForm";
 import { RecipeForm } from "./RecipeForm";
-import { deleteRecipe, getCookings, getRecipe } from "./homeRecipes";
+import { deleteRecipe, getCooking, getCookingPage, getRecipe } from "./homeRecipes";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
@@ -32,32 +32,35 @@ const mealName = (meal: string) =>
   ({ DESAYUNO: "Desayuno", ALMUERZO: "Almuerzo", MERIENDA: "Merienda", CENA: "Cena" })[
     meal as "DESAYUNO"
   ] ?? meal;
-const average = (values: number[]) =>
-  values.length
-    ? values.reduce((total, value) => total + value, 0) / values.length
-    : undefined;
-
 export function HomeRecipeDetailPage() {
   const id = Number(useParams().id);
   const validId = Number.isInteger(id) && id > 0;
   const navigate = useNavigate();
   useInAppBackGuard("/app/how-cook");
   const qc = useQueryClient();
+  const { coupleId, selectedZoneId, selectedStageId } = useZoneContext();
   const [editingRecipe, setEditingRecipe] = useState(false);
   const [editingCooking, setEditingCooking] = useState<Cooking | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedCookingId, setSelectedCookingId] = useState<number>();
   const [reviewing, setReviewing] = useState<CookingReview | null>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const recipe = useQuery({ queryKey: ["recipe", id], queryFn: () => getRecipe(id), enabled: validId });
-  const cookings = useQuery({ queryKey: ["cookings", id], queryFn: () => getCookings({ recipeId: id }), enabled: validId });
+  const cookings = useInfiniteQuery({
+    queryKey: ["cookings", id, coupleId, selectedZoneId, selectedStageId],
+    queryFn: ({ pageParam, signal }) => getCookingPage({ recipeId: id, cursor: pageParam, size: 10, signal }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: validId,
+  });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
-  const list = cookings.data ?? [];
+  const list = useMemo(() => cookings.data?.pages.flatMap((page) => page.content) ?? [], [cookings.data]);
   const specialDateList = specialDates.data ?? [];
-  const current = list.find((cooking) => cooking.id === selectedCookingId);
-  const reviews = list.flatMap((cooking) => cooking.reviews);
-  const ratingAverage = average(reviews.map((review) => review.rating));
-  const complexityAverage = average(reviews.map((review) => review.complexity ?? 1));
-  const tasteAverage = average(reviews.map((review) => review.taste ?? review.rating));
+  const selectedCooking = useQuery({
+    queryKey: ["cooking", selectedCookingId, coupleId, selectedZoneId, selectedStageId],
+    queryFn: () => getCooking(selectedCookingId!),
+    enabled: validId && selectedCookingId != null && !list.some((cooking) => cooking.id === selectedCookingId),
+  });
+  const current = list.find((cooking) => cooking.id === selectedCookingId) ?? selectedCooking.data;
   const removeRecipe = useMutation({
     mutationFn: () => deleteRecipe(id),
     onSuccess: async () => {
@@ -69,7 +72,7 @@ export function HomeRecipeDetailPage() {
   });
 
   useEffect(() => {
-    if (list.length && !list.some((cooking) => cooking.id === selectedCookingId)) {
+    if (list.length && selectedCookingId == null) {
       setSelectedCookingId(list[0].id);
     }
   }, [list, selectedCookingId]);
@@ -112,17 +115,17 @@ export function HomeRecipeDetailPage() {
       <section className="rating-breakdown rating-breakdown--cook" aria-label="Promedios de la receta">
         <div className="rating-breakdown__experience">
           <span>🍳 Nota promedio</span>
-          <RatingStars label="Nota promedio de la receta" value={ratingAverage} />
+          <RatingStars label="Nota promedio de la receta" value={value.rating ?? undefined} />
           <small>Calculada sobre todas las reseñas de sus cocinadas.</small>
         </div>
         <div className="rating-breakdown__metrics">
           <div>
             <span>😋 Sabor</span>
-            <RatingStars label="Sabor promedio de la receta" value={tasteAverage} />
+            <RatingStars label="Sabor promedio de la receta" value={value.tasteRating ?? undefined} />
           </div>
           <div>
             <span>🧩 Complejidad</span>
-            <RatingStars label="Complejidad promedio de la receta" value={complexityAverage} />
+            <RatingStars label="Complejidad promedio de la receta" value={value.complexityRating ?? undefined} />
           </div>
         </div>
       </section>
@@ -131,8 +134,10 @@ export function HomeRecipeDetailPage() {
         <div className="home-recipe-detail__panel"><p className="eyebrow">RECETA</p><h2>Cómo se hace</h2><ol className="recipe-steps">{value.steps.map((step, index) => <li key={`${step.instruction}-${index}`}>{step.instruction}</li>)}</ol></div>
       </section>
       <section className="reviews-section">
-        <div className="section-title section-title--with-actions"><div><p className="eyebrow">HISTORIAL DE COCINADAS</p><h2>Veces que la hicieron</h2></div><strong>{list.length}</strong>{current && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button></div>}</div>
+        <div className="section-title section-title--with-actions"><div><p className="eyebrow">HISTORIAL DE COCINADAS</p><h2>Veces que la hicieron</h2></div><strong>{value.cookingCount}</strong>{current && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingCooking(current)}>Editar cocinada</Button></div>}</div>
+        {cookings.isError && <p className="form-error" role="alert">No pudimos cargar el historial. <Button variant="secondary" type="button" onClick={() => void (cookings.isFetchNextPageError ? cookings.fetchNextPage() : cookings.refetch())}>Reintentar</Button></p>}
         {cookings.isLoading ? <LoadingSkeleton variant="experience" section="cook" compactExperience /> : list.length ? <>
+          <p className="muted" aria-live="polite">Mostrando {list.length} de {value.cookingCount} cocinadas.</p>
           <div className="item-date-pager">
             <RecordIterator
               ariaLabel="Navegar cocinadas"
@@ -143,7 +148,9 @@ export function HomeRecipeDetailPage() {
             />
           </div>
           {current && <CookingExperience cooking={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} />}
-        </> : <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
+          {selectedCooking.isError && <p className="form-error" role="alert">No pudimos abrir esa cocinada. <Button variant="secondary" type="button" onClick={() => void selectedCooking.refetch()}>Reintentar</Button></p>}
+          {cookings.hasNextPage && <Button variant="secondary" type="button" disabled={cookings.isFetchingNextPage} onClick={() => void cookings.fetchNextPage()}>{cookings.isFetchingNextPage ? "Cargando…" : "Ver cocinadas anteriores"}</Button>}
+        </> : !cookings.isLoading && !cookings.isError && <p className="empty-state">Todavía no cocinaron esta receta. Registren la primera vez para guardar su historial y reseñas.</p>}
       </section>
       {current?.id && <ExperienceJourneyPanel key={current?.id} source={{section:"COOK",entityId:id,experienceId:current?.id}} />}
       {editingRecipe && <RecipeForm recipe={value} onClose={() => setEditingRecipe(false)} />}

@@ -1,8 +1,8 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useInAppBackGuard } from "../../lib/backGuard";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { EntityDetailActions, EntityDetailHeader } from "../../components/ui/EntityDetailHeader";
@@ -20,11 +20,12 @@ import type { ActivityReview, ActivityVisit, ExperiencePhoto } from "../../types
 import { ActivityForm } from "./ActivityForm";
 import { ActivityReviewForm } from "./ActivityReviewForm";
 import { ActivityVisitForm } from "./ActivityVisitForm";
-import { deleteActivity, deleteActivityPhoto, formatActivityDateRange, getActivity, getActivityVisits, setActivityCover, uploadActivityPhoto } from "./whyFun";
+import { deleteActivity, deleteActivityPhoto, formatActivityDateRange, getActivity, getActivityVisit, getActivityVisitPage, setActivityCover, uploadActivityPhoto } from "./whyFun";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { mapsSearch } from "../places/places";
+import { useZoneContext } from "../../lib/zoneContext";
 
 const dateLabel = (value?: string) =>
   value
@@ -43,6 +44,7 @@ export function FunVenueDetailPage() {
   const navigate = useNavigate();
   useInAppBackGuard("/app/why-fun");
   const qc = useQueryClient();
+  const { coupleId, selectedZoneId, selectedStageId } = useZoneContext();
   const [editing, setEditing] = useState(false);
   const [editingVisit, setEditingVisit] = useState<ActivityVisit | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedVisitId, setSelectedVisitId] = useState<number>();
@@ -50,11 +52,23 @@ export function FunVenueDetailPage() {
   const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const activity = useQuery({ queryKey: ["activity", id], queryFn: () => getActivity(id), enabled: validId });
-  const visits = useQuery({ queryKey: ["activity-visits", id], queryFn: () => getActivityVisits(id), enabled: validId });
+  const visits = useInfiniteQuery({
+    queryKey: ["activity-visits", id, coupleId, selectedZoneId, selectedStageId],
+    queryFn: ({ pageParam, signal }) => getActivityVisitPage(id, { cursor: pageParam, size: 10, signal }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: validId,
+  });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
-  const list = visits.data ?? [];
+  const list = useMemo(() => visits.data?.pages.flatMap((page) => page.content) ?? [], [visits.data]);
   const specialDateList = specialDates.data ?? [];
-  const current = list.find((visit) => visit.id === selectedVisitId);
+  const selectedVisit = useQuery({
+    queryKey: ["activity-visit", selectedVisitId, coupleId, selectedZoneId, selectedStageId],
+    queryFn: () => getActivityVisit(selectedVisitId!),
+    enabled: validId && selectedVisitId != null && !list.some((visit) => visit.id === selectedVisitId),
+  });
+  const current = list.find((visit) => visit.id === selectedVisitId)
+    ?? (selectedVisit.isError ? undefined : selectedVisit.data);
   const invalidate = () => Promise.all([
     qc.invalidateQueries({ queryKey: ["activities"] }),
     qc.invalidateQueries({ queryKey: ["activity", id] }),
@@ -96,10 +110,10 @@ export function FunVenueDetailPage() {
   });
 
   useEffect(() => {
-    if (list.length && !list.some((visit) => visit.id === selectedVisitId)) {
+    if (list.length && (selectedVisitId == null || (selectedVisit.isError && !list.some((visit) => visit.id === selectedVisitId)))) {
       setSelectedVisitId(list[0].id);
     }
-  }, [list, selectedVisitId]);
+  }, [list, selectedVisitId, selectedVisit.isError]);
 
   if (!validId || activity.isError || (!activity.isLoading && !activity.data)) {
     return <section className="fun-detail"><p className="form-error" role="alert">No pudimos abrir esta actividad.</p></section>;
@@ -157,11 +171,13 @@ export function FunVenueDetailPage() {
           {occurrenceDateRange && <p className="fun-single-occurrence"><span>Fecha única</span><strong>{occurrenceDateRange}</strong></p>}
           {value.schedules.length ? <div className="fun-hours">{value.schedules.map((schedule) => <div key={`${schedule.dayOfWeek}-${schedule.opensAt}`}><strong>{dayLabel[schedule.dayOfWeek]}</strong><span>{schedule.opensAt} a {schedule.closesAt}</span></div>)}</div> : <p className="muted">No cargaron horarios para esta actividad.</p>}
         </div>
-        <div className="fun-detail-panel"><p className="eyebrow">HISTORIAL</p><h2>{list.length} salida{list.length === 1 ? "" : "s"}</h2><p className="muted">Cada fecha conserva su propia galería y reseñas.</p></div>
+        <div className="fun-detail-panel"><p className="eyebrow">HISTORIAL</p><h2>{value.visitCount} salida{value.visitCount === 1 ? "" : "s"}</h2><p className="muted">Cada fecha conserva su propia galería y reseñas.</p></div>
       </section>
       <section className="reviews-section">
-        <div className="section-title section-title--with-actions"><div><p className="eyebrow">SALIDAS</p><h2>El historial</h2></div><strong>{list.length}</strong>{current && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}</div>
+        <div className="section-title section-title--with-actions"><div><p className="eyebrow">SALIDAS</p><h2>El historial</h2></div><strong>{value.visitCount}</strong>{current && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar salida</Button></div>}</div>
+        {visits.isError && <p className="form-error" role="alert">No pudimos cargar las salidas. <Button variant="secondary" type="button" onClick={() => void (visits.isFetchNextPageError ? visits.fetchNextPage() : visits.refetch())}>Reintentar</Button></p>}
         {visits.isLoading ? <LoadingSkeleton variant="experience" section="fun" compactExperience /> : list.length ? <>
+          <p className="muted" aria-live="polite">Mostrando {list.length} de {value.visitCount} salidas.</p>
           <div className="item-date-pager">
             <RecordIterator
               ariaLabel="Navegar salidas"
@@ -172,7 +188,9 @@ export function FunVenueDetailPage() {
             />
           </div>
           {current && <div className="experience-detail"><p className="muted">Salida del {dateLabel(current.scheduledAt)}<SpecialDateLabels date={current.scheduledAt} specialDates={specialDateList} />. Registrada por {current.createdBy}; última edición de {current.updatedBy}.</p><ExperienceGallery accentLabel="SALIDA" emptyIcon="🎯" manageInModal name={`${value.name}, ${dateLabel(current.scheduledAt)}`} photos={current.photos} coverPhotoId={current.coverPhoto?.id} onUpload={(files) => uploadPhotos.mutateAsync(files)} onSetCover={(photo) => cover.mutate(Number(photo.id))} onDelete={setDeletingPhoto} /><ReviewList ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} reviews={current.reviews} /></div>}
-        </> : <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
+          {selectedVisit.isError && <p className="form-error" role="alert">No pudimos abrir esa salida. Elegí otra o volvé a cargar el historial.</p>}
+          {visits.hasNextPage && <Button variant="secondary" type="button" disabled={visits.isFetchingNextPage} onClick={() => void visits.fetchNextPage()}>{visits.isFetchingNextPage ? "Cargando…" : "Ver salidas anteriores"}</Button>}
+        </> : !visits.isLoading && !visits.isError && <p className="empty-state">Todavía no hay salidas. Registren la primera fecha para guardar fotos y reseñas.</p>}
       </section>
       {current?.id && <ExperienceJourneyPanel key={current?.id} source={{section:"FUN",entityId:id,experienceId:current?.id}} />}
       {editing && <ActivityForm activity={value} onClose={() => setEditing(false)} />}

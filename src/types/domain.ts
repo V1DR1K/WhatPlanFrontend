@@ -10,8 +10,8 @@ export type PlaceVisit={cityId?:number;stageId?:string|null;id:number;placeId:nu
 // Item types are retained only for legacy records returned by the food API.
 export type ItemReview={author:string;comment?:string;taste:number;price:number;createdAt:string;updatedAt:string};
 export type Item={id:number;name:string;createdBy:string;photoUrl?:string|null;thumbnailUrl?:string|null;photoWidth?:number|null;photoHeight?:number|null;reviews:ItemReview[];createdAt:string};
-export type Slice<T>={content:T[];nextCursor:number|null};
-export type Session={token:string;refreshToken?:string;username:string;role:'USER'|'ADMIN';user?:{mustChangePassword?:boolean}};
+export type Slice<T, Cursor=number>={content:T[];nextCursor:Cursor|null};
+export type Session={token:string;username:string;role:'USER'|'ADMIN';user?:{mustChangePassword?:boolean}};
 export type GlobalSettings={catalogPageSize:number};
 export type SpecialDateRecurrence='ONCE'|'ANNUAL'|'MONTHLY'|'DAILY';
 export type SpecialDate={id:number;date:string;endsOn?:string;label:string;recurrence:SpecialDateRecurrence;createdAt:string;updatedAt:string};
@@ -32,7 +32,7 @@ export type Home='TOMAS'|'AVRIL';
 export type MealType='DESAYUNO'|'ALMUERZO'|'MERIENDA'|'CENA';
 export type RecipeIngredient={name:string;quantity:number;unit:string};
 export type RecipeStep={instruction:string};
-export type Recipe={id:number;zoneId:number;name:string;sourceUrl?:string|null;photoUrl?:string|null;thumbnailUrl?:string|null;photoWidth?:number|null;photoHeight?:number|null;rating?:number|null;cookingCount:number;homes:Home[];ingredients:RecipeIngredient[];steps:RecipeStep[];createdBy:string;updatedBy:string;createdAt:string;updatedAt:string};
+export type Recipe={id:number;zoneId:number;name:string;sourceUrl?:string|null;photoUrl?:string|null;thumbnailUrl?:string|null;photoWidth?:number|null;photoHeight?:number|null;rating?:number|null;complexityRating?:number|null;tasteRating?:number|null;cookingCount:number;homes:Home[];ingredients:RecipeIngredient[];steps:RecipeStep[];createdBy:string;updatedBy:string;createdAt:string;updatedAt:string};
 export type CookingReview={id:number;author:string;updatedBy:string;rating:number;complexity:number;taste:number;comment?:string;createdAt:string;updatedAt:string};
 export type Cooking={cityId?:number;stageId?:string|null;id:number;recipe:Recipe;home:Home;servings:number;cookedOn:string;mealType:MealType;createdBy:string;updatedBy:string;reviews:CookingReview[];createdAt:string;updatedAt:string};
 // Aliases keep ancillary legacy UI modules type-safe while routes move to recipes/cookings.

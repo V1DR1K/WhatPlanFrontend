@@ -1,8 +1,14 @@
 import { getHistory } from '../../lib/history';
 import { api } from "../../lib/api";
-import type { PlaceVisit, PlaceVisitReview, PlaceVisitSummary } from "../../types/domain";
+import type { PlaceVisit, PlaceVisitReview, PlaceVisitSummary, Slice } from "../../types/domain";
 export type PlaceVisitReviewInput = Omit<PlaceVisitReview, "id" | "author" | "updatedBy" | "createdAt" | "updatedAt">;
 export const getVisits = (placeId: number) => getHistory<PlaceVisitSummary>(`/places/${placeId}/visits`);
+export const getVisitPage = (placeId: number, filters: { cursor?: string; size?: number; signal?: AbortSignal } = {}) => {
+  const query = new URLSearchParams();
+  if (filters.cursor) query.set("cursor", filters.cursor);
+  if (filters.size !== undefined) query.set("size", String(filters.size));
+  return api<Slice<PlaceVisitSummary, string>>(`/places/${placeId}/visits${query.size ? `?${query}` : ""}`, { signal: filters.signal });
+};
 export const getVisit = (visitId: number) => api<PlaceVisit>(`/place-visits/${visitId}`);
 export const createVisit = (placeId: number, visitedOn: string, location: import("../journey/journey").Binding = {}) =>
   api<PlaceVisitSummary>(`/places/${placeId}/visits`, {

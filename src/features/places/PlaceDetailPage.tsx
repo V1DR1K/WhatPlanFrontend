@@ -1,5 +1,5 @@
 import { ExperienceJourneyPanel } from '../journey/ExperienceJourneyPanel';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useQuery } from '../../lib/locationQuery';
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ import { RatingStars } from "../../components/ui/RatingStars";
 import { session } from "../../lib/api";
 import { showNotice } from "../../lib/flash";
 import type { ExperiencePhoto, PlaceReview, PlaceVisit, PlaceVisitReview, PlaceVisitSummary, SpecialDate } from "../../types/domain";
-import { deleteVisitPhoto, getVisit, getVisits, setVisitCover, uploadVisitPhoto } from "../items/items";
+import { deleteVisitPhoto, getVisit, getVisitPage, setVisitCover, uploadVisitPhoto } from "../items/items";
 import { VisitForm } from "../items/VisitForm";
 import { VisitReviewForm } from "../items/VisitReviewForm";
 import { PlaceForm } from "./PlaceForm";
@@ -26,6 +26,7 @@ import { deletePlace, getPlace, mapsSearch } from "./places";
 import { SpecialDateLabels, specialDateOptionSuffix } from "../special-dates/SpecialDateLabels";
 import { getSpecialDates } from "../special-dates/specialDates";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { useZoneContext } from "../../lib/zoneContext";
 
 const dateLabel = (date: string) =>
   new Intl.DateTimeFormat("es-AR", {
@@ -44,6 +45,7 @@ export function PlaceDetailPage() {
   const navigate = useNavigate();
   useInAppBackGuard("/app/food");
   const qc = useQueryClient();
+  const { coupleId, selectedZoneId, selectedStageId } = useZoneContext();
   const [editingPlace, setEditingPlace] = useState(false);
   const [editingVisit, setEditingVisit] = useState<PlaceVisitSummary | null | undefined>(() => new URLSearchParams(window.location.search).get("journeyAction") === "register" ? null : undefined);
   const [selectedVisitId, setSelectedVisitId] = useState<number>();
@@ -52,10 +54,16 @@ export function PlaceDetailPage() {
   const [deletingPhoto, setDeletingPhoto] = useState<ExperiencePhoto>();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const place = useQuery({ queryKey: ["place", id], queryFn: () => getPlace(id), enabled: validId });
-  const visits = useQuery({ queryKey: ["visits", id], queryFn: () => getVisits(id), enabled: validId });
+  const visits = useInfiniteQuery({
+    queryKey: ["visits", id, coupleId, selectedZoneId, selectedStageId],
+    queryFn: ({ pageParam, signal }) => getVisitPage(id, { cursor: pageParam, size: 10, signal }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: validId,
+  });
   const specialDates = useQuery({ queryKey: ["special-dates"], queryFn: getSpecialDates, enabled: validId });
   const visit = useQuery({
-    queryKey: ["visit", selectedVisitId],
+    queryKey: ["visit", selectedVisitId, coupleId, selectedZoneId, selectedStageId],
     queryFn: () => getVisit(selectedVisitId!),
     enabled: Boolean(selectedVisitId),
   });
@@ -104,11 +112,11 @@ export function PlaceDetailPage() {
   });
 
   useEffect(() => {
-    const list = visits.data ?? [];
-    if (list.length && !list.some((value) => value.id === selectedVisitId)) {
+    const list = visits.data?.pages.flatMap((page) => page.content) ?? [];
+    if (list.length && (selectedVisitId == null || (visit.isError && !list.some((value) => value.id === selectedVisitId)))) {
       setSelectedVisitId(list[0].id);
     }
-  }, [selectedVisitId, visits.data]);
+  }, [selectedVisitId, visits.data, visit.isError]);
 
   if (!validId || place.isError || (!place.isLoading && !place.data)) {
     return <section className="detail"><p className="form-error" role="alert">No pudimos cargar este lugar.</p></section>;
@@ -116,7 +124,7 @@ export function PlaceDetailPage() {
   if (place.isLoading) return <LoadingSkeleton variant="detail" section="food" />;
 
   const venue = place.data!;
-  const visitList = visits.data ?? [];
+  const visitList = visits.data?.pages.flatMap((page) => page.content) ?? [];
   const specialDateList = specialDates.data ?? [];
   const current = visit.data;
   const mapsUrl = venue.mapsUrl || mapsSearch(venue.address);
@@ -187,16 +195,17 @@ export function PlaceDetailPage() {
       <section className="watch-counter">
         <div className="watch-counter__content">
           <p className="eyebrow">HISTORIAL DE VISITAS</p>
-          <h2>{visitList.length ? `${visitList.length} visita${visitList.length === 1 ? "" : "s"}` : "Todavía no fueron"}</h2>
-          <p>{visitList[0] ? `Última: ${dateLabel(visitList[0].visitedOn)}` : "Registren una fecha al ir."}</p>
+          <h2>{visitList.length ? `${visitList.length}${visits.hasNextPage ? "+" : ""} visita${visitList.length === 1 && !visits.hasNextPage ? "" : "s"}` : visits.isLoading ? "Cargando visitas…" : "Todavía no fueron"}</h2>
+          <p>{visitList[0] ? `Última: ${dateLabel(visitList[0].visitedOn)}` : visits.isLoading ? "" : "Registren una fecha al ir."}</p>
         </div>
       </section>
+      {visits.isError && <p className="form-error" role="alert">No pudimos cargar el historial. <Button variant="secondary" type="button" onClick={() => void (visits.isFetchNextPageError ? visits.fetchNextPage() : visits.refetch())}>Reintentar</Button></p>}
       {visitList.length > 0 && (
         <section className="reviews-section">
           <div className="section-title section-title--with-actions">
             <div><p className="eyebrow">DETALLE DE VISITA</p><h2>La experiencia</h2></div>
-            <strong>{visitList.length} fechas</strong>
-            {selectedVisitId && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(visitList.find((value) => value.id === selectedVisitId)!)}>Editar visita</Button></div>}
+            <strong>{visitList.length}{visits.hasNextPage ? "+" : ""} fechas</strong>
+            {selectedVisitId && current && <div className="section-title__actions"><Button icon="✏️" variant="secondary" type="button" onClick={() => setEditingVisit(current)}>Editar visita</Button></div>}
           </div>
           <div className="item-date-pager">
             <RecordIterator
@@ -209,9 +218,11 @@ export function PlaceDetailPage() {
           </div>
           {visit.isLoading && <LoadingSkeleton variant="experience" section="food" compactExperience />}
           {current && <VisitExperience visit={current} specialDates={specialDateList} ownReview={Boolean(ownReview)} onReview={() => setReviewing(ownReview ?? null)} onUpload={(files) => uploadPhotos.mutateAsync(files)} onDeletePhoto={setDeletingPhoto} onSetCover={(photo) => setCover.mutate(Number(photo.id))} />}
+          {visit.isError && <p className="form-error" role="alert">No pudimos abrir esa visita. <Button variant="secondary" type="button" onClick={() => void visit.refetch()}>Reintentar</Button></p>}
+          {visits.hasNextPage && <Button variant="secondary" type="button" disabled={visits.isFetchingNextPage} onClick={() => void visits.fetchNextPage()}>{visits.isFetchingNextPage ? "Cargando…" : "Ver visitas anteriores"}</Button>}
         </section>
       )}
-      {!visitList.length && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
+      {!visitList.length && !visits.isLoading && !visits.isError && <p className="empty-state">Todavía no hay visitas. La primera fecha abre la galería y las reseñas de esta experiencia.</p>}
       {visit.data?.id && <ExperienceJourneyPanel key={visit.data?.id} source={{section:"FOOD",entityId:id,experienceId:visit.data?.id}} />}
       {editingPlace && <PlaceForm place={venue} onClose={() => setEditingPlace(false)} />}
       {reviewingPlace && <PlaceReviewForm place={venue} review={venue.reviews.find((review) => review.author === session.get()?.username)} onClose={() => setReviewingPlace(false)} />}
