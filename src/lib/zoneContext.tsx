@@ -46,7 +46,8 @@ export function ZoneProvider({ children }: { children: ReactNode }) {
     selectZone, selectLocation,
   }), [context.data, context.isLoading, cityId, stageId, selectedLocationKey, selectZone, selectLocation]);
   if (context.isLoading) return <LoadingSkeletonForPath pathname={pathname} />;
-  if (context.isError&&!context.data) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
+  const onboardingOrAdminRoute = pathname === '/app' || pathname.startsWith('/app/admin');
+  if (context.isError && !context.data && !onboardingOrAdminRoute) return <section className="async-state" role="alert"><h2>No pudimos cargar su ubicación</h2><p>{context.error.message}</p><Button type="button" onClick={() => void context.refetch()}>Reintentar</Button></section>;
   return <ZoneContext.Provider value={value}>{context.isRefetchError&&<p className="form-error" role="status">No pudimos actualizar las ubicaciones. <Button variant="secondary" onClick={()=>void context.refetch()}>Reintentar</Button></p>}{children}</ZoneContext.Provider>;
 }
 // eslint-disable-next-line react-refresh/only-export-components

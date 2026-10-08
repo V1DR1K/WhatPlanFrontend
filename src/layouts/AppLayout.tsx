@@ -1,10 +1,12 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { session } from '../lib/api';
 import { logout } from '../features/auth/auth';
 import { Button, buttonClassName } from '../components/ui/Button';
 import { SectionThemeContext, sectionThemeStyle } from '../lib/sectionTheme';
 import { useZoneContext } from '../lib/zoneContext';
+import { useAdminScope } from '../lib/adminScope';
+import { AdminCoupleTabs } from '../features/admin/AdminCoupleTabs';
 
 function backTarget(pathname: string) {
   if (pathname === '/app' || pathname === '/app/settings') return '/app';
@@ -25,6 +27,7 @@ export function AppLayout() {
   const previousHistoryIndex = useRef<number | undefined>(undefined);
   const user = session.get();
   const zoneContext = useZoneContext();
+  const adminScope = useAdminScope();
   const isAdmin = user?.role === 'ADMIN';
   const canManageSection = isAdmin;
   const inFood = location.pathname.startsWith('/app/food');
@@ -33,6 +36,11 @@ export function AppLayout() {
   const inCook = location.pathname.startsWith('/app/how-cook');
   const inFun = location.pathname.startsWith('/app/why-fun');
   const inDates = location.pathname.startsWith('/app/when-dates');
+  useEffect(() => {
+    if (adminScope.coupleId && (location.pathname === '/app' || location.pathname === '/app/admin')) {
+      adminScope.clearCouple();
+    }
+  }, [adminScope, location.pathname]);
   useLayoutEffect(() => {
     const origin = previousPathname.current;
     const parent = origin ? backTarget(origin) : undefined;
@@ -79,10 +87,12 @@ export function AppLayout() {
             <Link className={buttonClassName('icon', `round round--back${isDetail ? ' round--back--detail' : ''}`)} to={currentBackTarget} aria-label="Volver" title="Volver">↩️</Link>
           </>}
           {(canManageSection || inJourney) && sectionSettingsLink && <Link className={buttonClassName('icon', 'round')} to={sectionSettingsLink} aria-label="Configuración de la sección" title="Configuración de la sección">⚙️</Link>}
+          {isAdmin && <Link className={buttonClassName('icon', 'round')} to="/app/admin" aria-label="Panel administrativo" title="Panel administrativo">🛡️</Link>}
           {(!isAdmin || outsideSection) && <Link className={buttonClassName('icon', 'round')} to="/app/settings" aria-label="Configuración" title="Configuración">⚙️</Link>}
-          <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { logout(); navigate('/login'); }} />
+          <Button className="avatar" icon="🚪" variant="icon" aria-label={`Cerrar sesión de ${user?.username ?? 'usuario'}`} title="Cerrar sesión" onClick={() => { void logout().catch(() => undefined).finally(() => navigate('/login')); }} />
         </div>
       </header>
+      <AdminCoupleTabs />
       <div className="page-stage" key={location.pathname}><Outlet /></div>
     </main>
   </SectionThemeContext>;
