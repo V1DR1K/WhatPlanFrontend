@@ -4,11 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAdminScope } from '../../lib/adminScope';
 import {
-  addAdminCoupleMember, closeAdminCouple, getAdminAudit, getAdminCouple, getAdminUsers,
+  addAdminCoupleMember, auditActionLabel, closeAdminCouple, getAdminAudit, getAdminCouple, getAdminUsers,
   removeAdminCoupleMember, updateAdminCoupleMemberName, type AdminCouple,
 } from './admin';
 
 type DetailTab = 'members' | 'audit';
+const AUDIT_PAGE_SIZE = 50;
 const dateTime = (value: string) => new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 const namesFor = (couple: AdminCouple) => couple.members.filter(member => member.status === 'ACTIVE').map(member => member.displayName).join(' y ') || 'Pareja sin integrantes activos';
 
@@ -19,11 +20,12 @@ export function AdminCouplePage() {
   const { selectCouple } = useAdminScope();
   const [tab, setTab] = useState<DetailTab>('members');
   const [userId, setUserId] = useState('');
+  const [auditPage, setAuditPage] = useState(0);
   const couple = useQuery({ queryKey: ['admin', 'couple', id], queryFn: () => getAdminCouple(id), enabled: Boolean(id) });
   const users = useQuery({ queryKey: ['admin', 'users'], queryFn: getAdminUsers });
   const audit = useQuery({
-    queryKey: ['admin', 'audit', id],
-    queryFn: () => getAdminAudit({ coupleId: id, limit: 100 }),
+    queryKey: ['admin', 'audit', id, auditPage],
+    queryFn: () => getAdminAudit({ coupleId: id, page: auditPage, limit: AUDIT_PAGE_SIZE }),
     enabled: tab === 'audit' && Boolean(id),
   });
   const refreshAdmin = () => queryClient.invalidateQueries({ queryKey: ['admin'] });
@@ -101,10 +103,15 @@ export function AdminCouplePage() {
       {audit.isError && <p className="form-error" role="alert">{audit.error.message}</p>}
       <div className="category-list">
         {audit.data?.entries.map(entry => <span key={entry.id}>
-          <strong>{entry.actorUsername}</strong> · {entry.action} · {entry.method} {entry.path} · {entry.status} · {dateTime(entry.occurredAt)}
+          <strong>{entry.actorUsername}</strong> · {auditActionLabel(entry.action)} · {entry.method} {entry.path} · {entry.status} · {dateTime(entry.occurredAt)}
         </span>)}
         {audit.data?.entries.length === 0 && <p className="empty-state">Todavía no hay acciones registradas para esta pareja.</p>}
       </div>
+      {audit.data && <nav className="quick-nav chips" aria-label="Paginación de auditoría de la pareja">
+        <Button variant="secondary" disabled={auditPage === 0 || audit.isFetching} onClick={() => setAuditPage(page => Math.max(0, page - 1))}>← Anterior</Button>
+        <span aria-live="polite">Página {audit.data.totalPages === 0 ? 0 : auditPage + 1} de {audit.data.totalPages} · {audit.data.total} acciones</span>
+        <Button variant="secondary" disabled={auditPage + 1 >= audit.data.totalPages || audit.isFetching} onClick={() => setAuditPage(page => page + 1)}>Siguiente →</Button>
+      </nav>}
     </section>}
     {(removeMember.error || renameMember.error || close.error) && <p className="form-error" role="alert">{(removeMember.error || renameMember.error || close.error)!.message}</p>}
   </section>;

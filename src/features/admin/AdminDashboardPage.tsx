@@ -4,11 +4,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { useAdminScope } from '../../lib/adminScope';
 import {
-  createAdminCouple, getAdminAudit, getAdminCouples, getAdminOverview, getAdminUsers,
+  auditActionLabel, createAdminCouple, getAdminAudit, getAdminCouples, getAdminOverview, getAdminUsers,
   updateAdminUserRole, type AdminCouple, type AdminUser,
 } from './admin';
 
 type AdminTab = 'couples' | 'users' | 'audit';
+const AUDIT_PAGE_SIZE = 50;
 const dateTime = (value: string) => new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
 const activeNames = (couple: AdminCouple) => couple.members.filter(member => member.status === 'ACTIVE').map(member => member.displayName).join(' y ') || 'Sin integrantes activos';
 
@@ -20,12 +21,13 @@ export function AdminDashboardPage() {
   const [tab, setTab] = useState<AdminTab>(searchParams.get('tab') === 'audit' ? 'audit' : 'couples');
   const [firstMemberUserId, setFirstMemberUserId] = useState('');
   const [auditCoupleId, setAuditCoupleId] = useState(searchParams.get('coupleId') ?? '');
+  const [auditPage, setAuditPage] = useState(0);
   const overview = useQuery({ queryKey: ['admin', 'overview'], queryFn: getAdminOverview });
   const couples = useQuery({ queryKey: ['admin', 'couples'], queryFn: getAdminCouples, enabled: tab === 'couples' || tab === 'audit' });
   const users = useQuery({ queryKey: ['admin', 'users'], queryFn: getAdminUsers, enabled: tab === 'users' || tab === 'couples' });
   const audit = useQuery({
-    queryKey: ['admin', 'audit', auditCoupleId],
-    queryFn: () => getAdminAudit({ coupleId: auditCoupleId || undefined, limit: 100 }),
+    queryKey: ['admin', 'audit', auditCoupleId, auditPage],
+    queryFn: () => getAdminAudit({ coupleId: auditCoupleId || undefined, page: auditPage, limit: AUDIT_PAGE_SIZE }),
     enabled: tab === 'audit',
   });
   const createCouple = useMutation({
@@ -111,7 +113,7 @@ export function AdminDashboardPage() {
     {tab === 'audit' && <section>
       <div className="section-title"><div><p className="eyebrow">ACTIVIDAD REGISTRADA</p><h2>Auditoría</h2></div><strong>{audit.data?.total ?? 0}</strong></div>
       <label>Filtrar por pareja
-        <select value={auditCoupleId} onChange={event => setAuditCoupleId(event.target.value)}>
+        <select value={auditCoupleId} onChange={event => { setAuditCoupleId(event.target.value); setAuditPage(0); }}>
           <option value="">Todas las parejas</option>
           {couples.data?.map(couple => <option key={couple.id} value={couple.id}>{activeNames(couple)} · {couple.id.slice(0, 8)}</option>)}
         </select>
@@ -120,11 +122,16 @@ export function AdminDashboardPage() {
       {audit.isError && <p className="form-error" role="alert">{audit.error.message}</p>}
       <div className="category-list">
         {audit.data?.entries.map(entry => <span key={entry.id}>
-          <strong>{entry.actorUsername}</strong> · {entry.action} · {entry.method} {entry.path} · {entry.status} · {dateTime(entry.occurredAt)}
+          <strong>{entry.actorUsername}</strong> · {auditActionLabel(entry.action)} · {entry.method} {entry.path} · {entry.status} · {dateTime(entry.occurredAt)}
           {entry.coupleId && <small>Pareja {entry.coupleId.slice(0, 8)}</small>}
         </span>)}
         {audit.data?.entries.length === 0 && <p className="empty-state">No hay acciones para este filtro.</p>}
       </div>
+      {audit.data && <nav className="quick-nav chips" aria-label="Paginación de auditoría">
+        <Button variant="secondary" disabled={auditPage === 0 || audit.isFetching} onClick={() => setAuditPage(page => Math.max(0, page - 1))}>← Anterior</Button>
+        <span aria-live="polite">Página {audit.data.totalPages === 0 ? 0 : auditPage + 1} de {audit.data.totalPages} · {audit.data.total} acciones</span>
+        <Button variant="secondary" disabled={auditPage + 1 >= audit.data.totalPages || audit.isFetching} onClick={() => setAuditPage(page => page + 1)}>Siguiente →</Button>
+      </nav>}
     </section>}
   </section>;
 }

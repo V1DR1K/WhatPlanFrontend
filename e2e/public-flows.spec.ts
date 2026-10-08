@@ -196,11 +196,13 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
     'GET /api/admin/audit': (route) => route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({
-        entries: [{ id: 7, actorUserId: 1, actorUsername: 'tomas', coupleId, action: 'COUPLE_CREATED', method: 'POST', path: '/api/admin/couples', status: 201, occurredAt: '2026-01-01T00:00:00Z' }],
-        total: 1,
-        limit: 100,
-      }),
+      body: (() => {
+        const pageNumber = Number(new URL(route.request().url()).searchParams.get('page') ?? '0');
+        const entry = pageNumber === 0
+          ? { id: 7, actorUserId: 1, actorUsername: 'tomas', coupleId, action: 'COUPLE_CREATED', method: 'POST', path: '/api/admin/couples', status: 201, occurredAt: '2026-01-01T00:00:00Z' }
+          : { id: 6, actorUserId: 1, actorUsername: 'tomas', coupleId, action: 'API_MUTATION', method: 'PATCH', path: '/api/places/{id}', status: 200, occurredAt: '2025-12-31T00:00:00Z' };
+        return JSON.stringify({ entries: [entry], total: 51, page: pageNumber, limit: 50, totalPages: 2 });
+      })(),
     }),
   });
 
@@ -218,10 +220,15 @@ test('Tomás admin sees the panel for couples, users, and audit history', async 
   await page.getByRole('button', { name: /Usuarios/ }).click();
   await expect(page.getByText('tomas', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Auditoría/ }).click();
-  await expect(page.getByText(/COUPLE_CREATED/)).toBeVisible();
+  await expect(page.getByText(/Pareja creada/)).toBeVisible();
+  await page.getByRole('button', { name: 'Siguiente →' }).click();
+  await expect(page.getByText(/Cambio en datos/)).toBeVisible();
+  await page.getByRole('button', { name: '← Anterior' }).click();
   await page.getByRole('button', { name: /Parejas/ }).click();
   await page.getByRole('button', { name: 'Administrar' }).click();
   await expect(page.getByRole('navigation', { name: 'Secciones de la pareja' })).toBeVisible();
+  await page.getByRole('button', { name: /Auditoría/ }).click();
+  await expect(page.getByRole('navigation', { name: 'Paginación de auditoría de la pareja' })).toBeVisible();
   await page.getByRole('button', { name: /Dónde comemos/ }).click();
   await expect(page).toHaveURL(/\/app\/food$/);
 });
