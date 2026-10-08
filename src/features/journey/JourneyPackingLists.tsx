@@ -49,7 +49,7 @@ const LONG_PRESS_MOVE_TOLERANCE = 18;
 const AUTO_SCROLL_EDGE_SIZE = 76;
 const AUTO_SCROLL_MAX_STEP = 14;
 const previewTransform = ({ left, top }: { left: number; top: number }) =>
-  `translate3d(${left}px, ${top}px, 0) translate3d(14px, 14px, 0) rotate(1deg)`;
+  `translate3d(${left + 14}px, ${top + 14}px, 0) rotate(1deg)`;
 
 const capturePackingLayout = (list: HTMLUListElement): PackingLayoutSnapshot => ({
   list,
@@ -417,11 +417,6 @@ export function JourneyPackingLists({
                       }}
                     >
                       <div className="journey-packing-item-main">
-                        {editable && (
-                          <span className="journey-packing-drag-handle" aria-hidden="true">
-                            <JourneyIcon name="MOVE" />
-                          </span>
-                        )}
                         <label className="journey-checkbox">
                           <input
                             type="checkbox"
@@ -491,7 +486,9 @@ export function JourneyPackingLists({
           style={{ transform: previewTransform(previewPosition.current) }}
           aria-hidden="true"
         >
-          <span className="journey-packing-drag-preview__handle"><JourneyIcon name="MOVE" /></span>
+          <span className="journey-packing-drag-preview__status">
+            <JourneyIcon name={gesture.item.packed ? "CHECK" : "PENDING"} />
+          </span>
           <span className="journey-packing-drag-preview__copy">
             <strong>{gesture.item.description}</strong>
             <small>× {gesture.item.quantity}{gesture.item.packed ? " · En la valija" : " · Pendiente"}</small>
