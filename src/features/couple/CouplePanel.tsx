@@ -13,6 +13,7 @@ function memberNames(members: Member[]) {
 }
 
 export function CouplePanel({ compact = false, showLeaveAction = false }: { compact?: boolean; showLeaveAction?: boolean }) {
+  const stateClass = compact ? 'dashboard-couple' : 'async-state';
   const queryClient = useQueryClient();
   const query = useQuery({ queryKey: coupleQueryKey, queryFn: getCouple });
   const [inviteToken, setInviteToken] = useState<string | null>(null);
@@ -33,13 +34,14 @@ export function CouplePanel({ compact = false, showLeaveAction = false }: { comp
     window.location.assign('/app');
   }, onError: () => setConfirmingLeave(false) });
 
-  if (query.isLoading) return <section className="async-state async-state--loading" aria-busy="true">
+  if (query.isLoading) return <section className={`${stateClass} ${stateClass}--loading`} aria-busy="true">
     <p className="eyebrow">PAREJA</p><p>Preparando su espacio…</p>
   </section>;
-  if (query.isError) return <section className="async-state async-state--error" role="alert"><p>{query.error.message}</p></section>;
+  if (query.isError) return <section className={`${stateClass} ${stateClass}--error`} role="alert"><p>{query.error.message}</p></section>;
 
   const couple = query.data;
-  if (!couple || couple.status === 'NONE' || couple.status === 'CLOSED') return <section className="async-state">
+  if (compact && couple && couple.status !== 'NONE' && couple.status !== 'CLOSED') return null;
+  if (!couple || couple.status === 'NONE' || couple.status === 'CLOSED') return <section className={stateClass}>
     <p className="eyebrow">SU ESPACIO PRIVADO</p>
     <h2>Armen su pareja</h2>
     <p>Creá un espacio privado para compartir planes. Después podés invitar a la otra persona con un enlace de un solo uso.</p>
@@ -65,7 +67,7 @@ export function CouplePanel({ compact = false, showLeaveAction = false }: { comp
     }
   }
 
-  return <section className="async-state">
+  return <section className={stateClass}>
     <div className={`${compactTitle} section-title--with-actions`}>
       <div><p className="eyebrow">PAREJA · {couple.status === 'PENDING' ? 'PENDIENTE' : 'ACTIVA'}</p><h2>{names}</h2></div>
       <span>{couple.status === 'PENDING' ? '1 / 2' : '2 / 2'}</span>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { session } from '../../lib/api';
 import { sectionThemeStyle } from '../../lib/sectionTheme';
+import { CouplePanel } from '../couple/CouplePanel';
 import { getCouple } from '../couple/couple';
 
 export function DashboardPage() {
@@ -13,6 +14,7 @@ export function DashboardPage() {
     <p className="eyebrow">WHATPLAN · NUESTRO RINCÓN</p>
       <h1>Hola {names} <span>✨</span><br />¿qué van a hacer hoy?</h1>
     <p className="intro">Un lugar para anotar y reseñar todos sus planes</p>
+    <CouplePanel compact />
     {canOpenSections && <div className="module-picker">
       <Link to="/app/food" className="module-card module-card--food"><div className="module-card__emoji">🍔<span>🍜</span></div><p>DÓNDE COMEMOS</p><h2>where<span>food</span></h2><small>Guarden cada lugar y opinión</small><b>Entrar a saborear →</b></Link>
       <Link to="/app/films" className="module-card module-card--films"><div className="module-card__emoji">🎬<span>🍿</span></div><p>CUÁL MIRAMOS</p><h2>which<span>movie</span></h2><small>Guarden cada película y sus vistas</small><b>Entrar a la sala →</b></Link>
