@@ -16,6 +16,7 @@ import {
   type JourneyFile,
 } from "./journey";
 import { useJourneyRefresh } from "./JourneyEditors";
+import { JourneyPdfViewer } from "./JourneyPdfViewer";
 export function FilePreview({
   file,
   onClose,
@@ -24,17 +25,29 @@ export function FilePreview({
   onClose: () => void;
 }) {
   const [url, setUrl] = useState("");
+  const [pdfData, setPdfData] = useState<Uint8Array>();
   const [error, setError] = useState("");
-  const [page, setPage] = useState(1);
-  const [zoom, setZoom] = useState(100);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const controller = new AbortController();
     let objectUrl = "";
+    setUrl("");
+    setPdfData(undefined);
+    setError("");
+    setLoading(true);
     void fetchMedia(file.url, controller.signal)
-      .then((blob) => {
+      .then(async (blob) => {
         if (!controller.signal.aborted) {
-          objectUrl = URL.createObjectURL(blob);
+          const contentType = file.contentType || blob.type || "application/pdf";
+          const previewBlob = blob.type === contentType
+            ? blob
+            : new Blob([blob], { type: contentType });
+          objectUrl = URL.createObjectURL(previewBlob);
           setUrl(objectUrl);
+          if (!contentType.startsWith("image/")) {
+            const data = new Uint8Array(await previewBlob.arrayBuffer());
+            if (!controller.signal.aborted) setPdfData(data);
+          }
         }
       })
       .catch((e) => {
@@ -42,12 +55,15 @@ export function FilePreview({
           setError(
             e instanceof Error ? e.message : "No pudimos abrir el archivo.",
           );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
       });
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [file.url]);
+  }, [file.contentType, file.url]);
   if (url && file.contentType.startsWith("image/"))
     return (
       <PhotoViewer photos={[{ src: url, alt: "Foto guardada en el viaje" }]} onClose={onClose} />
@@ -56,54 +72,15 @@ export function FilePreview({
   return (
     <Modal className="journey-modal" onClose={onClose} size="wide" title="Vista previa del archivo">
       <div className="journey-file-preview">
-        <h2>Documento PDF</h2>
+        <h2>{file.contentType.startsWith("image/") ? "Vista previa de imagen" : "Documento PDF"}</h2>
         {error && (
           <p className="form-error" role="alert">
             {error}
           </p>
         )}
-        {!url && !error && <p role="status">Abriendo archivo…</p>}
-        {url && (
-          <>
-            <div className="journey-file-preview__controls">
-              <label>
-                Página
-                <input
-                  type="number"
-                  min="1"
-                  value={page}
-                  onChange={(e) => setPage(Math.max(1, Number(e.target.value)))}
-                />
-              </label>
-              <label>
-                Zoom
-                <select
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                >
-                  {[50, 75, 100, 125, 150, 200].map((v) => (
-                    <option key={v} value={v}>
-                      {v}%
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <a
-                className="button button--secondary"
-                href={url}
-                download={downloadName}
-              >
-                Descargar original
-              </a>
-            </div>
-            <iframe
-              title="Vista previa del documento PDF"
-              src={`${url}#page=${page}&zoom=${zoom}`}
-            />
-            <p className="muted">
-              Si su navegador no muestra el PDF, pueden descargar el original.
-            </p>
-          </>
+        {loading && !error && <p role="status">Abriendo archivo…</p>}
+        {!loading && !error && pdfData && url && (
+          <JourneyPdfViewer data={pdfData} url={url} downloadName={downloadName} />
         )}
       </div>
     </Modal>

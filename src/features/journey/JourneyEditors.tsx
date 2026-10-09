@@ -420,6 +420,7 @@ export function PointEditor({
               type="button"
               onClick={onDelete}
             >Eliminar punto completo</Button>
+          )}
           <Button
             icon={<JourneyIcon name="CHECK" />}
             disabled={
