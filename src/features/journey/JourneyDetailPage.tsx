@@ -183,6 +183,7 @@ export function JourneyDetailPage() {
     onSuccess: async () => {
       await refresh();
       if (confirm?.resource === "trip") navigate("/app/whither-journey");
+      if (confirm?.resource === "points") setPoint(undefined);
       setConfirm(undefined);
       showNotice("Cambio guardado.");
     },
@@ -962,6 +963,7 @@ export function JourneyDetailPage() {
           point={point ?? undefined}
           day={selectedDay === "unscheduled" ? undefined : selectedDay}
           completing={completing}
+          onDelete={point ? () => requestDelete("points", point.id, "¿Eliminar este punto por completo?") : undefined}
           onClose={() => setPoint(undefined)}
         />
       )}{" "}

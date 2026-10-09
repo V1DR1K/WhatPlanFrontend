@@ -99,12 +99,14 @@ export function PointEditor({
   point,
   day,
   completing = false,
+  onDelete,
   onClose,
 }: {
   detail: Detail;
   point?: Point;
   day?: string;
   completing?: boolean;
+  onDelete?: () => void;
   onClose: () => void;
 }) {
   const refresh = useJourneyRefresh(detail.trip.id);
@@ -190,7 +192,6 @@ export function PointEditor({
       onClose();
     },
   });
-  const linked = !!point?.source?.experienceId;
   const register = point?.source
     ? `${sourceHref(point.source)}?${new URLSearchParams({ journeyPoint: point.id, journeyStage: point.stageId, journeySection: point.source.section, journeyEntity: String(point.source.entityId), journeyDate: point.scheduledOn ?? today(), journeyAction: "register" })}`
     : "";
@@ -252,7 +253,6 @@ export function PointEditor({
             Vincular ficha existente
             <select
               value={section}
-              disabled={linked}
               onChange={(e) => {
                 const selected = e.target.value as Section | "";
                 setSection(selected);
@@ -273,7 +273,7 @@ export function PointEditor({
               <select
                 required
                 value={entityId || ""}
-                disabled={linked || catalog.isLoading}
+                disabled={catalog.isLoading}
                 onChange={(e) => {
                   const id = Number(e.target.value);
                   setEntityId(id);
@@ -301,7 +301,7 @@ export function PointEditor({
                 <select
                   value={experienceId || ""}
                   required={status === "COMPLETED"}
-                  disabled={linked || experiences.isLoading}
+                  disabled={experiences.isLoading}
                   onChange={(e) => setExperienceId(Number(e.target.value))}
                 >
                   <option value="">Todavía no registrada</option>
@@ -412,16 +412,25 @@ export function PointEditor({
           )}
         <FormError error={experiences.error} />
         <FormError error={save.error} />
-        <Button
-          icon={<JourneyIcon name="CHECK" />}
-          disabled={
-            save.isPending ||
-            (!!section && !entityId) ||
-            (status === "COMPLETED" && !!section && !experienceId)
-          }
-        >
-          {save.isPending ? "Guardando…" : "Guardar punto"}
-        </Button>
+        <div className="modal-form__actions">
+          {point && !completing && onDelete && (
+            <Button
+              variant="destructive"
+              icon={<JourneyIcon name="DELETE" />}
+              type="button"
+              onClick={onDelete}
+            >Eliminar punto completo</Button>
+          <Button
+            icon={<JourneyIcon name="CHECK" />}
+            disabled={
+              save.isPending ||
+              (!!section && !entityId) ||
+              (status === "COMPLETED" && !!section && !experienceId)
+            }
+          >
+            {save.isPending ? "Guardando…" : "Guardar punto"}
+          </Button>
+        </div>
       </form>
     </Modal>
   );
