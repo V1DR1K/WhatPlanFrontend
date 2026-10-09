@@ -65,6 +65,13 @@ import {
 const tabs = ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 const displayPointCategory = (point: Point) =>
   point.source?.section ?? point.category ?? "GENERAL";
+const comparePointSchedule = (a: Point, b: Point) => {
+  if (!a.scheduledTime) return b.scheduledTime ? 1 : a.position - b.position;
+  if (!b.scheduledTime) return -1;
+  return a.scheduledTime.localeCompare(b.scheduledTime) || a.position - b.position;
+};
+const sameScheduledTime = (a: Point | undefined, b: Point) =>
+  Boolean(a) && (a?.scheduledTime ?? "") === (b.scheduledTime ?? "");
 
 function stayGalleryPhoto(file: JourneyFile, position: number): ExperiencePhoto {
   return {
@@ -227,7 +234,7 @@ export function JourneyDetailPage() {
         ? !p.scheduledOn
         : p.scheduledOn === selectedDay,
     )
-    .sort((a, b) => a.position - b.position);
+    .sort(comparePointSchedule);
   const shownBalances = moneyStage
     ? (value.stageBalances?.find((s) =>
         moneyStage === "general"
@@ -444,6 +451,8 @@ export function JourneyDetailPage() {
                 const category = displayPointCategory(p);
                 const categoryType = pointTypes.data?.find((type) => type.code === category);
                 const addressUrl = mapsSearch(p.address) ?? p.mapsUrl;
+                const canMoveUp = sameScheduledTime(points[index - 1], p);
+                const canMoveDown = sameScheduledTime(points[index + 1], p);
                 return <li
                   key={p.id}
                   className={`journey-route__point is-${p.status.toLowerCase()}`}
@@ -508,8 +517,8 @@ export function JourneyDetailPage() {
                             {editable && <>
                               <Button variant="secondary" icon={<JourneyIcon name="EDIT" />} disabled={change.isPending} onClick={() => { setPoint(p); setCompleting(false); }}>Editar punto</Button>
                               {p.status !== "CANCELLED" && <Button variant="secondary" icon={<JourneyIcon name="CANCEL" />} disabled={change.isPending} onClick={() => change.mutate({ type: "point", value: { ...p, status: "CANCELLED" } })}>Cancelar punto</Button>}
-                              <Button variant="secondary" icon={<JourneyIcon name="UP" />} disabled={change.isPending || index === 0} aria-label={`Mover ${p.title} hacia arriba`} onClick={() => reorder(index, -1)}>Subir</Button>
-                              <Button variant="secondary" icon={<JourneyIcon name="DOWN" />} disabled={change.isPending || index === points.length - 1} aria-label={`Mover ${p.title} hacia abajo`} onClick={() => reorder(index, 1)}>Bajar</Button>
+                              <Button variant="secondary" icon={<JourneyIcon name="UP" />} disabled={change.isPending || !canMoveUp} aria-label={`Mover ${p.title} hacia arriba`} onClick={() => reorder(index, -1)}>Subir</Button>
+                              <Button variant="secondary" icon={<JourneyIcon name="DOWN" />} disabled={change.isPending || !canMoveDown} aria-label={`Mover ${p.title} hacia abajo`} onClick={() => reorder(index, 1)}>Bajar</Button>
                               <Button variant="destructive" icon={<JourneyIcon name="DELETE" />} onClick={() => requestDelete("points", p.id, "¿Quitar este punto?")}>Quitar punto</Button>
                             </>}
                           </div>
