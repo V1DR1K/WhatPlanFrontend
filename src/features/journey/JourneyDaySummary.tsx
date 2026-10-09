@@ -15,7 +15,6 @@ import {
   getJourneyDay,
   getJourneyDays,
   saveJourneyDayReview,
-  saveJourneyDayStory,
   offsetJourneyDate,
   type Detail,
   type Section,
@@ -40,7 +39,6 @@ export function JourneyDaySummary({
   editable: boolean;
 }) {
   const cache = useQueryClient();
-  const [editingStory, setEditingStory] = useState(false);
   const [editingReview, setEditingReview] = useState(false);
   const days = useQuery({
     queryKey: ["journey-days", detail.trip.id],
@@ -57,10 +55,6 @@ export function JourneyDaySummary({
     cache.invalidateQueries({ queryKey: ["journey", detail.trip.id] }),
     cache.invalidateQueries({ queryKey: ["journeys"] }),
   ]);
-  const story = useMutation({
-    mutationFn: (text: string) => saveJourneyDayStory(detail.trip.id, date, text),
-    onSuccess: async () => { await invalidate(); setEditingStory(false); },
-  });
   const selected = query.data;
   const dayOptions: RecordIteratorOption[] = [];
   for (let day = detail.trip.startsOn; day <= detail.trip.endsOn; day = offsetJourneyDate(day, 1)) {
@@ -126,11 +120,7 @@ export function JourneyDaySummary({
               </div> : <p className="journey-empty">{isFuture ? "Todavía no hay experiencias guardadas para este día." : "Aún no hay experiencias registradas para este día."}</p>}
             </section>
 
-            <section className="journey-day-memory">
-              <div className="journey-panel__heading"><h3>Su recuerdo del día</h3>
-                {editable && <Button variant="secondary" onClick={() => setEditingStory(true)}>{selected.story ? "Editar relato" : "Escribir un relato"}</Button>}
-              </div>
-              {selected.story ? <p className="journey-day-story">{selected.story}</p> : <p className="journey-empty">Un relato compartido para guardar los detalles de este día.</p>}
+            <section className="journey-day-reviews">
               <div className="journey-panel__heading"><h3>Reseñas personales</h3>
                 {editable && <Button variant="secondary" onClick={() => setEditingReview(true)}>{ownReview ? "Editar mi reseña" : "Agregar mi reseña"}</Button>}
               </div>
@@ -144,32 +134,10 @@ export function JourneyDaySummary({
         </>}
       </section>
 
-      {editingStory && selected && <StoryEditor story={selected.story ?? ""} pending={story.isPending}
-        error={story.error?.message} onClose={() => setEditingStory(false)}
-        onSave={(text) => story.mutate(text)} onDelete={selected.story ? () => story.mutate("") : undefined} />}
       {editingReview && selected && <ReviewEditor review={ownReview} pending={false}
         tripId={detail.trip.id} day={date} onClose={() => setEditingReview(false)} onRefresh={invalidate} />}
     </>
   );
-}
-
-function StoryEditor({ story, pending, error, onClose, onSave, onDelete }: {
-  story: string; pending: boolean; error?: string; onClose: () => void;
-  onSave: (story: string) => void; onDelete?: () => void;
-}) {
-  const [text, setText] = useState(story);
-  return <Modal className="journey-modal" title="Relato del día" onClose={onClose} confirmDiscard pending={pending}>
-    <form className="journey-form" onSubmit={(event) => { event.preventDefault(); onSave(text.trim()); }}>
-      <h2>¿Qué quieren recordar?</h2>
-      <label>Relato compartido<textarea autoFocus rows={7} maxLength={4000} value={text}
-        onChange={(event) => setText(event.target.value)} placeholder="Anoten los momentos que hicieron especial este día…" /></label>
-      {error && <p className="form-error" role="alert">{error}</p>}
-      <div className="modal-form__actions">
-        {onDelete && <Button type="button" variant="destructive" disabled={pending} onClick={onDelete}>Quitar relato</Button>}
-        <Button disabled={pending}>{pending ? "Guardando…" : "Guardar relato"}</Button>
-      </div>
-    </form>
-  </Modal>;
 }
 
 function ReviewEditor({ review, pending, tripId, day, onClose, onRefresh }: {

@@ -157,7 +157,6 @@ export type JourneySourcePhoto = { id: string; url: string; thumbnailUrl: string
 export type JourneyDayEntry = { id: string; section: Section; date: string; title: string; detail: string; href: string; photos: JourneySourcePhoto[] };
 export type JourneyDay = {
   date: string;
-  story: string | null;
   entries: JourneyDayEntry[];
   specialDates: { id: number; label: string; recurrence: string; href: string }[];
   photos: JourneyPhoto[];
@@ -343,10 +342,6 @@ export const getJourneyDays = (id: string) =>
   api<JourneyDayIndex[]>(`/whither-journey/${id}/days`);
 export const getJourneyGallery = (id: string) =>
   api<JourneyGalleryEntry[]>(`/whither-journey/${id}/gallery`);
-export const saveJourneyDayStory = (id: string, day: string, story: string) =>
-  api<JourneyDay>(`/whither-journey/${id}/days/${day}/story`, {
-    method: "PUT", body: JSON.stringify({ story }),
-  });
 export const saveJourneyDayReview = (id: string, day: string, rating: number | null, comment: string) =>
   api<JourneyDayReview>(`/whither-journey/${id}/days/${day}/reviews/me`, {
     method: "PUT", body: JSON.stringify({ rating, comment }),

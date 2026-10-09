@@ -530,15 +530,8 @@ test("journey summary stays focused and the gallery manages trip and linked phot
   await expect(page.locator(".journey-detail__header-actions").getByRole("link", { name: /Fechas importantes/ }))
     .toHaveAttribute("href", "/app/when-dates/1/2026-08-10");
 
-  await page.getByRole("button", { name: "Editar relato", exact: true }).click();
-  let dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Relato compartido").fill("Nos quedamos con la caminata y la cena.");
-  await dialog.getByRole("button", { name: "Guardar relato", exact: true }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.locator(".journey-day-story")).toHaveText("Nos quedamos con la caminata y la cena.");
-
   await page.getByRole("button", { name: "Agregar mi reseña", exact: true }).click();
-  dialog = page.getByRole("dialog");
+  let dialog = page.getByRole("dialog");
   await dialog.getByLabel("Comentario (opcional)").fill("La mejor caminata del viaje.");
   await dialog.getByRole("button", { name: "Guardar reseña", exact: true }).click();
   await expect(dialog).toHaveCount(0);

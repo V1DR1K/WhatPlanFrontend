@@ -2122,7 +2122,7 @@
   min-width: 0;
 }
 .journey-day-route,
-.journey-day-memory,
+.journey-day-reviews,
 .journey-day-entries,
 .journey-day-dates,
 .journey-day-photos {
@@ -2313,19 +2313,6 @@
 .journey-day-dates h3 {
   margin: 0 0 4px;
 }
-.journey-day-memory .journey-panel__heading:not(:first-child) {
-  margin-top: 32px;
-}
-.journey-day-story {
-  margin: 0;
-  padding: 18px 20px;
-  border-left: 3px solid #83d8f5;
-  border-radius: 0 12px 12px 0;
-  background: #12232d;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .journey-day-review-form .journey-day-rating {
   display: grid;
   gap: 12px;
@@ -2408,7 +2395,7 @@
     gap: 8px;
   }
   .journey-day-route,
-  .journey-day-memory,
+  .journey-day-reviews,
   .journey-day-entries,
   .journey-day-dates,
   .journey-day-photos {
@@ -2416,20 +2403,20 @@
     border-radius: 14px;
   }
   .journey-day-summary__columns > .journey-day-entries,
-  .journey-day-summary__columns > .journey-day-memory {
+  .journey-day-summary__columns > .journey-day-reviews {
     padding: 12px;
     border-radius: 12px;
   }
   .journey-day-summary__columns > .journey-day-entries > h3,
-  .journey-day-summary__columns > .journey-day-memory h3 {
+  .journey-day-summary__columns > .journey-day-reviews h3 {
     line-height: 1.25;
     overflow-wrap: anywhere;
   }
-  .journey-day-summary__columns > .journey-day-memory .journey-panel__heading {
+  .journey-day-summary__columns > .journey-day-reviews .journey-panel__heading {
     align-items: flex-start;
   }
   .journey-day-summary__columns
-    > .journey-day-memory
+    > .journey-day-reviews
     .journey-panel__heading
     .button {
     width: 100%;
@@ -2457,9 +2444,6 @@
   }
   .journey-day-entry__cue {
     border-radius: 6px;
-  }
-  .journey-day-story {
-    padding: 12px;
   }
   .journey-day-route li {
     flex-basis: min(220px, 78vw);

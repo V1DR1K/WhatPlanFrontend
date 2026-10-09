@@ -62,7 +62,6 @@ export async function journeyFixture(page: Page, rich = false) {
     const firstDay = trip.startsOn;
     dayDetails.set(`${trip.id}:${firstDay}`, {
       date: firstDay,
-      story: rich ? "Empezamos el viaje caminando juntos por San Telmo." : null,
       entries: rich ? [{
         id: "FOOD:9", section: "FOOD", date: firstDay, title: "La Cabrera",
         detail: "Parrilla · Palermo", href: "/app/food/places/7", photos: [{ id: "FOOD:VISIT:77", url: "/place-visit-photos/77", thumbnailUrl: "/place-visit-photos/77?thumbnail=true", width: 320, height: 240 }],
@@ -430,18 +429,13 @@ export async function journeyFixture(page: Page, rich = false) {
       }
       return reply(result);
     }
-    const dayRoute = /^\/whither-journey\/([^/]+)\/days\/(\d{4}-\d{2}-\d{2})(?:\/(story|reviews\/me))?$/.exec(path);
+    const dayRoute = /^\/whither-journey\/([^/]+)\/days\/(\d{4}-\d{2}-\d{2})(?:\/(reviews\/me))?$/.exec(path);
     if (dayRoute) {
       const detail = journeys.get(dayRoute[1]);
       if (!detail) return reply({ detail: "No encontramos este viaje." }, 404);
       const [, tripId, date, action] = dayRoute;
       const key = `${tripId}:${date}`;
-      let value = dayDetails.get(key) ?? { date, story: null, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
-      if (action === "story" && method === "PUT") {
-        value = { ...value, story: payload.story || null };
-        dayDetails.set(key, value);
-        return reply(value);
-      }
+      let value = dayDetails.get(key) ?? { date, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
       if (action === "reviews/me" && method === "PUT") {
         const review = { id: randomUUID(), userId: 1, author: "tomas", rating: payload.rating ?? null, comment: payload.comment || null };
         value = { ...value, reviews: [...value.reviews.filter((r) => r.userId !== 1), review] };
@@ -466,7 +460,7 @@ export async function journeyFixture(page: Page, rich = false) {
       detail.files.push(photo);
       if (purpose === "DAY" && day) {
         const key = `${journeyPhotos[1]}:${day}`;
-        const value = dayDetails.get(key) ?? { date: day, story: null, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
+        const value = dayDetails.get(key) ?? { date: day, entries: [], specialDates: [], photos: [], reviews: [] } satisfies JourneyDay;
         dayDetails.set(key, { ...value, photos: [...value.photos, { id, name: photo.name, url: photo.url, thumbnailUrl: photo.thumbnailUrl, width: photo.width, height: photo.height, purpose, day }] });
       }
       if (!detail.trip.coverPhotoId) {
