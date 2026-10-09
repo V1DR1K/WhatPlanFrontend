@@ -216,14 +216,19 @@ for (const viewport of [
     const fileRow = page.locator(".journey-file-list li");
     await expect(fileRow).toContainText("Todo el viaje");
     await fileRow.getByRole("button", { name: "Vista previa", exact: true }).click();
-    await expect(page.getByTitle("Vista previa del documento PDF")).toBeVisible();
+    const pdfPage = page.getByRole("img", {
+      name: "Página 1 de 1 del documento PDF",
+    });
+    await expect(pdfPage).toBeVisible();
+    const initialPageWidth = await pdfPage.evaluate((canvas) =>
+      canvas.getBoundingClientRect().width,
+    );
     await page
       .getByRole("combobox", { name: "Zoom", exact: true })
       .selectOption("150");
-    await expect(page.getByTitle("Vista previa del documento PDF")).toHaveAttribute(
-      "src",
-      /zoom=150/,
-    );
+    await expect.poll(() =>
+      pdfPage.evaluate((canvas) => canvas.getBoundingClientRect().width),
+    ).toBeGreaterThan(initialPageWidth);
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "Cerrar", exact: true })

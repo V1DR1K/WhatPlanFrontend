@@ -7,6 +7,37 @@ type FixtureBody = Trip &
   Detail["stays"][number] &
   Detail["packing"][number] &
   Detail["movements"][number] & { cityId: number };
+
+function onePagePdf() {
+  const content = [
+    "BT",
+    "/F1 20 Tf",
+    "72 720 Td",
+    "(E2E PDF preview) Tj",
+    "ET",
+  ].join("\n");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${Buffer.byteLength(content)} >>\nstream\n${content}\nendstream`,
+  ];
+  let source = "%PDF-1.4\n";
+  const offsets = [0];
+  for (const [index, object] of objects.entries()) {
+    offsets.push(Buffer.byteLength(source));
+    source += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  }
+  const xrefOffset = Buffer.byteLength(source);
+  source += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  for (const offset of offsets.slice(1)) {
+    source += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  }
+  source += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return Buffer.from(source, "ascii");
+}
+
 export async function journeyFixture(page: Page, rich = false) {
   const cities: City[] = [
     { id: 1, name: "Rosario", countryCode: "AR" },
@@ -521,9 +552,7 @@ export async function journeyFixture(page: Page, rich = false) {
       if (isJourneyPhoto) return route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/Z2YAAAAASUVORK5CYII=", "base64") });
       return route.fulfill({
         contentType: "application/pdf",
-        body: Buffer.from(
-          "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Count 0 /Kids [] >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF",
-        ),
+        body: onePagePdf(),
       });
     }
     if (/\/(place-visit-photos|why-fun\/activity-visit-photos|films\/\d+\/photo)\//.test(path) || path.startsWith("/place-visit-photos/"))
