@@ -76,6 +76,44 @@ for (const viewport of [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
 ]) {
+  test(`agenda displays addresses and linked section URLs at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await journeyFixture(page, true);
+    await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+
+    const foodPoint = page.locator(".journey-route__point").filter({
+      has: page.getByRole("heading", { name: "Desayuno y paseo por San Telmo" }),
+    });
+    await expect(foodPoint.locator(".journey-point-address")).toHaveText(/Thames 1277, Palermo, Buenos Aires/);
+    await expect(foodPoint.getByRole("link", { name: /Dirección/ }))
+      .toHaveAttribute("href", "https://maps.google.com/?q=Thames+1277");
+    await foodPoint.locator(".journey-point-overflow > summary").click();
+    await expect(foodPoint.getByRole("link", { name: /Ver referencia/ }))
+      .toHaveAttribute("href", "https://www.instagram.com/lacabrera/");
+    await foodPoint.locator(".journey-point-overflow > summary").click();
+
+    const filmPoint = page.locator(".journey-route__point").filter({
+      has: page.getByRole("heading", { name: "Una película al final del día" }),
+    });
+    await filmPoint.locator(".journey-point-overflow > summary").click();
+    await expect(filmPoint.getByRole("link", { name: /Ver tráiler/ }))
+      .toHaveAttribute("href", "https://www.youtube.com/watch?v=demo-trailer");
+    await expect(filmPoint.getByRole("link", { name: /Ver en TMDB/ }))
+      .toHaveAttribute("href", "https://www.themoviedb.org/movie/550");
+    const pointOverflows = await Promise.all(
+      [foodPoint, filmPoint].map((point) => point.evaluate((element) =>
+        element.getBoundingClientRect().right > window.innerWidth + 1,
+      )),
+    );
+    expect(pointOverflows).toEqual([false, false]);
+  });
+}
+
+for (const viewport of [
+  { width: 1440, height: 1000 },
+  { width: 390, height: 844 },
+]) {
   test(`organize a journey at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
     const fixture = await journeyFixture(page);

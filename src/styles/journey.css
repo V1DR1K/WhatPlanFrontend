@@ -622,6 +622,24 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
+.journey-point-address {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 2px 0 10px;
+  color: #b9dce9;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.journey-point-address .journey-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #83d8f5;
+}
+.journey-point-address > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .journey-status {
   font-size: 0.85rem;
   color: #83d8f5;

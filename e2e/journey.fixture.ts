@@ -161,12 +161,12 @@ export async function journeyFixture(page: Page, rich = false) {
         scheduledOn: "2026-08-10",
         scheduledTime: "09:30:00",
         notes: "Caminar por el mercado y elegir un café para volver.",
-        address: "Mercado de San Telmo",
-        mapsUrl: "https://maps.google.com/",
+        address: null,
+        mapsUrl: null,
         position: 0,
         status: "COMPLETED",
         category: "FOOD",
-        source: null,
+        source: { section: "FOOD", entityId: 7 },
         extraActions: [],
       },
       {
@@ -546,6 +546,19 @@ export async function journeyFixture(page: Page, rich = false) {
       ]);
     if (path.startsWith("/whither-journey/experiences/"))
       return reply([{ id: 9, date: "2026-08-10", cityId: 2, stageId: null }]);
+    if (path === "/places/7")
+      return reply({
+        id: 7,
+        address: "Thames 1277, Palermo, Buenos Aires",
+        mapsUrl: "https://maps.google.com/?q=Thames+1277",
+        sourceUrl: "https://www.instagram.com/lacabrera/",
+      });
+    if (path === "/films/7")
+      return reply({
+        id: 7,
+        tmdbId: 550,
+        tmdb: { trailerUrl: "https://www.youtube.com/watch?v=demo-trailer" },
+      });
     const content = /^\/whither-journey\/files\/([^/]+)\/content$/.exec(path);
     if (content) {
       const isJourneyPhoto = Array.from(journeys.values()).some((d) => d.files.some((f) => f.id === content[1] && (f.purpose === "TRIP" || f.purpose === "DAY")));

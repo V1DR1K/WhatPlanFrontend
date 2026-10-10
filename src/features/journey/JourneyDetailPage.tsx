@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueries } from "@tanstack/react-query";
 import { useQuery } from "../../lib/locationQuery";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Modal } from "../../components/ui/Modal";
@@ -36,12 +36,14 @@ import {
   addPackingForBoth,
   reorderPacking,
   type Point,
+  type Source,
   type Stay,
   type Movement,
   type JourneyFile,
   type Packing,
   uploadFile,
 } from "./journey";
+import { getJourneySourceDetails } from "./journeySourceDetails";
 import { JourneyIcon } from "./JourneyIcon";
 import { JourneyPackingLists } from "./JourneyPackingLists";
 import { JourneyForm } from "./JourneyForm";
@@ -92,14 +94,32 @@ export function JourneyDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const context = useZoneContext();
+  const [tab, setTab] = useState<(typeof tabs)[number]>("Resumen");
   const detail = useQuery({
     queryKey: ["journey", id],
     queryFn: () => getTrip(id),
     enabled: /^[0-9a-f-]{36}$/i.test(id),
   });
+  const sourceRefs = new Map<string, Source>();
+  for (const point of detail.data?.points ?? []) {
+    if (point.source) sourceRefs.set(`${point.source.section}:${point.source.entityId}`, point.source);
+  }
+  const linkedSources = [...sourceRefs.values()];
+  const linkedSourceQueries = useQueries({
+    queries: linkedSources.map((source) => ({
+      queryKey: ["journey-source-details", context.coupleId, source.section, source.entityId],
+      queryFn: () => getJourneySourceDetails(source),
+      enabled: Boolean(context.coupleId && tab === "Agenda"),
+    })),
+  });
+  const sourceDetailsByKey = new Map(
+    linkedSources.map((source, index) => [
+      `${source.section}:${source.entityId}`,
+      linkedSourceQueries[index]?.data,
+    ]),
+  );
   const pointTypes = useQuery({ queryKey: ["journey-point-types"], queryFn: getJourneyPointTypes });
   const refresh = useJourneyRefresh(id);
-  const [tab, setTab] = useState<(typeof tabs)[number]>("Resumen");
   const [day, setDay] = useState("");
   const [editTrip, setEditTrip] = useState(false);
   const [coverPreview, setCoverPreview] = useState(false);
@@ -451,7 +471,15 @@ export function JourneyDetailPage() {
               {points.map((p, index) => {
                 const category = displayPointCategory(p);
                 const categoryType = pointTypes.data?.find((type) => type.code === category);
-                const addressUrl = mapsSearch(p.address) ?? p.mapsUrl;
+                const sourceDetails = p.source
+                  ? sourceDetailsByKey.get(`${p.source.section}:${p.source.entityId}`)
+                  : undefined;
+                const pointAddress = p.address || sourceDetails?.address;
+                const addressUrl = p.address
+                  ? mapsSearch(p.address) ?? p.mapsUrl
+                  : p.mapsUrl ?? sourceDetails?.mapsUrl ?? mapsSearch(sourceDetails?.address);
+                const customActionUrls = new Set((p.extraActions ?? []).map((action) => action.url));
+                const linkedActions = (sourceDetails?.actions ?? []).filter((action) => !customActionUrls.has(action.url));
                 const canMoveUp = sameScheduledTime(points[index - 1], p);
                 const canMoveDown = sameScheduledTime(points[index + 1], p);
                 return <li
@@ -478,6 +506,7 @@ export function JourneyDetailPage() {
                           ? "Cancelado"
                           : "Pendiente"}
                     </span>
+                    {pointAddress && <p className="journey-point-address"><JourneyIcon name="MAPS" /> <span>{pointAddress}</span></p>}
                     {p.notes && <details className="journey-point-note">
                       <summary><JourneyIcon name="INFO" /> Nota <span aria-hidden="true" /></summary>
                       <p>{p.notes}</p>
@@ -511,6 +540,10 @@ export function JourneyDetailPage() {
                               to={sourceHref(p.source)} onClick={() => context.selectLocation(p.stageId)}>
                               <JourneyIcon name={p.source.section} /> Abrir ficha <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
                             </Link>}
+                            {linkedActions.map((action) => <a className={`button button--secondary journey-action-link journey-action-link--source journey-action-link--${p.source?.section.toLowerCase() ?? "custom"}`}
+                              href={action.url} key={`${p.id}-source-${action.url}`} target="_blank" rel="noreferrer">
+                              <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
+                            </a>)}
                             {p.extraActions?.map((action, actionIndex) => <a className="button button--secondary journey-action-link journey-action-link--custom"
                               href={action.url} key={`${p.id}-${actionIndex}`} target="_blank" rel="noreferrer">
                               <JourneyIcon name={action.icon} /> {action.label} <JourneyIcon className="journey-action-link__arrow" name="OPEN" />
