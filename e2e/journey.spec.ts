@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 import { journeyFixture } from "./journey.fixture";
 import { mkdir } from "node:fs/promises";
 
@@ -71,6 +72,60 @@ test("journey displays matching important dates in its header automatically", as
   await expect(page.locator(".journey-linked-dates")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Vincular fecha importante" })).toHaveCount(0);
 });
+
+for (const viewport of [
+  { width: 1440, height: 1000 },
+  { width: 390, height: 844 },
+]) {
+  test(`agenda orders scheduled points chronologically at ${viewport.width}px`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    const fixture = await journeyFixture(page, true);
+    const journey = fixture.journeys.get("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!;
+    const pointTemplate = journey.points[0];
+    const incomingOrder = [
+      ["09:00", "09:00:00"],
+      ["11:00", "11:00:00"],
+      ["Sin horario 1", null],
+      ["18:30", "18:30:00"],
+      ["14:00", "14:00:00"],
+      ["16:00", "16:00:00"],
+      ["13:00", "13:00:00"],
+      ["17:30", "17:30:00"],
+      ["18:00", "18:00:00"],
+      ["22:00", "22:00:00"],
+      ["Sin horario 2", null],
+      ["23:00", "23:00:00"],
+      ["12:00", "12:00:00"],
+    ] as const;
+    journey.points = incomingOrder.map(([title, scheduledTime], position) => ({
+      ...pointTemplate,
+      id: randomUUID(),
+      title,
+      scheduledOn: journey.trip.startsOn,
+      scheduledTime,
+      position,
+    }));
+
+    await page.goto("/app/whither-journey/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    await page.getByRole("tab", { name: "Agenda", exact: true }).click();
+
+    await expect(page.locator(".journey-route h3")).toHaveText([
+      "09:00",
+      "11:00",
+      "12:00",
+      "13:00",
+      "14:00",
+      "16:00",
+      "17:30",
+      "18:00",
+      "18:30",
+      "22:00",
+      "23:00",
+      "Sin horario 1",
+      "Sin horario 2",
+    ]);
+  });
+}
 
 for (const viewport of [
   { width: 1440, height: 1000 },

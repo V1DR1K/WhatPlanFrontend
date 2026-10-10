@@ -67,10 +67,21 @@ import {
 const tabs = ["Resumen", "Agenda", "Galería", "Archivos", "Estadías", "Valijas", "Dinero"] as const;
 const displayPointCategory = (point: Point) =>
   point.source?.section ?? point.category ?? "GENERAL";
+const scheduledTimeSeconds = (scheduledTime: string | null) => {
+  const match = scheduledTime?.trim().match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d)(?:\.(\d+))?)?$/);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  if (hours > 23) return null;
+
+  return hours * 3600 + Number(match[2]) * 60 + Number(match[3] ?? 0) + Number(`0.${match[4] ?? "0"}`);
+};
 const comparePointSchedule = (a: Point, b: Point) => {
-  if (!a.scheduledTime) return b.scheduledTime ? 1 : a.position - b.position;
-  if (!b.scheduledTime) return -1;
-  return a.scheduledTime.localeCompare(b.scheduledTime) || a.position - b.position;
+  const aTime = scheduledTimeSeconds(a.scheduledTime);
+  const bTime = scheduledTimeSeconds(b.scheduledTime);
+  if (aTime === null) return bTime === null ? a.position - b.position : 1;
+  if (bTime === null) return -1;
+  return aTime - bTime || a.position - b.position;
 };
 const sameScheduledTime = (a: Point | undefined, b: Point) =>
   Boolean(a) && (a?.scheduledTime ?? "") === (b.scheduledTime ?? "");
